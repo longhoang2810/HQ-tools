@@ -49,11 +49,28 @@ python3 lookup.py 107-13-1
 ## Dữ liệu
 
 `data/nd24_chemicals.json` được sinh từ `extract.py`, parse trực tiếp
-Phụ lục I–IV của NĐ 24/2026/NĐ-CP (1331 dòng CAS). Để tạo lại từ file gốc:
+Phụ lục I–IV của **bản chính thức NĐ 24/2026/NĐ-CP** (`nd24.md`, các Phụ lục ở
+dạng bảng markdown, 1360 dòng CAS). Để tạo lại:
 
 ```
-textutil -convert txt -output nd24.txt "24_2026_ND-CP_....docx"
-python3 extract.py nd24.txt
+python3 extract.py            # đọc nd24.md -> data/nd24_chemicals.json
+```
+
+> Trước đây dữ liệu lấy từ `nd24.txt` (bản `textutil` một-ô-mỗi-dòng, parse theo
+> số dòng cứng). Đã thay bằng `nd24.md` chính thức: parser bám cấu trúc bảng nên
+> ổn định hơn, và sửa được vài lỗi phân loại của bản cũ (POP về đúng PL III thay
+> vì PL IV; PL I không còn bị rớt chất).
+
+**Trạng thái chuyển tiếp Điều 30.4/30.5** — với hóa chất Phụ lục III, công cụ
+đối chiếu **NĐ 113/2017/NĐ-CP** (`nd113.md`) để cho biết chất đó là **"cũ"** (đã
+có trong danh mục tiền chất công nghiệp / hạn chế SX-KD của NĐ 113 → KHÔNG được
+miễn Giấy phép) hay **"chưa rõ"** (không có trong NĐ 113 → *có thể* là chất mới
+được miễn tới 31/12/2026, nhưng phải đối chiếu thêm **NĐ 82/2022** và **Danh mục
+hóa chất Bảng NĐ 33/2024** — hai văn bản này chưa có trong công cụ). Công cụ
+**không bao giờ** tự kết luận "được miễn"; tập cũ trích từ `extract_nd113.py`:
+
+```
+python3 extract_nd113.py      # đọc nd113.md -> data/nd113_old_cas.json
 ```
 
 Phần **yêu cầu nhập khẩu / miễn trừ** (`IMPORT_RULES`, `EXEMPTIONS`,
@@ -69,6 +86,11 @@ xong chạy lại `python3 build_html.py` để cập nhật trang HTML.
   này khi không tìm thấy CAS.
 - Yêu cầu nhập khẩu trong `lookup.py` là bản tóm tắt điều luật, không thay
   thế văn bản gốc — luôn đối chiếu Điều được dẫn chiếu trước khi làm hồ sơ.
+- Trạng thái chuyển tiếp (Điều 30.4/30.5) chỉ đối chiếu được với **NĐ 113/2017**;
+  **chưa** có **NĐ 82/2022** và **Danh mục hóa chất Bảng NĐ 33/2024**. Vì vậy
+  công cụ chỉ khẳng định chắc "cũ", còn "chưa rõ" nghĩa là *phải tự đối chiếu
+  thêm* — không đồng nghĩa với "được miễn". (Thiết kế fail-safe: thà báo cần
+  Giấy phép còn hơn miễn nhầm.)
 - Phụ lục II mục 2 (hỗn hợp chất) và Phụ lục III mục II (hỗn hợp chất kiểm
   soát đặc biệt) là quy tắc theo ngưỡng hàm lượng %, không tra theo CAS —
   không nằm trong phạm vi tool này.

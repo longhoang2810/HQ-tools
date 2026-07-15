@@ -1,6 +1,19 @@
 """Smallest possible regression check: known CAS -> known annex(es), and
 that scanning a pasted DN description pulls every CAS out of free text."""
-from core import DATA, EXEMPTIONS, IMPORT_RULES, SHORT_FLAG, annexes_for, cas_status, extract_cas, highest_annex
+from core import (
+    DATA,
+    EXEMPTIONS,
+    IMPORT_RULES,
+    ND113_OLD,
+    ND113_TIEN_CHAT,
+    SHORT_FLAG,
+    annexes_for,
+    cas_status,
+    extract_cas,
+    highest_annex,
+    transitional_flag_short,
+    transitional_status,
+)
 
 
 def test_known_chemicals():
@@ -81,6 +94,44 @@ def test_pl3_splits_import_congbo_from_use_deadline():
     assert "KHÔNG phải điều kiện thông quan" in rule
 
 
+def test_data_regenerated_from_official_nd24():
+    # Bản chính thức NĐ24 (markdown) đầy đủ hơn bản textutil cũ: POP nằm ở PL III
+    # (không phải PL IV), PL I không bị rớt chất, và errata CAS vẫn được áp dụng.
+    assert len(DATA) > 1300
+    assert annexes_for("126-72-7") == {"III"}   # Tris(2,3-dibromopropyl)phosphate (POP) -> III
+    assert "I" in annexes_for("108-88-3")        # Toluene có trong PL I (bản cũ bị rớt)
+    assert annexes_for("10137-74-3") == {"II"} and annexes_for("10037-74-3") == set()  # errata giữ nguyên
+
+
+def test_transitional_old_chemical_is_definitive():
+    # P2P là tiền chất công nghiệp cũ (NĐ113) -> khẳng định 'cũ', KHÔNG được miễn.
+    st = transitional_status("103-79-7")
+    assert st is not None and st[0] == "cu"
+    assert "NĐ 113/2017" in st[1] and "KHÔNG thuộc diện miễn" in st[1]
+    assert "103-79-7" in ND113_TIEN_CHAT
+
+
+def test_transitional_non_pl3_returns_none():
+    # Chỉ hóa chất Phụ lục III mới có trạng thái chuyển tiếp Điều 30.4.
+    assert transitional_status("106-99-0") is None      # PL I/II/IV
+    assert transitional_flag_short("106-99-0") is None
+
+
+def test_transitional_failsafe_never_asserts_new_without_caveat():
+    # THUỘC TÍNH AN TOÀN: với MỌI hóa chất PL III không có trong NĐ113, công cụ
+    # KHÔNG được tự kết luận 'mới/được miễn' — luôn phải kèm cảnh báo đối chiếu
+    # NĐ 82/2022 và Danh mục Bảng NĐ 33/2024. Đây là điểm dễ sai gây miễn nhầm.
+    pl3 = {r["cas"] for r in DATA if r["annex"] == "III"}
+    for cas in pl3:
+        st = transitional_status(cas)
+        assert st is not None and st[0] in ("cu", "chua_xac_dinh")
+        if st[0] == "chua_xac_dinh":
+            assert "NĐ 82/2022" in st[1] and "NĐ 33/2024" in st[1]
+            assert "phải đối chiếu" in st[1].lower() or "PHẢI đối chiếu" in st[1]
+        # không câu chữ nào được khẳng định chắc chắn 'được miễn' mà bỏ điều kiện
+        assert "chắc chắn được miễn" not in st[1]
+
+
 if __name__ == "__main__":
     test_known_chemicals()
     test_highest_annex_prioritizes_permit_over_declaration()
@@ -93,4 +144,8 @@ if __name__ == "__main__":
     test_exemptions_cover_dieu_21_4_and_product_declaration()
     test_congbo_is_not_a_customs_gate_pl2()
     test_pl3_splits_import_congbo_from_use_deadline()
+    test_data_regenerated_from_official_nd24()
+    test_transitional_old_chemical_is_definitive()
+    test_transitional_non_pl3_returns_none()
+    test_transitional_failsafe_never_asserts_new_without_caveat()
     print("ok")

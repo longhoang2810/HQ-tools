@@ -16,7 +16,16 @@ Cách dùng (công chức hải quan chỉ cần copy-paste mô tả DN):
 import sys
 from pathlib import Path
 
-from core import SHORT_FLAG, cas_status, extract_cas, format_exemptions, format_report, highest_annex, rows_for
+from core import (
+    SHORT_FLAG,
+    cas_status,
+    extract_cas,
+    format_exemptions,
+    format_report,
+    highest_annex,
+    rows_for,
+    transitional_flag_short,
+)
 
 ANNEX_LABEL = {"I": "PL I", "II": "PL II", "III": "PL III", "IV": "PL IV", None: "—"}
 
@@ -48,6 +57,9 @@ def print_summary(entries):
         flag = SHORT_FLAG.get(annex)
         if flag:
             print(f"{'':<14}└─ {flag}")
+        tflag = transitional_flag_short(cas)
+        if tflag:
+            print(f"{'':<14}└─ {tflag}")
     print()
 
 

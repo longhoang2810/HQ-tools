@@ -8,6 +8,15 @@ from pathlib import Path
 DATA = json.loads((Path(__file__).parent / "data" / "nd24_chemicals.json").read_text(encoding="utf-8"))
 CAS_RE = re.compile(r"\b\d{2,7}-\d{2}-\d\b")
 
+# Danh mục cũ của NĐ 113/2017 (tiền chất công nghiệp + hạn chế SX-KD) — dùng để
+# xác định trạng thái chuyển tiếp Điều 30.4/30.5 cho hóa chất Phụ lục III. Đây
+# KHÔNG phải danh mục đầy đủ của "quy định cũ" (thiếu NĐ 82/2022 và Danh mục hóa
+# chất Bảng NĐ 33/2024) — vì vậy chỉ dùng để KHẲNG ĐỊNH 'cũ', không kết luận 'mới'.
+_ND113 = json.loads((Path(__file__).parent / "data" / "nd113_old_cas.json").read_text(encoding="utf-8"))
+ND113_TIEN_CHAT = set(_ND113["tien_chat_cong_nghiep"])
+ND113_HAN_CHE = set(_ND113["han_che_sxkd"])
+ND113_OLD = ND113_TIEN_CHAT | ND113_HAN_CHE
+
 # ponytail: tóm tắt thủ tục chính, không thay thế văn bản gốc — luôn đọc kèm
 # Điều được dẫn chiếu trước khi làm hồ sơ thật.
 IMPORT_RULES = {
@@ -199,6 +208,54 @@ def cas_status(cas):
     return ("warn", "Cần Giấy phép", None)
 
 
+def transitional_status(cas):
+    """Trạng thái chuyển tiếp NĐ 26 Điều 30.4/30.5 cho hóa chất Phụ lục III
+    (kiểm soát đặc biệt). Trả (state, text) hoặc None nếu CAS không thuộc PL III.
+
+    state:
+      - "cu"           : có trong danh mục cũ NĐ 113/2017 -> KHÔNG được miễn Điều 30.4.
+      - "chua_xac_dinh": không có trong NĐ 113/2017 -> CHƯA đủ căn cứ kết luận 'mới'.
+
+    Fail-safe (giống cas_status): chỉ KHẲNG ĐỊNH 'cũ' khi tra được trong NĐ 113;
+    KHÔNG bao giờ tự kết luận 'mới/được miễn' vì còn thiếu NĐ 82/2022 và Danh mục
+    hóa chất Bảng NĐ 33/2024 — cán bộ phải tự đối chiếu hai văn bản đó.
+    """
+    if "III" not in annexes_for(cas):
+        return None
+    if cas in ND113_OLD:
+        which = []
+        if cas in ND113_TIEN_CHAT:
+            which.append("tiền chất công nghiệp")
+        if cas in ND113_HAN_CHE:
+            which.append("hạn chế SX-KD")
+        return (
+            "cu",
+            "Hóa chất CŨ — đã có trong danh mục NĐ 113/2017 ("
+            + " & ".join(which)
+            + "). KHÔNG thuộc diện miễn xuất trình Giấy phép của Điều 30.4; vẫn "
+            "cần Giấy phép (có thể dùng Giấy chứng nhận/Giấy phép cũ thay thế "
+            "theo Điều 30.5/30.6, đối chiếu văn bản gốc).",
+        )
+    return (
+        "chua_xac_dinh",
+        "CHƯA rõ mới/cũ — không có trong danh mục NĐ 113/2017. CÓ THỂ là hóa chất "
+        "mới do NĐ 24 đưa vào (được miễn xuất trình Giấy phép tới 31/12/2026 theo "
+        "Điều 30.4), NHƯNG phải đối chiếu thêm NĐ 82/2022 và Danh mục hóa chất "
+        "Bảng NĐ 33/2024 (chưa có trong công cụ) trước khi áp dụng miễn trừ.",
+    )
+
+
+def transitional_flag_short(cas):
+    """Cờ ngắn cho bảng quét (scan). None nếu không phải PL III."""
+    st = transitional_status(cas)
+    if not st:
+        return None
+    state, _ = st
+    if state == "cu":
+        return "Chuyển tiếp Điều 30.4: hóa chất CŨ (có trong NĐ 113/2017) — KHÔNG được miễn, vẫn cần Giấy phép"
+    return "Chuyển tiếp Điều 30.4: CHƯA rõ mới/cũ — phải đối chiếu NĐ 82/2022 + Danh mục Bảng NĐ 33/2024"
+
+
 def format_exemptions():
     lines = ["CÁC TRƯỜNG HỢP ĐƯỢC MIỄN TRỪ (NĐ 26/2026/NĐ-CP)", ""]
     for group in EXEMPTIONS:
@@ -232,4 +289,10 @@ def format_report(cas):
             lines.append(f"== Yêu cầu nhập khẩu (Phụ lục {annex}) ==")
             lines.append(IMPORT_RULES[annex])
             lines.append("")
+            if annex == "III":
+                st = transitional_status(cas)
+                if st:
+                    lines.append("-- Trạng thái chuyển tiếp (NĐ 26, Điều 30.4/30.5) --")
+                    lines.append(st[1])
+                    lines.append("")
     return "\n".join(lines)

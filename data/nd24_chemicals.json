@@ -224,25 +224,46 @@
   "category": "Phụ lục I – Hóa chất cơ bản thuộc lĩnh vực công nghiệp hóa chất trọng điểm"
  },
  {
+  "cas": "108-88-3",
+  "name_en": "Methyl benzene",
+  "name_vn": "Toluene",
+  "annex": "I",
+  "category": "Phụ lục I – Hóa chất cơ bản thuộc lĩnh vực công nghiệp hóa chất trọng điểm"
+ },
+ {
+  "cas": "102-71-6",
+  "name_en": "Triethanolamine",
+  "name_vn": "Triethanol amine",
+  "annex": "I",
+  "category": "Phụ lục I – Hóa chất cơ bản thuộc lĩnh vực công nghiệp hóa chất trọng điểm"
+ },
+ {
+  "cas": "100-42-5",
+  "name_en": "Vinyl benzene (styrene)",
+  "name_vn": "Vinyl benzen",
+  "annex": "I",
+  "category": "Phụ lục I – Hóa chất cơ bản thuộc lĩnh vực công nghiệp hóa chất trọng điểm"
+ },
+ {
   "cas": "75-01-4",
   "name_en": "Vinyl chloride",
   "name_vn": "Vinyl clorua",
-  "annex": "II",
-  "category": "Phụ lục II › Mục 1 – Chất sản xuất, kinh doanh có điều kiện"
+  "annex": "I",
+  "category": "Phụ lục I – Hóa chất cơ bản thuộc lĩnh vực công nghiệp hóa chất trọng điểm"
  },
  {
   "cas": "110-82-7",
   "name_en": "Cyclohexane",
   "name_vn": "Xyclohexan",
-  "annex": "II",
-  "category": "Phụ lục II › Mục 1 – Chất sản xuất, kinh doanh có điều kiện"
+  "annex": "I",
+  "category": "Phụ lục I – Hóa chất cơ bản thuộc lĩnh vực công nghiệp hóa chất trọng điểm"
  },
  {
   "cas": "1330-20-7",
   "name_en": "Xylene",
   "name_vn": "Xylen",
-  "annex": "II",
-  "category": "Phụ lục II › Mục 1 – Chất sản xuất, kinh doanh có điều kiện"
+  "annex": "I",
+  "category": "Phụ lục I – Hóa chất cơ bản thuộc lĩnh vực công nghiệp hóa chất trọng điểm"
  },
  {
   "cas": "75-07-0",
@@ -2899,15 +2920,15 @@
  },
  {
   "cas": "134237-51-7",
-  "name_en": "Hexabromo cyclododecane",
-  "name_vn": "Hexabrom xyclododecan",
+  "name_en": "",
+  "name_vn": "",
   "annex": "II",
   "category": "Phụ lục II › Mục 1 – Chất sản xuất, kinh doanh có điều kiện"
  },
  {
   "cas": "134237-52-8",
-  "name_en": "Hexabromo cyclododecane",
-  "name_vn": "Hexabrom xyclododecan",
+  "name_en": "",
+  "name_vn": "",
   "annex": "II",
   "category": "Phụ lục II › Mục 1 – Chất sản xuất, kinh doanh có điều kiện"
  },
@@ -3011,15 +3032,15 @@
  },
  {
   "cas": "48122-14-1",
-  "name_en": "Hexahydromethyl phthalic anhydride",
-  "name_vn": "Hexahydromethyl phthalic anhydrit",
+  "name_en": "",
+  "name_vn": "",
   "annex": "II",
   "category": "Phụ lục II › Mục 1 – Chất sản xuất, kinh doanh có điều kiện"
  },
  {
   "cas": "57110-29-9",
-  "name_en": "Hexahydromethyl phthalic anhydride",
-  "name_vn": "Hexahydromethyl phthalic anhydrit",
+  "name_en": "",
+  "name_vn": "",
   "annex": "II",
   "category": "Phụ lục II › Mục 1 – Chất sản xuất, kinh doanh có điều kiện"
  },
@@ -4068,15 +4089,15 @@
  },
  {
   "cas": "104-40-5",
-  "name_en": "Nonylphenol",
-  "name_vn": "Nonylphenol",
+  "name_en": "",
+  "name_vn": "",
   "annex": "II",
   "category": "Phụ lục II › Mục 1 – Chất sản xuất, kinh doanh có điều kiện"
  },
  {
   "cas": "84852-15-3",
-  "name_en": "Nonylphenol",
-  "name_vn": "Nonylphenol",
+  "name_en": "",
+  "name_vn": "",
   "annex": "II",
   "category": "Phụ lục II › Mục 1 – Chất sản xuất, kinh doanh có điều kiện"
  },
@@ -5719,25 +5740,53 @@
   "category": "Phụ lục II › Mục 1 – Chất sản xuất, kinh doanh có điều kiện"
  },
  {
+  "cas": "113136-77-9",
+  "name_en": "1-(2,4-Dichloranilinocarbonyl)cyclopropan carbonsaure",
+  "name_vn": "1-(2,4-Diclo anilino cacbonyl) xyclopropan cacbonsaure",
+  "annex": "II",
+  "category": "Phụ lục II › Mục 1 – Chất sản xuất, kinh doanh có điều kiện"
+ },
+ {
+  "cas": "32809-16-8",
+  "name_en": "3-(3,5-dichloro phenyl)-1,5-dimethyl-3-azabicyclo[3.1.0] hexane-2,4-dione",
+  "name_vn": "3-(3,5-diclo phenyl)-1,5-dimetyl-3-azabicyclo[3.1.0] hexan-2,4-dion",
+  "annex": "II",
+  "category": "Phụ lục II › Mục 1 – Chất sản xuất, kinh doanh có điều kiện"
+ },
+ {
+  "cas": "2312-35-8",
+  "name_en": "2-(4-tert-butylphenoxy)cyclohexyl prop-2-yne-1-sulfonate",
+  "name_vn": "2-(4-tert-butyl phenoxy) xyclohexyl prop-2-yne-1-sunfonat",
+  "annex": "II",
+  "category": "Phụ lục II › Mục 1 – Chất sản xuất, kinh doanh có điều kiện"
+ },
+ {
+  "cas": "3268-49-3",
+  "name_en": "3-(Methylmercapto) propionaldehyde",
+  "name_vn": "3-(Methylmercapto) propionaldehyde",
+  "annex": "II",
+  "category": "Phụ lục II › Mục 1 – Chất sản xuất, kinh doanh có điều kiện"
+ },
+ {
   "cas": "329-01-1",
   "name_en": "3-(Trifluoromethyl) phenyl isocyanate",
   "name_vn": "3-(Trifluoromethyl) phenyl isocyanat",
-  "annex": "III",
-  "category": "Phụ lục III › Nhóm 1 (IVB) › A – Tiền chất công nghiệp"
+  "annex": "II",
+  "category": "Phụ lục II › Mục 1 – Chất sản xuất, kinh doanh có điều kiện"
  },
  {
   "cas": "55179-31-2",
   "name_en": "(1RS,2RS;1RS,2SR)-1-(Biphenyl-4-yloxy)-3,3-dimethyl-1-(1H-1,2,4-triazol-1-yl) butan-2-ol",
   "name_vn": "(1RS,2RS;1RS,2SR)-1-(Biphenyl-4-yloxy)-3,3-dimetyl-1-(1H-1,2,4-triazol-1-yl) butan-2-ol",
-  "annex": "III",
-  "category": "Phụ lục III › Nhóm 1 (IVB) › A – Tiền chất công nghiệp"
+  "annex": "II",
+  "category": "Phụ lục II › Mục 1 – Chất sản xuất, kinh doanh có điều kiện"
  },
  {
   "cas": "87674-68-8",
   "name_en": "(RS)-2-Chloro-N-(2,4-dimethyl-3-thienyl)-N-(2-methoxy-1-methylethyl) acetamide",
   "name_vn": "(RS)-2-Clo-N-(2,4-dimetyl-3-thienyl)-N-(2-methoxy-1-metyl ethyl) acetamit",
-  "annex": "III",
-  "category": "Phụ lục III › Nhóm 1 (IVB) › A – Tiền chất công nghiệp"
+  "annex": "II",
+  "category": "Phụ lục II › Mục 1 – Chất sản xuất, kinh doanh có điều kiện"
  },
  {
   "cas": "103-79-7",
@@ -5845,46 +5894,53 @@
   "category": "Phụ lục III › Nhóm 1 (IVB) › A – Tiền chất công nghiệp"
  },
  {
+  "cas": "89-52-1",
+  "name_en": "1 - Acetylamino - 2 - carboxybenzene",
+  "name_vn": "N - acetylanthranilic acid",
+  "annex": "III",
+  "category": "Phụ lục III › Nhóm 1 (IVB) › A – Tiền chất công nghiệp"
+ },
+ {
   "cas": "93-55-0",
   "name_en": "1-phenyl-1-propanone",
   "name_vn": "Propiophenone (P1P)",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 1 (IVB) › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"
+  "category": "Phụ lục III › Nhóm 1 (IVB) › A – Tiền chất công nghiệp"
  },
  {
   "cas": "110-89-4",
   "name_en": "Piperidine",
   "name_vn": "Piperidine",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 1 (IVB) › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"
+  "category": "Phụ lục III › Nhóm 1 (IVB) › A – Tiền chất công nghiệp"
  },
  {
   "cas": "120-57-0",
   "name_en": "1,3 - Benzodioxole, 5 - carboxaldehyde",
   "name_vn": "Piperonal",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 1 (IVB) › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"
+  "category": "Phụ lục III › Nhóm 1 (IVB) › A – Tiền chất công nghiệp"
  },
  {
   "cas": "4676-39-5",
   "name_en": "3,4 - methylenedioxypheny - 2 - propanone",
   "name_vn": "Piperonyl methyl ketone (PMK)",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 1 (IVB) › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"
+  "category": "Phụ lục III › Nhóm 1 (IVB) › A – Tiền chất công nghiệp"
  },
  {
   "cas": "103-82-2",
   "name_en": "Benzeneacetic acid",
   "name_vn": "Phenylacetic acid",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 1 (IVB) › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"
+  "category": "Phụ lục III › Nhóm 1 (IVB) › A – Tiền chất công nghiệp"
  },
  {
   "cas": "94-59-7",
   "name_en": "1,3 - Benzodioxole, 5 - (2 -propenyl)",
   "name_vn": "Safrole",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 1 (IVB) › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"
+  "category": "Phụ lục III › Nhóm 1 (IVB) › A – Tiền chất công nghiệp"
  },
  {
   "cas": "78-53-5",
@@ -5909,22 +5965,22 @@
  },
  {
   "cas": "676-97-1",
-  "name_en": "Chemicals, except for those listed in Schedule 1, containing a phosphorus atom to which is bonded one methyl, ethyl or propyl (normal or iso) group but not further carbon atoms",
-  "name_vn": "Các hóa chất, trừ các chất đã được liệt kê tại Bảng 1, chứa 1 nguyên tử phospho liên kết với một nhóm methyl, ethyl hoặc propyl (mạch thẳng hoặc nhánh) nhưng không liên kết thêm với các nguyên tử các bon khác",
+  "name_en": "Methylphosphonyl dichloride",
+  "name_vn": "Methylphosphonyl dichloride",
   "annex": "III",
   "category": "Phụ lục III › Nhóm 1 (IVB) › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"
  },
  {
   "cas": "756-79-6",
-  "name_en": "Chemicals, except for those listed in Schedule 1, containing a phosphorus atom to which is bonded one methyl, ethyl or propyl (normal or iso) group but not further carbon atoms",
-  "name_vn": "Các hóa chất, trừ các chất đã được liệt kê tại Bảng 1, chứa 1 nguyên tử phospho liên kết với một nhóm methyl, ethyl hoặc propyl (mạch thẳng hoặc nhánh) nhưng không liên kết thêm với các nguyên tử các bon khác",
+  "name_en": "Dimethyl methyl phosphonate",
+  "name_vn": "Dimethyl methyl phosphonate",
   "annex": "III",
   "category": "Phụ lục III › Nhóm 1 (IVB) › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"
  },
  {
   "cas": "944-22-9",
-  "name_en": "Chemicals, except for those listed in Schedule 1, containing a phosphorus atom to which is bonded one methyl, ethyl or propyl (normal or iso) group but not further carbon atoms",
-  "name_vn": "Các hóa chất, trừ các chất đã được liệt kê tại Bảng 1, chứa 1 nguyên tử phospho liên kết với một nhóm methyl, ethyl hoặc propyl (mạch thẳng hoặc nhánh) nhưng không liên kết thêm với các nguyên tử các bon khác",
+  "name_en": "O-Ethyl S-phenyl ethylphosphonothiolothionate",
+  "name_vn": "O-Ethyl S-phenyl ethylphosphonothiolothionate",
   "annex": "III",
   "category": "Phụ lục III › Nhóm 1 (IVB) › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"
  },
@@ -5951,15 +6007,15 @@
  },
  {
   "cas": "108-01-0",
-  "name_en": "N,N-Dialkyl (Me, Et, n-Pr or i-Pr) aminoethane-2-ols",
-  "name_vn": "Các hợp chất N,N-Dialkyl (Me, Et, n-Pr hoặc i-Pr) aminoethane-2-ol",
+  "name_en": "N, N-Dimethylaminoethanol",
+  "name_vn": "N, N-Dimethylaminoethanol",
   "annex": "III",
   "category": "Phụ lục III › Nhóm 1 (IVB) › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"
  },
  {
   "cas": "100-37-8",
-  "name_en": "N,N-Dialkyl (Me, Et, n-Pr or i-Pr) aminoethane-2-ols",
-  "name_vn": "Các hợp chất N,N-Dialkyl (Me, Et, n-Pr hoặc i-Pr) aminoethane-2-ol",
+  "name_en": "N, N-Diethylaminoethanol",
+  "name_vn": "N, N-Diethylaminoethanol",
   "annex": "III",
   "category": "Phụ lục III › Nhóm 1 (IVB) › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"
  },
@@ -6720,39 +6776,53 @@
   "category": "Phụ lục III › Nhóm 1 (IVB) › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"
  },
  {
+  "cas": "79-01-6",
+  "name_en": "Trichloro ethylene",
+  "name_vn": "Triclo etylen",
+  "annex": "III",
+  "category": "Phụ lục III › Nhóm 1 (IVB) › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"
+ },
+ {
+  "cas": "1330-78-5",
+  "name_en": "Tricresyl phosphate",
+  "name_vn": "Tricresyl photphat",
+  "annex": "III",
+  "category": "Phụ lục III › Nhóm 1 (IVB) › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"
+ },
+ {
   "cas": "115-96-8",
   "name_en": "Tris (2-chloro ethyl) phosphate",
   "name_vn": "Tris (2-clo etyl) photphat",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 2 (IVC) › A – Tiền chất công nghiệp"
+  "category": "Phụ lục III › Nhóm 1 (IVB) › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"
  },
  {
   "cas": "1314-62-1",
   "name_en": "Vanadium pentoxide",
   "name_vn": "Vanadi pentoxit",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 2 (IVC) › A – Tiền chất công nghiệp"
+  "category": "Phụ lục III › Nhóm 1 (IVB) › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"
  },
  {
   "cas": "100-42-5",
   "name_en": "Vinyl benzene (styrene)",
   "name_vn": "Vinyl benzen",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 2 (IVC) › A – Tiền chất công nghiệp"
+  "category": "Phụ lục III › Nhóm 1 (IVB) › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"
  },
  {
   "cas": "75-01-4",
   "name_en": "Vinyl chloride",
   "name_vn": "Vinyl clorua",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 2 (IVC) › A – Tiền chất công nghiệp"
+  "category": "Phụ lục III › Nhóm 1 (IVB) › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"
  },
  {
   "cas": "108-91-8",
   "name_en": "Cyclohexyl amine",
   "name_vn": "Xyclohexyl amin",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 2 (IVC) › A – Tiền chất công nghiệp"
+  "category": "Phụ lục III › Nhóm 1 (IVB) › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"
  },
  {
   "cas": "64-19-7",
@@ -6791,8 +6861,8 @@
  },
  {
   "cas": "60-29-7",
-  "name_en": "1 - 1 - Oxybisethane",
-  "name_vn": "Diethyl ether",
+  "name_en": "1 - 1 - Oxybisethane<br>Diethyl ether",
+  "name_vn": "Ethyl ether (Diethyl ether)<br>Ethyl ether",
   "annex": "III",
   "category": "Phụ lục III › Nhóm 2 (IVC) › A – Tiền chất công nghiệp"
  },
@@ -6832,53 +6902,67 @@
   "category": "Phụ lục III › Nhóm 2 (IVC) › A – Tiền chất công nghiệp"
  },
  {
+  "cas": "74-89-5",
+  "name_en": "Aminomethane",
+  "name_vn": "Methylamine",
+  "annex": "III",
+  "category": "Phụ lục III › Nhóm 2 (IVC) › A – Tiền chất công nghiệp"
+ },
+ {
+  "cas": "79-24-3",
+  "name_en": "Nitroethane",
+  "name_vn": "Nitroethane",
+  "annex": "III",
+  "category": "Phụ lục III › Nhóm 2 (IVC) › A – Tiền chất công nghiệp"
+ },
+ {
   "cas": "7722-64-7",
   "name_en": "Potassium permanganate",
   "name_vn": "Kali permanganat",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 2 (IVC) › B – Hóa chất Bảng 3 (Công ước Vũ khí hóa học)"
+  "category": "Phụ lục III › Nhóm 2 (IVC) › A – Tiền chất công nghiệp"
  },
  {
   "cas": "7664-93-9",
   "name_en": "Sulfuric acid",
   "name_vn": "Axit Sulfuric",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 2 (IVC) › B – Hóa chất Bảng 3 (Công ước Vũ khí hóa học)"
+  "category": "Phụ lục III › Nhóm 2 (IVC) › A – Tiền chất công nghiệp"
  },
  {
   "cas": "526-83-0",
   "name_en": "2,3 - Dihydroxy butanedioic acid",
   "name_vn": "Tartaric acid và đồng phân",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 2 (IVC) › B – Hóa chất Bảng 3 (Công ước Vũ khí hóa học)"
+  "category": "Phụ lục III › Nhóm 2 (IVC) › A – Tiền chất công nghiệp"
  },
  {
   "cas": "87-69-4",
   "name_en": "2,3 - Dihydroxy butanedioic acid",
   "name_vn": "Tartaric acid và đồng phân",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 2 (IVC) › B – Hóa chất Bảng 3 (Công ước Vũ khí hóa học)"
+  "category": "Phụ lục III › Nhóm 2 (IVC) › A – Tiền chất công nghiệp"
  },
  {
   "cas": "133-37-9",
   "name_en": "2,3 - Dihydroxy butanedioic acid",
   "name_vn": "Tartaric acid và đồng phân",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 2 (IVC) › B – Hóa chất Bảng 3 (Công ước Vũ khí hóa học)"
+  "category": "Phụ lục III › Nhóm 2 (IVC) › A – Tiền chất công nghiệp"
  },
  {
   "cas": "108-88-3",
   "name_en": "Methyl benzene",
   "name_vn": "Toluene",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 2 (IVC) › B – Hóa chất Bảng 3 (Công ước Vũ khí hóa học)"
+  "category": "Phụ lục III › Nhóm 2 (IVC) › A – Tiền chất công nghiệp"
  },
  {
   "cas": "7719-09-7",
   "name_en": "Thionyl chloride",
   "name_vn": "Thionyl chloride",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 2 (IVC) › B – Hóa chất Bảng 3 (Công ước Vũ khí hóa học)"
+  "category": "Phụ lục III › Nhóm 2 (IVC) › A – Tiền chất công nghiệp"
  },
  {
   "cas": "76-06-2",
@@ -6951,46 +7035,53 @@
   "category": "Phụ lục III › Nhóm 2 (IVC) › B – Hóa chất Bảng 3 (Công ước Vũ khí hóa học)"
  },
  {
+  "cas": "10026-13-8",
+  "name_en": "Phosphorus pentachloride",
+  "name_vn": "Phosphorus pentachloride",
+  "annex": "III",
+  "category": "Phụ lục III › Nhóm 2 (IVC) › B – Hóa chất Bảng 3 (Công ước Vũ khí hóa học)"
+ },
+ {
   "cas": "10025-67-9",
   "name_en": "Sulfur monochloride",
   "name_vn": "Sulfur monochloride",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 2 (IVC) › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"
+  "category": "Phụ lục III › Nhóm 2 (IVC) › B – Hóa chất Bảng 3 (Công ước Vũ khí hóa học)"
  },
  {
   "cas": "10545-99-0",
   "name_en": "Sulfur dichloride",
   "name_vn": "Sulfur dichloride",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 2 (IVC) › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"
+  "category": "Phụ lục III › Nhóm 2 (IVC) › B – Hóa chất Bảng 3 (Công ước Vũ khí hóa học)"
  },
  {
   "cas": "121-45-9",
   "name_en": "Trimethyl phosphite",
   "name_vn": "Trimethyl phosphite",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 2 (IVC) › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"
+  "category": "Phụ lục III › Nhóm 2 (IVC) › B – Hóa chất Bảng 3 (Công ước Vũ khí hóa học)"
  },
  {
   "cas": "122-52-1",
   "name_en": "Triethyl phosphite",
   "name_vn": "Triethyl phosphite",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 2 (IVC) › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"
+  "category": "Phụ lục III › Nhóm 2 (IVC) › B – Hóa chất Bảng 3 (Công ước Vũ khí hóa học)"
  },
  {
   "cas": "7719-09-7",
   "name_en": "Thionyl chloride",
   "name_vn": "Thionyl chloride",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 2 (IVC) › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"
+  "category": "Phụ lục III › Nhóm 2 (IVC) › B – Hóa chất Bảng 3 (Công ước Vũ khí hóa học)"
  },
  {
   "cas": "102-71-6",
   "name_en": "Triethanolamine",
   "name_vn": "Triethanol amine",
   "annex": "III",
-  "category": "Phụ lục III › Nhóm 2 (IVC) › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"
+  "category": "Phụ lục III › Nhóm 2 (IVC) › B – Hóa chất Bảng 3 (Công ước Vũ khí hóa học)"
  },
  {
   "cas": "116-06-3",
@@ -7490,25 +7581,88 @@
   "category": "Phụ lục III › Nhóm 2 (IVC) › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"
  },
  {
+  "cas": "61788-33-8",
+  "name_en": "Polychlorinated terphenyls (PCTs)",
+  "name_vn": "Terphenyls clo hóa (PCTs)",
+  "annex": "III",
+  "category": "Phụ lục III › Nhóm 2 (IVC) › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"
+ },
+ {
+  "cas": "1461-22-9",
+  "name_en": "Tributyltin compounds",
+  "name_vn": "Tributyltin",
+  "annex": "III",
+  "category": "Phụ lục III › Nhóm 2 (IVC) › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"
+ },
+ {
+  "cas": "1983-10-4",
+  "name_en": "Tributyltin compounds",
+  "name_vn": "Tributyltin",
+  "annex": "III",
+  "category": "Phụ lục III › Nhóm 2 (IVC) › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"
+ },
+ {
+  "cas": "2155-70-6",
+  "name_en": "Tributyltin compounds",
+  "name_vn": "Tributyltin",
+  "annex": "III",
+  "category": "Phụ lục III › Nhóm 2 (IVC) › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"
+ },
+ {
+  "cas": "24124-25-2",
+  "name_en": "Tributyltin compounds",
+  "name_vn": "Tributyltin",
+  "annex": "III",
+  "category": "Phụ lục III › Nhóm 2 (IVC) › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"
+ },
+ {
+  "cas": "4342-36-3",
+  "name_en": "Tributyltin compounds",
+  "name_vn": "Tributyltin",
+  "annex": "III",
+  "category": "Phụ lục III › Nhóm 2 (IVC) › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"
+ },
+ {
+  "cas": "85409-17-2",
+  "name_en": "Tributyltin compounds",
+  "name_vn": "Tributyltin",
+  "annex": "III",
+  "category": "Phụ lục III › Nhóm 2 (IVC) › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"
+ },
+ {
+  "cas": "56-35-9",
+  "name_en": "Tributyltin compounds",
+  "name_vn": "Tributyltin",
+  "annex": "III",
+  "category": "Phụ lục III › Nhóm 2 (IVC) › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"
+ },
+ {
+  "cas": "50-29-3",
+  "name_en": "1,1,1-Trichloro-2,2-bis(4-chlorophenyl) ethane",
+  "name_vn": "1,1,1-Triclo-2,2-bis (4-clophenyl) etan (D.D.T)",
+  "annex": "III",
+  "category": "Phụ lục III › Nhóm 2 (IVC) › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"
+ },
+ {
   "cas": "126-72-7",
   "name_en": "Tris (2,3-dibromo propyl) phosphate",
   "name_vn": "Tris (2,3-dibro propyl) photphat",
-  "annex": "IV",
-  "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất"
+  "annex": "III",
+  "category": "Phụ lục III › Nhóm 2 (IVC) › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"
  },
  {
   "cas": "8001-35-2",
   "name_en": "Toxaphene (Camphechlor)",
   "name_vn": "Toxaphen (Camphechlor)",
-  "annex": "IV",
-  "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất"
+  "annex": "III",
+  "category": "Phụ lục III › Nhóm 2 (IVC) › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"
  },
  {
   "cas": "25973-55-1",
   "name_en": "2-(2H-Benzotriazol-2-yl)-4,6-di-tert-pentylphenol",
   "name_vn": "UV-328",
-  "annex": "IV",
-  "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất"
+  "annex": "III",
+  "category": "Phụ lục III › Nhóm 2 (IVC) › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"
  },
  {
   "cas": "107-02-8",
@@ -7571,8 +7725,7 @@
   "name_en": "Ammonium nitrate",
   "name_vn": "Amoni nitrat",
   "annex": "IV",
-  "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất",
-  "threshold_kg": "10.000"
+  "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất"
  },
  {
   "cas": "494-52-0",
@@ -7714,6 +7867,22 @@
   "cas": "10294-34-5",
   "name_en": "Boron trichloride (Borane, trichloro-)",
   "name_vn": "Boron triclorua",
+  "annex": "IV",
+  "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất",
+  "threshold_kg": "5.000"
+ },
+ {
+  "cas": "20654-88-0",
+  "name_en": "Boron trifluoride (Borane, trifluoro-)",
+  "name_vn": "Boron triflorua",
+  "annex": "IV",
+  "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất",
+  "threshold_kg": "5.000"
+ },
+ {
+  "cas": "7637-07-2",
+  "name_en": "Boron trifluoride (Borane, trifluoro-)",
+  "name_vn": "Boron triflorua",
   "annex": "IV",
   "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất",
   "threshold_kg": "5.000"
@@ -8400,8 +8569,8 @@
  },
  {
   "cas": "109-27-3",
-  "name_en": "Furan",
-  "name_vn": "Furan",
+  "name_en": "1-guanyl-4-nitrosaminoguanyl-1 -tetrazene",
+  "name_vn": "1 -Guanyl-4-nitrosaminoguanyl-1 -tetrazen",
   "annex": "IV",
   "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất",
   "threshold_kg": "10.000"
@@ -8452,12 +8621,12 @@
   "name_vn": "Hydrazin nitrat",
   "annex": "IV",
   "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất",
-  "threshold_kg": "5.000"
+  "threshold_kg": "50.000"
  },
  {
   "cas": "1333-74-0",
-  "name_en": "Hydrazine nitrate",
-  "name_vn": "Hydrazin nitrat",
+  "name_en": "Hydrogen",
+  "name_vn": "Hydro",
   "annex": "IV",
   "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất",
   "threshold_kg": "5.000"
@@ -8571,8 +8740,7 @@
   "name_en": "Potassium nitrate",
   "name_vn": "Kali nitrat",
   "annex": "IV",
-  "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất",
-  "threshold_kg": "1.250.000"
+  "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất"
  },
  {
   "cas": "10545-99-0",
@@ -8844,12 +9012,12 @@
   "name_vn": "Nitơ glyxerin",
   "annex": "IV",
   "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất",
-  "threshold_kg": "50.000"
+  "threshold_kg": "5.000"
  },
  {
   "cas": "10102-43-9",
-  "name_en": "Nitroglycerin",
-  "name_vn": "Nitơ glyxerin",
+  "name_en": "Nitric oxdide (Nitrogen oxide (NO))",
+  "name_vn": "Nitơ monoxit",
   "annex": "IV",
   "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất",
   "threshold_kg": "50.000"
@@ -9208,8 +9376,8 @@
  },
  {
   "cas": "7803-52-3",
-  "name_en": "Silane",
-  "name_vn": "Silan",
+  "name_en": "Stibine (antimony hydril)",
+  "name_vn": "Stibin (antimon hydril)",
   "annex": "IV",
   "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất",
   "threshold_kg": "10.000"
@@ -9573,5 +9741,45 @@
   "annex": "IV",
   "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất",
   "threshold_kg": "5.000"
+ },
+ {
+  "cas": "66-81-9",
+  "name_en": "Cycloheximide",
+  "name_vn": "Xycloheximit",
+  "annex": "IV",
+  "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất",
+  "threshold_kg": "5.000"
+ },
+ {
+  "cas": "108-91-8",
+  "name_en": "Cyclohexylamine (Cyclohexanamine)",
+  "name_vn": "Xyclohexan amin",
+  "annex": "IV",
+  "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất",
+  "threshold_kg": "5.000"
+ },
+ {
+  "cas": "75-19-4",
+  "name_en": "Cyclopropane",
+  "name_vn": "Xyclopropan",
+  "annex": "IV",
+  "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất",
+  "threshold_kg": "10.000"
+ },
+ {
+  "cas": "2691-41-0",
+  "name_en": "Cyclotetramethylenet etranitramine",
+  "name_vn": "Xyclotetrametylen tetra nitramin",
+  "annex": "IV",
+  "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất",
+  "threshold_kg": "10.000"
+ },
+ {
+  "cas": "121-82-4",
+  "name_en": "Cyclotrimethylene trinitramine",
+  "name_vn": "Xyclotrimetylen trinitramin",
+  "annex": "IV",
+  "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất",
+  "threshold_kg": "10.000"
  }
 ]

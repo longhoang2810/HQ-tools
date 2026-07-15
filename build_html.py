@@ -21,6 +21,16 @@ IMPORT_RULES_JSON = json.dumps(core.IMPORT_RULES, ensure_ascii=False)
 NOTE_GAP_JSON = json.dumps(core.NOTE_GAP, ensure_ascii=False)
 SHORT_FLAG_JSON = json.dumps(core.SHORT_FLAG, ensure_ascii=False)
 
+# Tính sẵn trạng thái chuyển tiếp (Điều 30.4/30.5) cho từng CAS Phụ lục III từ
+# core.py rồi nhúng vào HTML — KHÔNG chép lại logic/nội dung tiếng Việt sang JS,
+# tránh HTML lệch với CLI (đúng nguyên tắc single-source ở docstring trên).
+TRANSITIONAL = {}
+for _cas in sorted({r["cas"] for r in core.DATA if r["annex"] == "III"}):
+    _st = core.transitional_status(_cas)
+    if _st:
+        TRANSITIONAL[_cas] = {"text": _st[1], "short": core.transitional_flag_short(_cas)}
+TRANSITIONAL_JSON = json.dumps(TRANSITIONAL, ensure_ascii=False)
+
 
 def esc(s):
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
@@ -170,6 +180,7 @@ const DATA = __DATA_JSON__;
 const IMPORT_RULES = __IMPORT_RULES_JSON__;
 const NOTE_GAP = __NOTE_GAP_JSON__;
 const SHORT_FLAG = __SHORT_FLAG_JSON__;
+const TRANSITIONAL = __TRANSITIONAL_JSON__;
 
 const ANNEX_ORDER = ["III", "II", "I", "IV"];
 const ANNEX_LABEL = { "I": "PL I", "II": "PL II", "III": "PL III", "IV": "PL IV" };
@@ -226,6 +237,9 @@ function detailFor(cas, note) {
   for (const annex of ["I", "II", "III", "IV"]) {
     if (seenAnnex.has(annex)) {
       out += `== Yêu cầu nhập khẩu (Phụ lục ${annex}) ==\\n${IMPORT_RULES[annex]}\\n\\n`;
+      if (annex === "III" && TRANSITIONAL[cas]) {
+        out += `-- Trạng thái chuyển tiếp (NĐ 26, Điều 30.4/30.5) --\\n${TRANSITIONAL[cas].text}\\n\\n`;
+      }
     }
   }
   if (note) out += `>> ${note}\\n`;
@@ -265,7 +279,8 @@ function run() {
     const name = rows.length ? rows[0].name_vn : "(không có trong dữ liệu)";
     const { badge, text: statusText } = statuses[i];
     const flag = annex ? (SHORT_FLAG[annex] || "") : "";
-    table += `<tr class="${badge}"><td class="cas">${esc(cas)}</td><td>${esc(name)}</td><td>${annex ? ANNEX_LABEL[annex] : "—"}</td><td><span class="pill ${badge}">${esc(statusText)}</span>${flag ? `<div class="flag">${esc(flag)}</div>` : ""}</td></tr>`;
+    const tflag = TRANSITIONAL[cas] ? TRANSITIONAL[cas].short : "";
+    table += `<tr class="${badge}"><td class="cas">${esc(cas)}</td><td>${esc(name)}</td><td>${annex ? ANNEX_LABEL[annex] : "—"}</td><td><span class="pill ${badge}">${esc(statusText)}</span>${flag ? `<div class="flag">${esc(flag)}</div>` : ""}${tflag ? `<div class="flag">${esc(tflag)}</div>` : ""}</td></tr>`;
   });
   table += "</table></div>";
 
@@ -309,6 +324,7 @@ out = (
     .replace("__IMPORT_RULES_JSON__", IMPORT_RULES_JSON)
     .replace("__NOTE_GAP_JSON__", NOTE_GAP_JSON)
     .replace("__SHORT_FLAG_JSON__", SHORT_FLAG_JSON)
+    .replace("__TRANSITIONAL_JSON__", TRANSITIONAL_JSON)
 )
 Path(__file__).parent.joinpath("Tra cứu hóa chất NĐ24.html").write_text(out, encoding="utf-8")
 print("Tra cứu hóa chất NĐ24.html written —", len(out), "bytes")
