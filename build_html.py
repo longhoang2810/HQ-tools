@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sinh index.html — trang tra cứu offline, không cần terminal/Python để dùng.
+"""Sinh Tra cứu hóa chất NĐ24.html — trang tra cứu offline, không cần terminal/Python để dùng.
 Nhúng luôn data/nd24_chemicals.json + toàn bộ quy tắc từ core.py vào file
 HTML nên chỉ cần double-click mở bằng trình duyệt là chạy được, kể cả
 không có mạng.
@@ -305,5 +305,5 @@ out = (
     .replace("__IMPORT_RULES_JSON__", IMPORT_RULES_JSON)
     .replace("__NOTE_GAP_JSON__", NOTE_GAP_JSON)
 )
-Path(__file__).parent.joinpath("index.html").write_text(out, encoding="utf-8")
-print("index.html written —", len(out), "bytes")
+Path(__file__).parent.joinpath("Tra cứu hóa chất NĐ24.html").write_text(out, encoding="utf-8")
+print("Tra cứu hóa chất NĐ24.html written —", len(out), "bytes")

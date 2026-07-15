@@ -34,10 +34,18 @@ def test_cas_status_non_annex_iii_ok():
     assert badge == "ok" and text == "Không cần Giấy phép"
 
 
+def test_decree_cas_errata_corrected():
+    # 2 mã CAS ghi sai trong NĐ 24 đã sửa về số CAS quốc tế (ERRATA trong
+    # extract.py): số sai không còn tra ra, số đúng tra ra đúng phụ lục.
+    assert annexes_for("10037-74-3") == set() and annexes_for("10137-74-3") == {"II"}  # Canxi clorat
+    assert annexes_for("7746-08-4") == set() and annexes_for("7446-08-4") == {"II"}    # Selen dioxit
+
+
 if __name__ == "__main__":
     test_known_chemicals()
     test_highest_annex_prioritizes_permit_over_declaration()
     test_extract_cas_from_free_text()
     test_cas_status_annex_iii_always_needs_permit()
     test_cas_status_non_annex_iii_ok()
+    test_decree_cas_errata_corrected()
     print("ok")

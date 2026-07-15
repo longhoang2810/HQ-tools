@@ -19,6 +19,19 @@ CAS_RE = re.compile(r"^\d{2,7}-\d{2}-\d$")
 STT_RE = re.compile(r"^\d+\.$")
 THRESHOLD_RE = re.compile(r"^[\d.]+(\s*\(net\))?$")
 
+# Errata: 2 mã CAS trong Phụ lục NĐ 24/2026 sai so với số CAS quốc tế (số ghi
+# trong nghị định sai cả check-digit). Sửa tại đây để giữ nd24.txt đúng nguyên
+# văn nghị định; chạy lại extract.py là tự áp dụng, không sửa tay data JSON.
+#   Canxi clorat Ca(ClO3)2: NĐ ghi 10037-74-3 -> đúng 10137-74-3 (PubChem CID 24978)
+#   Selen dioxit SeO2:      NĐ ghi 7746-08-4  -> đúng 7446-08-4  (PubChem CID 24007)
+# Mã 10118-77-6 (C7H9ClO4) cũng sai check-digit nhưng ĐÃ đối chiếu: đúng nguyên
+# văn nghị định và không có CAS hợp lệ để thay (10118-77-1 không tồn tại). Giữ
+# nguyên theo nghị định, KHÔNG đưa vào ERRATA (đây là lỗi trong văn bản gốc).
+ERRATA = {
+    "10037-74-3": "10137-74-3",
+    "7746-08-4": "7446-08-4",
+}
+
 lines = SRC.read_text(encoding="utf-8").splitlines()
 
 # Section boundaries found by inspecting the headers in nd24.txt (1-indexed
@@ -54,7 +67,7 @@ def parse_section(body, annex, category):
             continue  # "---" placeholder rows: no single CAS, skip (see grep note in README)
         for cas in cas_list:
             row = {
-                "cas": cas,
+                "cas": ERRATA.get(cas, cas),
                 "name_en": name_en,
                 "name_vn": name_vn,
                 "annex": annex,
