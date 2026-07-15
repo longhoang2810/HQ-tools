@@ -22,9 +22,14 @@ IMPORT_RULES = {
     doanh hóa chất có điều kiện do UBND cấp tỉnh cấp (NĐ 26, Điều 8, 9, 10.2).
   - Nhập khẩu để tự sử dụng (không kinh doanh): không cần Giấy chứng nhận,
     nhưng phải công bố mục đích sử dụng trên Cơ sở dữ liệu chuyên ngành hóa
-    chất (NĐ 26, Điều 10.3).
-  - Cả hai trường hợp đều phải khai báo hóa chất nhập khẩu qua Cổng một
-    cửa quốc gia (NĐ 26, Điều 6), trừ trường hợp được miễn trừ.""",
+    chất (NĐ 26, Điều 10.3). Lưu ý: Điều 10.3 KHÔNG ấn định thời hạn và KHÔNG
+    đặt việc công bố làm điều kiện thông quan — doanh nghiệp chủ động chọn
+    thời điểm công bố; đây là nghĩa vụ với CSDL chuyên ngành, không phải cửa
+    kiểm soát của cơ quan hải quan.
+  - Bước BẮT BUỘC trước khi thông quan là khai báo hóa chất nhập khẩu qua
+    Cổng một cửa quốc gia (NĐ 26, Điều 6); chính phản hồi khai báo mới có
+    giá trị pháp lý để làm thủ tục thông quan (Điều 6.3.c). Cả hai trường hợp
+    trên đều phải khai báo, trừ trường hợp được miễn trừ tại Điều 6.7.""",
     "III": """Phụ lục III (hóa chất cần kiểm soát đặc biệt — tiền chất công
   nghiệp / hóa chất Bảng 2, 3 / Công ước Rotterdam-Stockholm):
   - Bắt buộc có Giấy phép xuất khẩu, nhập khẩu hóa chất cần kiểm soát đặc
@@ -36,9 +41,15 @@ IMPORT_RULES = {
   - MIỄN Giấy phép XNK nếu hóa chất chỉ xuất hiện trong hỗn hợp ở nồng độ
     dưới ngưỡng: Nhóm 1 <1%, Nhóm 2 <5% khối lượng hỗn hợp (NĐ 26, Điều
     21.2) — hàng nguyên chất/nồng độ trên ngưỡng thì KHÔNG được miễn.
-  - Nếu dùng để sản xuất sản phẩm/hàng hóa khác: còn phải lập tài khoản
-    và công bố mục đích sử dụng trên Cơ sở dữ liệu chuyên ngành hóa chất
-    trước 30 ngày khi dùng lần đầu (NĐ 26, Điều 14.3, Điều 15).
+  - Nếu NHẬP KHẨU để sản xuất sản phẩm/hàng hóa khác: phải lập tài khoản và
+    công bố mục đích sử dụng trên Cơ sở dữ liệu chuyên ngành hóa chất KHI
+    thực hiện việc nhập khẩu (NĐ 26, Điều 14.3). Điều 14.3 KHÔNG ấn định thời
+    hạn cứng và KHÔNG phải điều kiện thông quan — khác với Giấy phép (Điều
+    14.2 mới là điều kiện thông quan); doanh nghiệp chủ động thời điểm công bố.
+  - Khi ĐƯA HÓA CHẤT VÀO SỬ DỤNG để sản xuất hàng hóa, dịch vụ: phải công bố
+    loại hóa chất và mục đích sử dụng TRƯỚC 30 NGÀY tính đến lần sử dụng đầu
+    tiên (hoặc khi thay đổi mục đích đã công bố) — mốc 30 ngày là mốc CỨNG
+    gắn với khâu SỬ DỤNG, không phải khâu nhập khẩu (NĐ 26, Điều 15.1).
   - Nếu là tiền chất công nghiệp và XUẤT KHẨU (không phải nhập khẩu): cần
     thêm văn bản chấp thuận của Bộ Công an (NĐ 26, Điều 14.6.d).
   - CHUYỂN TIẾP (đang hiệu lực): hóa chất kiểm soát đặc biệt do NĐ 24 mới đưa
@@ -61,7 +72,7 @@ IMPORT_RULES = {
 # Cờ ngắn gọn cho bảng tóm tắt (dùng khi quét nhiều CAS cùng lúc).
 SHORT_FLAG = {
     "I": "Chỉ cần khai báo NK (nếu thuộc HS 28/29)",
-    "II": "Không cần Giấy phép, nhưng cần GCN đủ điều kiện KD nếu NK để kinh doanh (Điều 10.2), hoặc công bố mục đích sử dụng trên CSDL chuyên ngành hóa chất nếu NK để tự dùng (Điều 10.3)",
+    "II": "Không cần Giấy phép. NK để kinh doanh: cần GCN đủ điều kiện KD (Điều 10.2). NK để tự dùng: công bố mục đích sử dụng trên CSDL chuyên ngành — doanh nghiệp CHỦ ĐỘNG thời điểm, KHÔNG phải điều kiện thông quan (Điều 10.3). Bước bắt buộc trước thông quan là khai báo NK (Điều 6)",
     "III": "⚠ BẮT BUỘC Giấy phép XNK (Bộ Công Thương) — trừ khi nồng độ dưới ngưỡng miễn trừ (Điều 21), hoặc là chất mới do NĐ24 đưa vào được miễn xuất trình Giấy phép tới 31/12/2026 (Điều 30.4)",
     "IV": "Có ngưỡng tồn trữ — cần KH/BP ứng phó sự cố nếu vượt ngưỡng",
 }

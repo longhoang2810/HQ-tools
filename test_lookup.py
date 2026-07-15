@@ -60,6 +60,27 @@ def test_exemptions_cover_dieu_21_4_and_product_declaration():
     assert "Điều 28, 29" in all_items  # nghĩa vụ công bố hàm lượng trong sản phẩm
 
 
+def test_congbo_is_not_a_customs_gate_pl2():
+    # Điều 10.3: công bố mục đích sử dụng KHÔNG phải điều kiện thông quan và
+    # doanh nghiệp chủ động thời điểm; điều kiện thông quan là khai báo NK
+    # (Điều 6). Cả IMPORT_RULES lẫn SHORT_FLAG phải nói rõ sự phân biệt này.
+    rule = IMPORT_RULES["II"]
+    assert "Điều 6" in rule and "trước khi thông quan" in rule
+    assert "không phải cửa" in rule or "KHÔNG đặt việc công bố làm điều kiện thông quan" in rule
+    assert "CHỦ ĐỘNG" in SHORT_FLAG["II"] and "Điều 6" in SHORT_FLAG["II"]
+
+
+def test_pl3_splits_import_congbo_from_use_deadline():
+    # Không được gộp Điều 14.3 (công bố KHI nhập khẩu, không thời hạn cứng)
+    # với Điều 15.1 (công bố TRƯỚC 30 NGÀY khi đưa vào sử dụng lần đầu).
+    rule = IMPORT_RULES["III"]
+    assert "Điều 14.3" in rule and "Điều 15.1" in rule
+    # Mốc 30 ngày phải gắn với khâu sử dụng, không gắn với khâu nhập khẩu.
+    assert "30 NGÀY" in rule and "SỬ DỤNG" in rule
+    # Điều 14.3 phải được nêu là KHÔNG phải điều kiện thông quan.
+    assert "KHÔNG phải điều kiện thông quan" in rule
+
+
 if __name__ == "__main__":
     test_known_chemicals()
     test_highest_annex_prioritizes_permit_over_declaration()
@@ -70,4 +91,6 @@ if __name__ == "__main__":
     test_short_flag_surfaces_dieu10_for_pl2()
     test_pl3_transitional_exemption_documented()
     test_exemptions_cover_dieu_21_4_and_product_declaration()
+    test_congbo_is_not_a_customs_gate_pl2()
+    test_pl3_splits_import_congbo_from_use_deadline()
     print("ok")
