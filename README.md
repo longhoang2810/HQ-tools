@@ -56,6 +56,11 @@ textutil -convert txt -output nd24.txt "24_2026_ND-CP_....docx"
 python3 extract.py nd24.txt
 ```
 
+Phần **yêu cầu nhập khẩu / miễn trừ** (`IMPORT_RULES`, `EXEMPTIONS`,
+`SHORT_FLAG` trong `core.py`) là bản tóm tắt thủ tục từ **NĐ 26/2026/NĐ-CP** —
+toàn văn để đối chiếu nằm ở `nd26.txt` trong repo. Sửa tóm tắt trong `core.py`
+xong chạy lại `python3 build_html.py` để cập nhật trang HTML.
+
 ## Giới hạn đã biết
 
 - Không có danh mục "Hóa chất Bảng 1" (Công ước vũ khí hóa học) hay "hóa
@@ -76,3 +81,7 @@ python3 test_lookup.py
 
 Skipped: chưa có OCR ảnh scan — nếu công chức cần dán ảnh chụp hồ sơ thay
 vì text, thêm bước OCR trước khi đưa vào `scan.py`/`Tra cứu hóa chất NĐ24.html`.
+
+---
+
+Tác giả: **Nguyễn Hoàng Long** - HQ KCX&KCN

@@ -40,7 +40,14 @@ IMPORT_RULES = {
     và công bố mục đích sử dụng trên Cơ sở dữ liệu chuyên ngành hóa chất
     trước 30 ngày khi dùng lần đầu (NĐ 26, Điều 14.3, Điều 15).
   - Nếu là tiền chất công nghiệp và XUẤT KHẨU (không phải nhập khẩu): cần
-    thêm văn bản chấp thuận của Bộ Công an (NĐ 26, Điều 14.6.d).""",
+    thêm văn bản chấp thuận của Bộ Công an (NĐ 26, Điều 14.6.d).
+  - CHUYỂN TIẾP (đang hiệu lực): hóa chất kiểm soát đặc biệt do NĐ 24 mới đưa
+    vào Danh mục — KHÔNG thuộc Danh mục tiền chất/hạn chế SX-KD cũ (NĐ 113/2017,
+    NĐ 82/2022) hay Danh mục hóa chất Bảng (NĐ 33/2024) — được MIỄN xuất trình
+    hồ sơ Giấy phép XK/NK hóa chất kiểm soát đặc biệt đến trước 31/12/2026 (NĐ
+    26, Điều 30.4). Tiền chất công nghiệp mới đưa vào được dùng Giấy chứng nhận
+    đủ ĐK SX-KD cũ thay cho Giấy phép đến 31/12/2027 (Điều 30.5). Phải đối chiếu
+    danh mục cũ để biết hóa chất có thuộc diện "mới" hay không.""",
     "IV": """Phụ lục IV (Bảng A — phải xây dựng Kế hoạch/Biện pháp phòng
   ngừa, ứng phó sự cố hóa chất): đây KHÔNG phải điều kiện nhập khẩu, mà là
   nghĩa vụ an toàn khi tồn trữ. Nếu khối lượng tồn trữ tại một thời điểm
@@ -54,8 +61,8 @@ IMPORT_RULES = {
 # Cờ ngắn gọn cho bảng tóm tắt (dùng khi quét nhiều CAS cùng lúc).
 SHORT_FLAG = {
     "I": "Chỉ cần khai báo NK (nếu thuộc HS 28/29)",
-    "II": "Cần GCN đủ điều kiện KD (nếu NK để KD) / công bố mục đích SD (nếu tự dùng)",
-    "III": "⚠ BẮT BUỘC Giấy phép XNK (Bộ Công Thương) — trừ khi nồng độ dưới ngưỡng miễn trừ, xem Điều 21",
+    "II": "Không cần Giấy phép, nhưng cần GCN đủ điều kiện KD nếu NK để kinh doanh (Điều 10.2), hoặc công bố mục đích sử dụng trên CSDL chuyên ngành hóa chất nếu NK để tự dùng (Điều 10.3)",
+    "III": "⚠ BẮT BUỘC Giấy phép XNK (Bộ Công Thương) — trừ khi nồng độ dưới ngưỡng miễn trừ (Điều 21), hoặc là chất mới do NĐ24 đưa vào được miễn xuất trình Giấy phép tới 31/12/2026 (Điều 30.4)",
     "IV": "Có ngưỡng tồn trữ — cần KH/BP ứng phó sự cố nếu vượt ngưỡng",
 }
 
@@ -90,7 +97,15 @@ EXEMPTIONS = [
         ],
     },
     {
-        "title": "4. Miễn khi hóa chất nằm trong sản phẩm hoàn chỉnh",
+        "title": "4. Miễn trừ khác",
+        "cite": "Điều 21, khoản 4 & 5",
+        "items": [
+            "(Điều 21.4) San chiết, pha chế hóa chất nhằm phục vụ TRỰC TIẾP cho hoạt động sản xuất nội bộ của chính tổ chức, cá nhân thực hiện việc san chiết, pha chế: miễn cấp Giấy chứng nhận / Giấy phép sản xuất, kinh doanh.",
+            "(Điều 21.5) Tổ chức cho thuê đất KHÔNG kèm cơ sở vật chất để tồn trữ hóa chất; hoặc dịch vụ tồn trữ hóa chất có điều kiện / kiểm soát đặc biệt nồng độ dưới 0,1%: miễn Giấy chứng nhận đủ điều kiện hoạt động dịch vụ tồn trữ.",
+        ],
+    },
+    {
+        "title": "5. Miễn khi hóa chất nằm trong sản phẩm hoàn chỉnh",
         "cite": "Điều 21, khoản 6",
         "lead": (
             "MIỄN CẤP Giấy chứng nhận sản xuất, kinh doanh (với hóa chất có "
@@ -105,6 +120,7 @@ EXEMPTIONS = [
             "Sản phẩm gia dụng: keo dán, chất tẩy rửa, hóa mỹ phẩm.",
             "Xăng, dầu, condensate, naphta dùng chế biến xăng dầu.",
             "Pin, ắc quy, thiết bị y tế, thiết bị thí nghiệm.",
+            "Lưu ý: được miễn giấy phép hóa chất KHÔNG miễn mọi nghĩa vụ — tổ chức, cá nhân nhập khẩu sản phẩm chứa hóa chất nguy hiểm vẫn phải công bố thông tin hàm lượng hóa chất nguy hiểm trước khi lưu thông (NĐ 26, Điều 28, 29).",
         ],
     },
 ]

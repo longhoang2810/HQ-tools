@@ -16,7 +16,7 @@ Cách dùng (công chức hải quan chỉ cần copy-paste mô tả DN):
 import sys
 from pathlib import Path
 
-from core import cas_status, extract_cas, format_exemptions, format_report, highest_annex, rows_for
+from core import SHORT_FLAG, cas_status, extract_cas, format_exemptions, format_report, highest_annex, rows_for
 
 ANNEX_LABEL = {"I": "PL I", "II": "PL II", "III": "PL III", "IV": "PL IV", None: "—"}
 
@@ -45,6 +45,9 @@ def print_summary(entries):
         annex = highest_annex(cas)
         _, text, _ = cas_status(cas)
         print(f"{cas:<14}{name:<{name_w}}  {ANNEX_LABEL.get(annex, '—'):<8}  {text}")
+        flag = SHORT_FLAG.get(annex)
+        if flag:
+            print(f"{'':<14}└─ {flag}")
     print()
 
 

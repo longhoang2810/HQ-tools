@@ -19,6 +19,7 @@ import core
 DATA_JSON = json.dumps(core.DATA, ensure_ascii=False)
 IMPORT_RULES_JSON = json.dumps(core.IMPORT_RULES, ensure_ascii=False)
 NOTE_GAP_JSON = json.dumps(core.NOTE_GAP, ensure_ascii=False)
+SHORT_FLAG_JSON = json.dumps(core.SHORT_FLAG, ensure_ascii=False)
 
 
 def esc(s):
@@ -96,6 +97,7 @@ HTML = """<!doctype html>
   .pill.warn { background: var(--red-ink); color: #fff; }
   .pill.ok { background: #2f7d3c; color: #fff; }
   .pill.unknown { background: #9a7a12; color: #fff; }
+  td .flag { display: block; font-size: 0.78rem; color: var(--muted); margin-top: 6px; line-height: 1.35; max-width: 40ch; }
 
   details.detail { border: 1px solid var(--line); border-radius: 8px; margin-top: 10px; background: #fbfcfd; overflow: hidden; }
   details.detail[open] { border-color: #c9d3de; }
@@ -161,12 +163,13 @@ HTML = """<!doctype html>
   __EXEMPTIONS_HTML__
 </div>
 
-<footer>Bản tóm tắt để tra cứu nhanh — luôn đối chiếu điều luật gốc trước khi ra quyết định thông quan.</footer>
+<footer>Bản tóm tắt để tra cứu nhanh — luôn đối chiếu điều luật gốc trước khi ra quyết định thông quan.<br>Tác giả: Nguyễn Hoàng Long - HQ KCX&amp;KCN</footer>
 
 <script>
 const DATA = __DATA_JSON__;
 const IMPORT_RULES = __IMPORT_RULES_JSON__;
 const NOTE_GAP = __NOTE_GAP_JSON__;
+const SHORT_FLAG = __SHORT_FLAG_JSON__;
 
 const ANNEX_ORDER = ["III", "II", "I", "IV"];
 const ANNEX_LABEL = { "I": "PL I", "II": "PL II", "III": "PL III", "IV": "PL IV" };
@@ -261,7 +264,8 @@ function run() {
     const annex = highestAnnex(cas);
     const name = rows.length ? rows[0].name_vn : "(không có trong dữ liệu)";
     const { badge, text: statusText } = statuses[i];
-    table += `<tr class="${badge}"><td class="cas">${esc(cas)}</td><td>${esc(name)}</td><td>${annex ? ANNEX_LABEL[annex] : "—"}</td><td><span class="pill ${badge}">${esc(statusText)}</span></td></tr>`;
+    const flag = annex ? (SHORT_FLAG[annex] || "") : "";
+    table += `<tr class="${badge}"><td class="cas">${esc(cas)}</td><td>${esc(name)}</td><td>${annex ? ANNEX_LABEL[annex] : "—"}</td><td><span class="pill ${badge}">${esc(statusText)}</span>${flag ? `<div class="flag">${esc(flag)}</div>` : ""}</td></tr>`;
   });
   table += "</table></div>";
 
@@ -304,6 +308,7 @@ out = (
     .replace("__DATA_JSON__", DATA_JSON)
     .replace("__IMPORT_RULES_JSON__", IMPORT_RULES_JSON)
     .replace("__NOTE_GAP_JSON__", NOTE_GAP_JSON)
+    .replace("__SHORT_FLAG_JSON__", SHORT_FLAG_JSON)
 )
 Path(__file__).parent.joinpath("Tra cứu hóa chất NĐ24.html").write_text(out, encoding="utf-8")
 print("Tra cứu hóa chất NĐ24.html written —", len(out), "bytes")

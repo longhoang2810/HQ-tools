@@ -1,6 +1,6 @@
 """Smallest possible regression check: known CAS -> known annex(es), and
 that scanning a pasted DN description pulls every CAS out of free text."""
-from core import DATA, annexes_for, cas_status, extract_cas, highest_annex
+from core import DATA, EXEMPTIONS, IMPORT_RULES, SHORT_FLAG, annexes_for, cas_status, extract_cas, highest_annex
 
 
 def test_known_chemicals():
@@ -41,6 +41,25 @@ def test_decree_cas_errata_corrected():
     assert annexes_for("7746-08-4") == set() and annexes_for("7446-08-4") == {"II"}    # Selen dioxit
 
 
+def test_short_flag_surfaces_dieu10_for_pl2():
+    # SHORT_FLAG (trước là dead code) giờ được đưa lên bảng tóm tắt — cờ PL II
+    # phải nhắc nghĩa vụ công bố / Giấy chứng nhận theo Điều 10.
+    assert "Điều 10" in SHORT_FLAG["II"] and "công bố" in SHORT_FLAG["II"]
+
+
+def test_pl3_transitional_exemption_documented():
+    # Điều 30.4/30.5 (miễn xuất trình Giấy phép tới 31/12/2026) phải có trong
+    # quy tắc PL III để verdict "Cần Giấy phép" không bị hiểu là tuyệt đối.
+    assert "30.4" in IMPORT_RULES["III"] and "31/12/2026" in IMPORT_RULES["III"]
+
+
+def test_exemptions_cover_dieu_21_4_and_product_declaration():
+    cites = " | ".join(g["cite"] for g in EXEMPTIONS)
+    assert "khoản 4" in cites  # san chiết, pha chế nội bộ (Điều 21.4)
+    all_items = " ".join(i for g in EXEMPTIONS for i in g["items"])
+    assert "Điều 28, 29" in all_items  # nghĩa vụ công bố hàm lượng trong sản phẩm
+
+
 if __name__ == "__main__":
     test_known_chemicals()
     test_highest_annex_prioritizes_permit_over_declaration()
@@ -48,4 +67,7 @@ if __name__ == "__main__":
     test_cas_status_annex_iii_always_needs_permit()
     test_cas_status_non_annex_iii_ok()
     test_decree_cas_errata_corrected()
+    test_short_flag_surfaces_dieu10_for_pl2()
+    test_pl3_transitional_exemption_documented()
+    test_exemptions_cover_dieu_21_4_and_product_declaration()
     print("ok")
