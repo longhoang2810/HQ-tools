@@ -13,6 +13,7 @@ việc của cơ quan cấp phép, không phải câu hỏi "chất này cần g
 """
 import json
 import re
+import textwrap
 from pathlib import Path
 
 DATA = json.loads((Path(__file__).parent / "data" / "nd24_chemicals.json").read_text(encoding="utf-8"))
@@ -20,59 +21,50 @@ CAS_RE = re.compile(r"\b\d{2,7}-\d{2}-\d\b")
 
 # ponytail: tóm tắt yêu cầu giấy tờ, không thay thế văn bản gốc — luôn đọc kèm
 # Điều được dẫn chiếu trước khi làm hồ sơ thật.
+#
+# MỖI Ý = MỘT GẠCH ĐẦU DÒNG, KHÔNG bẻ dòng cứng trong chuỗi. Trước đây đây là
+# chuỗi nhiều dòng đã bẻ sẵn + thụt lề, nên trang HTML (white-space: pre-wrap)
+# hiện ra thụt lề giữa câu, xuống dòng loạn; và assert `"x y" in rule` đỏ oan vì
+# cụm từ bị ngắt. Để người render tự ngắt dòng theo bề rộng của họ.
+# Không nhắc lại chi tiết miễn trừ ở đây — đã có mục "Các trường hợp được miễn trừ".
 IMPORT_RULES = {
-    "I": """Phụ lục I (hóa chất cơ bản trọng điểm) không tự nó phát sinh
-  yêu cầu giấy phép riêng. Nếu hóa chất thuộc chương 28/29 Danh mục HS thì
-  vẫn phải: (1) Khai báo hóa chất nhập khẩu qua Cổng một cửa quốc gia trước
-  khi thông quan kèm hóa đơn thương mại + Phiếu an toàn hóa chất (NĐ 26,
-  Điều 6); được miễn nếu nhập <10kg hoặc thuộc các trường hợp miễn trừ tại
-  Điều 6.7.""",
-    "II": """Phụ lục II (hóa chất sản xuất, kinh doanh có điều kiện):
-  - Nhập khẩu để KINH DOANH: phải có Giấy chứng nhận đủ điều kiện sản xuất,
-    kinh doanh hóa chất có điều kiện (NĐ 26, Điều 8, 9, 10.2).
-  - Nhập khẩu để tự sử dụng (không kinh doanh): không cần Giấy chứng nhận,
-    nhưng phải công bố mục đích sử dụng trên Cơ sở dữ liệu chuyên ngành hóa
-    chất (NĐ 26, Điều 10.3). Lưu ý: Điều 10.3 KHÔNG ấn định thời hạn và KHÔNG
-    đặt việc công bố làm điều kiện thông quan — doanh nghiệp chủ động chọn
-    thời điểm công bố; đây là nghĩa vụ với CSDL chuyên ngành, không phải cửa
-    kiểm soát của cơ quan hải quan.
-  - Bước BẮT BUỘC trước khi thông quan là khai báo hóa chất nhập khẩu qua
-    Cổng một cửa quốc gia (NĐ 26, Điều 6); chính phản hồi khai báo mới có
-    giá trị pháp lý để làm thủ tục thông quan (Điều 6.3.c). Cả hai trường hợp
-    trên đều phải khai báo, trừ trường hợp được miễn trừ tại Điều 6.7.""",
-    "III": """Phụ lục III (hóa chất cần kiểm soát đặc biệt — tiền chất công
-  nghiệp / hóa chất Bảng 2, 3 / Công ước Rotterdam-Stockholm):
-  - PHẢI CÓ: Giấy phép xuất khẩu, nhập khẩu hóa chất cần kiểm soát đặc biệt.
-    Đây là điều kiện để thông quan (NĐ 26, Điều 14.2).
-  - MIỄN Giấy phép XNK nếu hóa chất chỉ xuất hiện trong hỗn hợp ở nồng độ
-    dưới ngưỡng: Nhóm 1 ≤1%, Nhóm 2 ≤5% khối lượng hỗn hợp (NĐ 26 Điều 21.2,
-    ngưỡng cập nhật theo NQ 19/2026/NQ-CP) — hàng nguyên chất/nồng độ trên
-    ngưỡng thì KHÔNG được miễn theo khoản này (nhưng vẫn có thể được miễn
-    theo Điều 21 khoản 6/7/8 — xem "Các trường hợp được miễn trừ").
-  - Nếu NHẬP KHẨU để sản xuất sản phẩm/hàng hóa khác: phải lập tài khoản và
-    công bố mục đích sử dụng trên Cơ sở dữ liệu chuyên ngành hóa chất KHI
-    thực hiện việc nhập khẩu (NĐ 26, Điều 14.3). Điều 14.3 KHÔNG ấn định thời
-    hạn cứng và KHÔNG phải điều kiện thông quan — khác với Giấy phép (Điều
-    14.2 mới là điều kiện thông quan); doanh nghiệp chủ động thời điểm công bố.
-  - Khi ĐƯA HÓA CHẤT VÀO SỬ DỤNG để sản xuất hàng hóa, dịch vụ: phải công bố
-    loại hóa chất và mục đích sử dụng TRƯỚC 30 NGÀY tính đến lần sử dụng đầu
-    tiên (hoặc khi thay đổi mục đích đã công bố) — mốc 30 ngày là mốc CỨNG
-    gắn với khâu SỬ DỤNG, không phải khâu nhập khẩu (NĐ 26, Điều 15.1).
-  - Nếu là tiền chất công nghiệp và XUẤT KHẨU (không phải nhập khẩu): cần
-    thêm văn bản chấp thuận của Bộ Công an (NĐ 26, Điều 14.6.d).
-  - PHÂN BIỆT GIẤY: Giấy phép XNK (khâu XNK, Điều 14.2) là giấy khác với
-    Giấy phép sản xuất, kinh doanh hóa chất KSĐB (khâu SX-KD).
-    Chất thuộc Phụ lục III luôn cần Giấy phép XNK khi xuất/nhập khẩu, bất kể
-    khâu SX-KD có giấy gì.""",
-    "IV": """Phụ lục IV (Bảng A — phải xây dựng Kế hoạch/Biện pháp phòng
-  ngừa, ứng phó sự cố hóa chất): đây KHÔNG phải điều kiện nhập khẩu, mà là
-  nghĩa vụ an toàn khi tồn trữ. Nếu khối lượng tồn trữ tại một thời điểm
-  vượt ngưỡng ghi trong dữ liệu (cột threshold_kg), tổ chức phải có Kế
-  hoạch phòng ngừa, ứng phó sự cố hóa chất được cơ quan có thẩm quyền phê
-  duyệt hoặc Biện pháp tự ban hành (NĐ 24 Điều 3; NĐ 26 Điều 4.4). Vẫn áp
-  dụng song song yêu cầu nhập khẩu của Phụ lục I/II/III nếu hóa chất đó
-  cũng thuộc các phụ lục đó.""",
+    "I": [
+        "Không phát sinh giấy phép riêng.",
+        "Nếu thuộc chương 28/29 Danh mục HS: phải khai báo hóa chất nhập khẩu qua Cổng một cửa quốc gia trước thông quan, kèm hóa đơn thương mại và Phiếu an toàn hóa chất (Điều 6). Miễn khai báo nếu nhập dưới 10 kg (Điều 6.7).",
+    ],
+    "II": [
+        "Nhập khẩu để KINH DOANH: phải có Giấy chứng nhận đủ điều kiện sản xuất, kinh doanh hóa chất có điều kiện (Điều 8, 9, 10.2).",
+        "Nhập khẩu để TỰ DÙNG: không cần Giấy chứng nhận; chỉ công bố mục đích sử dụng trên Cơ sở dữ liệu chuyên ngành hóa chất (Điều 10.3).",
+        "Việc công bố KHÔNG phải điều kiện thông quan và không có thời hạn cứng — doanh nghiệp chủ động chọn thời điểm công bố (Điều 10.3).",
+        "Điều kiện thông quan là khai báo hóa chất nhập khẩu qua Cổng một cửa quốc gia (Điều 6); phản hồi khai báo mới có giá trị pháp lý để làm thủ tục (Điều 6.3.c).",
+    ],
+    "III": [
+        "PHẢI CÓ: Giấy phép xuất khẩu, nhập khẩu hóa chất cần kiểm soát đặc biệt — đây là điều kiện thông quan (Điều 14.2).",
+        "Đã được cấp Giấy phép nhập khẩu thì MIỄN khai báo hóa chất (Điều 6.7.a) — không phải khai báo riêng nữa.",
+        "Các trường hợp được miễn Giấy phép XNK (ngưỡng nồng độ, sản phẩm hoàn chỉnh, thí nghiệm, XNK tại chỗ): xem mục \"Các trường hợp được miễn trừ\" bên dưới (Điều 21).",
+        "Nhập khẩu để sản xuất sản phẩm khác: lập tài khoản và công bố mục đích sử dụng trên Cơ sở dữ liệu chuyên ngành KHI nhập khẩu (Điều 14.3) — không có thời hạn cứng, không phải điều kiện thông quan.",
+        "Đưa vào SỬ DỤNG lần đầu, hoặc đổi mục đích đã công bố: phải công bố TRƯỚC 30 NGÀY — mốc cứng này gắn với khâu SỬ DỤNG, không phải khâu nhập khẩu (Điều 15.1).",
+        "Xuất khẩu tiền chất công nghiệp: cần thêm văn bản chấp thuận của Bộ Công an (Điều 14.6.d).",
+        "Phân biệt giấy: Giấy phép XNK (khâu XNK) khác Giấy phép sản xuất, kinh doanh hóa chất KSĐB (khâu SX-KD). Thuộc Phụ lục III là luôn cần Giấy phép XNK khi xuất/nhập khẩu.",
+    ],
+    "IV": [
+        "KHÔNG phải điều kiện nhập khẩu — đây là nghĩa vụ an toàn khi tồn trữ.",
+        "Tồn trữ tại một thời điểm vượt ngưỡng: phải có Kế hoạch phòng ngừa, ứng phó sự cố hóa chất được cơ quan có thẩm quyền phê duyệt, hoặc Biện pháp tự ban hành (NĐ 24 Điều 3; NĐ 26 Điều 4.4).",
+        "Vẫn áp dụng song song yêu cầu của Phụ lục I/II/III nếu chất cũng thuộc các phụ lục đó.",
+    ],
 }
+
+# Ẩn khối phụ lục nào khi phụ lục khác đã có mặt. Điều 6.7.a: hóa chất KSĐB đã
+# được cấp Giấy phép nhập khẩu thì MIỄN khai báo -> với chất Phụ lục III, khối
+# Phụ lục I (vốn chỉ nói về khai báo) là thừa và gây hiểu nhầm "phải khai báo".
+# Nhúng sang JS (build_html.py) để CLI và HTML dùng CHUNG một quy tắc.
+SUPPRESS_ANNEX = {"III": ["I"]}
+
+
+def annexes_to_explain(present):
+    """Các phụ lục cần in phần 'Yêu cầu nhập khẩu', theo thứ tự, đã bỏ khối bị ẩn."""
+    hidden = {h for a in present for h in SUPPRESS_ANNEX.get(a, [])}
+    return [a for a in ["I", "II", "III", "IV"] if a in present and a not in hidden]
 
 # Bảng tóm tắt chỉ hiện verdict (pill). KHÔNG còn cờ tóm tắt kèm mỗi dòng: nội
 # dung của chúng lặp lại y nguyên IMPORT_RULES, vốn đã hiện ngay dưới bảng cho
@@ -295,9 +287,9 @@ def format_report(cas):
             f"thận trọng."
         )
     lines.append("")
-    for annex in ["I", "II", "III", "IV"]:
-        if annex in seen_annex:
-            lines.append(f"== Yêu cầu nhập khẩu (Phụ lục {annex}) ==")
-            lines.append(IMPORT_RULES[annex])
-            lines.append("")
+    for annex in annexes_to_explain(seen_annex):
+        lines.append(f"== Yêu cầu nhập khẩu (Phụ lục {annex}) ==")
+        for bullet in IMPORT_RULES[annex]:
+            lines.append(textwrap.fill(bullet, width=78, initial_indent="  - ", subsequent_indent="    "))
+        lines.append("")
     return "\n".join(lines)

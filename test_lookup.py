@@ -3,6 +3,8 @@ that scanning a pasted DN description pulls every CAS out of free text."""
 import re
 from pathlib import Path
 
+import core
+
 from core import (
     DATA,
     EXEMPTIONS,
@@ -22,7 +24,7 @@ def norm_rules():
     """IMPORT_RULES là chuỗi nhiều dòng -> cụm từ hay bị NGẮT QUA DÒNG, khiến
     `assert "x y" in rule` đỏ oan (đã dính 3 lần trong lúc refactor). Chuẩn hóa
     khoảng trắng + hạ chữ thường rồi mới so."""
-    return {k: re.sub(r"\s+", " ", v).lower() for k, v in IMPORT_RULES.items()}
+    return {k: re.sub(r"\s+", " ", " ".join(v)).lower() for k, v in IMPORT_RULES.items()}
 
 
 def test_known_chemicals():
@@ -90,8 +92,8 @@ def test_nq19_thresholds_kept():
     all_items = " ".join(i for g in EXEMPTIONS for i in g["items"])
     assert "Khoản 7" in all_items and "≤ 1mg" in all_items
     assert "Khoản 8" in all_items and "tại chỗ" in all_items
-    r3 = IMPORT_RULES["III"]
-    assert "≤1%" in r3 and "NQ 19" in r3
+    # Nguong cu the KHONG con nhac lai trong IMPORT_RULES (da co muc mien tru).
+    assert "≤1%" not in " ".join(IMPORT_RULES["III"])
 
 
 def test_moi_verdict_goi_dung_ten_giay():
@@ -133,7 +135,7 @@ def test_khong_con_noi_dung_ho_so_trinh_tu_thu_tuc():
     # tham quyen cap (phan cap NQ 19), hay khoi chuyen tiep Dieu 30.4 (mien XUAT
     # TRINH ho so GP SX-KD). Chan viec chung quay lai.
     blob = " ".join(
-        [IMPORT_RULES[a] for a in "I II III IV".split()]
+        [" ".join(IMPORT_RULES[a]) for a in "I II III IV".split()]
         + [i for g in EXEMPTIONS for i in g["items"]]
         + [g["cite"] for g in EXEMPTIONS]
         + [EXEMPTIONS_WARNING]
@@ -172,8 +174,10 @@ def test_congbo_is_not_a_customs_gate_pl2():
     # (Điều 6). Bảng tóm tắt nay chỉ có pill -> IMPORT_RULES["II"] (hiện ngay dưới
     # bảng) là nơi DUY NHẤT nói sự phân biệt này, nên phải nói đủ.
     rule = norm_rules()["II"]
-    assert "điều 6" in rule and "trước khi thông quan" in rule
-    assert "không đặt việc công bố làm điều kiện thông quan" in rule
+    # cửa thông quan = khai báo (Điều 6), KHÔNG phải công bố
+    assert "điều kiện thông quan là khai báo hóa chất nhập khẩu" in rule
+    assert "điều 6" in rule
+    assert "công bố không phải điều kiện thông quan" in rule
     assert "chủ động chọn thời điểm công bố" in rule
     assert "điều 10.3" in rule
     # ...và phải gọi đúng tên giấy cho khâu kinh doanh (Điều 10.2).
@@ -183,12 +187,16 @@ def test_congbo_is_not_a_customs_gate_pl2():
 def test_pl3_splits_import_congbo_from_use_deadline():
     # Không được gộp Điều 14.3 (công bố KHI nhập khẩu, không thời hạn cứng)
     # với Điều 15.1 (công bố TRƯỚC 30 NGÀY khi đưa vào sử dụng lần đầu).
-    rule = IMPORT_RULES["III"]
-    assert "Điều 14.3" in rule and "Điều 15.1" in rule
-    # Mốc 30 ngày phải gắn với khâu sử dụng, không gắn với khâu nhập khẩu.
-    assert "30 NGÀY" in rule and "SỬ DỤNG" in rule
-    # Điều 14.3 phải được nêu là KHÔNG phải điều kiện thông quan.
-    assert "KHÔNG phải điều kiện thông quan" in rule
+    # Hai ý phải nằm ở HAI gạch đầu dòng riêng, không dính vào nhau.
+    b14 = next(b for b in IMPORT_RULES["III"] if "Điều 14.3" in b)
+    b15 = next(b for b in IMPORT_RULES["III"] if "Điều 15.1" in b)
+    assert b14 is not b15
+    # Điều 14.3: gắn khâu NHẬP KHẨU, không thời hạn cứng, không phải cửa thông quan.
+    assert "KHI nhập khẩu" in b14 and "không có thời hạn cứng" in b14
+    assert "không phải điều kiện thông quan" in b14
+    # Điều 15.1: mốc 30 NGÀY là mốc cứng, gắn khâu SỬ DỤNG.
+    assert "TRƯỚC 30 NGÀY" in b15 and "SỬ DỤNG" in b15
+    assert "không phải khâu nhập khẩu" in b15
 
 
 def test_data_regenerated_from_official_nd24():
@@ -198,6 +206,32 @@ def test_data_regenerated_from_official_nd24():
     assert annexes_for("126-72-7") == {"III"}   # Tris(2,3-dibromopropyl)phosphate (POP) -> III
     assert "I" in annexes_for("108-88-3")        # Toluene có trong PL I (bản cũ bị rớt)
     assert annexes_for("10137-74-3") == {"II"} and annexes_for("10037-74-3") == set()  # errata giữ nguyên
+
+
+def test_pl3_an_khoi_pl1_vi_da_mien_khai_bao():
+    # Điều 6.7.a (nd26.txt:118): "Nhập khẩu hóa chất cần kiểm soát đặc biệt khi đã
+    # được cơ quan có thẩm quyền cấp Giấy phép nhập khẩu" -> MIỄN khai báo. Khối
+    # Phụ lục I chỉ nói về khai báo, nên với chất PL III nó vừa thừa vừa gây hiểu
+    # nhầm "vẫn phải khai báo". 9 chất vừa PL I vừa PL III (Metanol, Toluene...).
+    assert core.annexes_to_explain({"I", "III"}) == ["III"]
+    assert core.annexes_to_explain({"I", "III", "IV"}) == ["III", "IV"]
+    assert core.annexes_to_explain({"I"}) == ["I"]          # không có III thì vẫn hiện
+    assert core.annexes_to_explain({"II", "III"}) == ["II", "III"]  # PL II giữ (giấy khác)
+    rep = format_report("67-56-1")                          # Metanol = PL I + III + IV
+    assert "Yêu cầu nhập khẩu (Phụ lục I)" not in rep
+    assert "Yêu cầu nhập khẩu (Phụ lục III)" in rep
+    assert "MIỄN khai báo hóa chất (Điều 6.7.a)" in " ".join(IMPORT_RULES["III"])
+
+
+def test_import_rules_khong_be_dong_cung():
+    # Trước đây IMPORT_RULES là chuỗi đã bẻ dòng + thụt lề -> HTML (pre-wrap) hiện
+    # thụt lề giữa câu, xuống dòng loạn. Mỗi ý phải là MỘT dòng liền, để người
+    # render tự ngắt theo bề rộng của họ.
+    for annex, bullets in IMPORT_RULES.items():
+        assert isinstance(bullets, list), f"PL {annex}: phải là list gạch đầu dòng"
+        for b in bullets:
+            assert "\n" not in b, f"PL {annex}: gạch đầu dòng còn bẻ dòng cứng: {b[:40]}"
+            assert b == b.strip(), f"PL {annex}: gạch đầu dòng thừa khoảng trắng"
 
 
 if __name__ == "__main__":
@@ -211,6 +245,8 @@ if __name__ == "__main__":
     test_nq19_thresholds_kept()
     test_moi_verdict_goi_dung_ten_giay()
     test_html_khong_lech_khoi_core()
+    test_pl3_an_khoi_pl1_vi_da_mien_khai_bao()
+    test_import_rules_khong_be_dong_cung()
     test_khong_con_noi_dung_ho_so_trinh_tu_thu_tuc()
     test_decree_cas_errata_corrected()
     test_exemptions_cover_dieu_21_4_and_product_declaration()

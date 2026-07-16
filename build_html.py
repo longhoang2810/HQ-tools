@@ -21,6 +21,7 @@ IMPORT_RULES_JSON = json.dumps(core.IMPORT_RULES, ensure_ascii=False)
 NOTE_GAP_JSON = json.dumps(core.NOTE_GAP, ensure_ascii=False)
 OBLIGATIONS_JSON = json.dumps(core.OBLIGATIONS, ensure_ascii=False)
 VERDICT_JSON = json.dumps(core.VERDICT, ensure_ascii=False)
+SUPPRESS_ANNEX_JSON = json.dumps(core.SUPPRESS_ANNEX, ensure_ascii=False)
 
 
 def esc(s):
@@ -105,7 +106,12 @@ HTML = """<!doctype html>
   details.detail summary::-webkit-details-marker { display: none; }
   details.detail summary::before { content: "▸"; color: var(--muted); transition: transform .12s; }
   details.detail[open] summary::before { transform: rotate(90deg); }
-  details.detail .body { padding: 2px 16px 14px; white-space: pre-wrap; font-size: 0.93rem; color: #333; border-top: 1px solid var(--line); margin-top: 4px; padding-top: 12px; }
+  details.detail .body { padding: 2px 16px 16px; font-size: 0.93rem; color: #333; border-top: 1px solid var(--line); margin-top: 4px; padding-top: 12px; }
+  details.detail .cats { white-space: pre-wrap; color: var(--muted); font-size: 0.9rem; }
+  details.detail h4 { margin: 14px 0 6px; font-size: 0.9rem; color: var(--blue-dark); }
+  details.detail ul.rules { margin: 0; padding-left: 20px; }
+  details.detail ul.rules li { margin-bottom: 5px; text-align: left; }
+  details.detail p.obl { margin: 12px 0 0; padding: 8px 12px; background: var(--green-bg); border: 1px solid var(--green-line); border-radius: 6px; }
 
   .exempt h2 { font-size: 1.1rem; margin: 0 0 4px; }
   .exempt h3 { font-size: 0.95rem; margin: 16px 0 6px; color: var(--blue-dark); }
@@ -171,6 +177,7 @@ const IMPORT_RULES = __IMPORT_RULES_JSON__;
 const NOTE_GAP = __NOTE_GAP_JSON__;
 const OBLIGATIONS = __OBLIGATIONS_JSON__;
 const VERDICT = __VERDICT_JSON__;
+const SUPPRESS_ANNEX = __SUPPRESS_ANNEX_JSON__;
 
 const ANNEX_ORDER = ["III", "II", "I", "IV"];
 const ANNEX_LABEL = { "I": "PL I", "II": "PL II", "III": "PL III", "IV": "PL IV" };
@@ -238,14 +245,17 @@ function detailFor(cas, note) {
     ivThr.sort((a, b) => kg(a) - kg(b));
     out += `  ⚠ Chất này có nhiều ngưỡng tồn trữ Phụ lục IV khác nhau (${ivThr.join(", ")} kg) tùy phân loại (hóa chất cần kiểm soát đặc biệt / hóa chất cấm) — xác định đúng phân loại để áp ngưỡng phù hợp; nếu chưa rõ, ngưỡng thấp nhất (${ivThr[0]} kg) là mức thận trọng.\\n`;
   }
-  out += "\\n";
+  let html = `<div class="cats">${esc(out.trim())}</div>`;
+  // Cùng quy tắc ẩn khối với core.annexes_to_explain (SUPPRESS_ANNEX nhúng từ core.py).
+  const hidden = new Set();
+  for (const a of seenAnnex) for (const h of (SUPPRESS_ANNEX[a] || [])) hidden.add(h);
   for (const annex of ["I", "II", "III", "IV"]) {
-    if (seenAnnex.has(annex)) {
-      out += `== Yêu cầu nhập khẩu (Phụ lục ${annex}) ==\\n${IMPORT_RULES[annex]}\\n\\n`;
-    }
+    if (!seenAnnex.has(annex) || hidden.has(annex)) continue;
+    const items = IMPORT_RULES[annex].map(b => `<li>${esc(b)}</li>`).join("");
+    html += `<h4>Yêu cầu nhập khẩu (Phụ lục ${annex})</h4><ul class="rules">${items}</ul>`;
   }
-  if (note) out += `>> ${note}\\n`;
-  return out.trim();
+  if (note) html += `<p class="obl">${esc(note)}</p>`;
+  return html;
 }
 
 function run() {
@@ -294,7 +304,7 @@ function run() {
       : `${cas} — không có trong dữ liệu`;
     // Chi mo san chi tiet chat can chu y (do/vang); chat on thi thu gon.
     const open = badge === "ok" ? "" : " open";
-    details += `<details class="detail"${open}><summary><span class="pill ${badge}">${annex ? ANNEX_LABEL[annex] : "?"}</span> ${esc(title)}</summary><div class="body">${esc(detailFor(cas, note))}</div></details>`;
+    details += `<details class="detail"${open}><summary><span class="pill ${badge}">${annex ? ANNEX_LABEL[annex] : "?"}</span> ${esc(title)}</summary><div class="body">${detailFor(cas, note)}</div></details>`;
   });
 
   resultsEl.innerHTML = table + details + "</div>";
@@ -325,6 +335,7 @@ out = (
     .replace("__NOTE_GAP_JSON__", NOTE_GAP_JSON)
     .replace("__OBLIGATIONS_JSON__", OBLIGATIONS_JSON)
     .replace("__VERDICT_JSON__", VERDICT_JSON)
+    .replace("__SUPPRESS_ANNEX_JSON__", SUPPRESS_ANNEX_JSON)
     .replace("__VERDICT_PL3__", core.VERDICT["pl3"])
 )
 Path(__file__).parent.joinpath("Tra cứu hóa chất NĐ24.html").write_text(out, encoding="utf-8")
