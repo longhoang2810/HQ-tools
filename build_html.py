@@ -158,6 +158,7 @@ HTML = """<!doctype html>
     <button id="run-btn" onclick="run()">🔍 Tra cứu</button>
   </div>
   <div class="toolbar">
+    <button class="mini" onclick="randomExample()">🎲 Ví dụ ngẫu nhiên</button>
     <button class="mini" onclick="clearAll()">✕ Xóa</button>
     <span class="hint">Mẹo: nhấn <b>Ctrl+Enter</b> (⌘+Enter trên Mac) để tra cứu nhanh</span>
   </div>
@@ -309,6 +310,20 @@ function clearAll() {
   document.getElementById("input").value = "";
   document.getElementById("results").innerHTML = "";
   document.getElementById("input").focus();
+}
+
+function randomExample() {
+  const byCas = new Map();
+  DATA.forEach(row => { if (!byCas.has(row.cas)) byCas.set(row.cas, row); });
+  const pool = [...byCas.values()];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const sample = pool.slice(0, 4);
+  document.getElementById("input").value = "Hỗn hợp mẫu gồm: " +
+    sample.map(row => `${row.name_vn} (CAS ${row.cas})`).join(", ") + ".";
+  run();
 }
 
 const inputEl = document.getElementById("input");

@@ -14,7 +14,7 @@ có mạng — dữ liệu đã nhúng sẵn trong file). Dán mô tả DN vào 
 Trang này cũng có mục **"Các trường hợp được miễn trừ"** cố định ở cuối
 (NĐ 26 Điều 6.7, Điều 10.3, Điều 21).
 
-Tiện ích trên trang: nút **Xóa**, phím tắt **Ctrl+Enter**, tự tra ngay khi
+Tiện ích trên trang: nút **Ví dụ ngẫu nhiên** để tạo nhanh một hỗn hợp mẫu, nút **Xóa**, phím tắt **Ctrl+Enter**, tự tra ngay khi
 dán, và chip thống kê số chất cần Giấy phép. Ghi kèm `% hàm lượng`
 trên cùng dòng với mã CAS để tự so ngưỡng miễn trừ Điều 21.
 

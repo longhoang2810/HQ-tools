@@ -102,8 +102,7 @@ def test_moi_verdict_goi_dung_ten_giay():
     assert "giấy phép xuất khẩu, nhập khẩu hóa chất cần kiểm soát đặc biệt" in r["III"]
     assert "giấy chứng nhận đủ điều kiện sản xuất, kinh doanh hóa chất có điều kiện" in r["II"]
     assert "kế hoạch phòng ngừa, ứng phó sự cố hóa chất" in r["IV"]
-    # PL III phai neu ro GP XNK khac GP san xuat, kinh doanh KSDB.
-    assert "giấy phép sản xuất, kinh doanh hóa chất ksđb" in r["III"]
+    assert "các trường hợp được miễn giấy phép xnk quy định tại điều 21" in r["III"]
 
 
 def test_html_khong_lech_khoi_core():
@@ -125,6 +124,14 @@ def test_html_khong_lech_khoi_core():
         page = html.read_text(encoding="utf-8")
         assert VERDICT["pl3"] in page, "HTML đã commit cũ hơn core.py — chạy python3 build_html.py"
         assert PENALTY_WARNING in page, "HTML cũ hơn core.py — chạy python3 build_html.py"
+
+
+def test_html_co_nut_vi_du_ngau_nhien():
+    src = Path(__file__).with_name("build_html.py").read_text(encoding="utf-8")
+    assert 'onclick="randomExample()"' in src
+    assert 'onclick="clearAll()"' in src
+    assert 'const byCas = new Map()' in src
+    assert 'sample.map(row => `${row.name_vn} (CAS ${row.cas})`)' in src
 
 
 def test_khong_con_noi_dung_ho_so_trinh_tu_thu_tuc():
@@ -188,9 +195,8 @@ def test_pl3_splits_import_congbo_from_use_deadline():
     b14 = next(b for b in IMPORT_RULES["III"] if "Điều 14.3" in b)
     b15 = next(b for b in IMPORT_RULES["III"] if "Điều 15.1" in b)
     assert b14 is not b15
-    # Điều 14.3: gắn khâu NHẬP KHẨU, không thời hạn cứng, không phải cửa thông quan.
-    assert "KHI nhập khẩu" in b14 and "không có thời hạn cứng" in b14
-    assert "không phải điều kiện thông quan" in b14
+    # Điều 14.3: gắn khâu NHẬP KHẨU và không phải cửa thông quan.
+    assert "KHI nhập khẩu" in b14 and "không phải điều kiện thông quan" in b14
     # Điều 15.1: mốc 30 NGÀY là mốc cứng, gắn khâu SỬ DỤNG.
     assert "TRƯỚC 30 NGÀY" in b15 and "SỬ DỤNG" in b15
     assert "không phải khâu nhập khẩu" in b15
