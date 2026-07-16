@@ -3,19 +3,15 @@ that scanning a pasted DN description pulls every CAS out of free text."""
 from core import (
     DATA,
     EXEMPTIONS,
+    EXEMPTIONS_WARNING,
     IMPORT_RULES,
     OBLIGATIONS,
-    OLD_BANG,
-    OLD_HAN_CHE,
-    OLD_TIEN_CHAT,
     SHORT_FLAG,
     annexes_for,
     cas_status,
     extract_cas,
     format_report,
     highest_annex,
-    transitional_flag_short,
-    transitional_status,
 )
 
 
@@ -41,8 +37,9 @@ def test_extract_cas_from_free_text():
 def test_cas_status_annex_iii_always_needs_permit():
     # Khong tu nhan dien % nua -> hoa chat PL III luon bao can giay phep,
     # du thuc te co the duoc mien theo nong do (can doi chieu thu cong).
+    # Verdict phai goi DUNG TEN giay, khong noi "Giay phep" trong nghia.
     badge, text, note = cas_status("67-56-1")
-    assert badge == "warn" and text == "Cần Giấy phép" and note is None
+    assert badge == "warn" and text == "Cần Giấy phép XNK hóa chất KSĐB" and note is None
 
 
 def test_cas_status_non_annex_iii_flags_other_obligations():
@@ -59,7 +56,7 @@ def test_cas_status_plain_green_when_no_other_obligation():
     plain = next((r["cas"] for r in DATA if annexes_for(r["cas"]) == {"I"}), None)
     assert plain is not None
     badge, text, note = cas_status(plain)
-    assert badge == "ok" and text == "Không cần Giấy phép" and note is None
+    assert badge == "ok" and text == "Không cần Giấy phép XNK" and note is None
 
 
 def test_annex_iv_multiple_thresholds_flagged():
@@ -70,23 +67,57 @@ def test_annex_iv_multiple_thresholds_flagged():
     assert "150" in rep and "5.000" in rep and "nhiều ngưỡng tồn trữ" in rep
 
 
-def test_nq19_thresholds_and_devolution():
+def test_nq19_thresholds_kept():
     # NQ 19 noi nguong: khoan 1 & 2 -> <= ; khoan 3 (hoa chat cam) GIU <0,1%.
+    # NQ 19 KHONG them/bot chat nao, nhung DOI nguong -> anh huong "can giay hay
+    # khong" nen phai giu. Phan phan cap cua NQ 19 la thu tuc -> da bo.
     kho = {g["cite"]: g["items"] for g in EXEMPTIONS}
     k123 = next(items for cite, items in kho.items() if "khoản 1-3" in cite)
-    assert "≤ 1%" in k123[0]                      # khoan 1: SX-KD
+    assert "≤ 1%" in k123[0]                       # khoan 1: SX-KD
     assert "≤ 1%" in k123[1] and "≤ 5%" in k123[1]  # khoan 2: XNK
     assert "< 0,1%" in k123[2]                     # khoan 3: cam giu nguyen
-    # NQ 19 them khoan 7/8/9.
+    # NQ 19 them khoan 7/8 (deu la MIEN CAP Giay phep XNK -> thuoc "can giay gi").
     all_items = " ".join(i for g in EXEMPTIONS for i in g["items"])
     assert "Khoản 7" in all_items and "≤ 1mg" in all_items
     assert "Khoản 8" in all_items and "tại chỗ" in all_items
-    assert "Khoản 9" in all_items and "31/12/2026" in all_items
-    # Phan cap: Nhom 1 & hoa chat cam -> UBND cap tinh; Nhom 2 -> Bo Cong Thuong.
     r3 = IMPORT_RULES["III"]
     assert "≤1%" in r3 and "NQ 19" in r3
-    assert "UBND cấp tỉnh" in r3 and "Nhóm 1" in r3 and "Nhóm 2" in r3
-    assert "UBND cấp tỉnh" in SHORT_FLAG["III"] and "Nhóm 2" in SHORT_FLAG["III"]
+
+
+def test_moi_verdict_goi_dung_ten_giay():
+    # Nguyen tac: cong cu tra loi "chat nay CAN GIAY GI" -> moi cho hien thi phai
+    # goi dung ten giay, khong dung chu "Giay phep" trong nghia.
+    assert "Giấy phép xuất khẩu, nhập khẩu hóa chất cần kiểm soát đặc biệt" in SHORT_FLAG["III"]
+    assert "Giấy chứng nhận đủ điều kiện SX-KD hóa chất có điều kiện" in SHORT_FLAG["II"]
+    assert "Không cần giấy phép nào" in SHORT_FLAG["I"]      # PL I khong co giay phep
+    assert "Không liên quan Giấy phép XNK" in SHORT_FLAG["IV"]
+    # PL III phai neu ro GP XNK khac GP san xuat, kinh doanh KSDB.
+    assert "Giấy phép sản xuất, kinh doanh hóa chất KSĐB" in IMPORT_RULES["III"]
+
+
+def test_khong_con_noi_dung_ho_so_trinh_tu_thu_tuc():
+    # PHAM VI: trang tra cuu "can giay gi" -> khong chua ho so/trinh tu/thu tuc cap,
+    # tham quyen cap (phan cap NQ 19), hay khoi chuyen tiep Dieu 30.4 (mien XUAT
+    # TRINH ho so GP SX-KD). Chan viec chung quay lai.
+    blob = " ".join(
+        [IMPORT_RULES[a] for a in "I II III IV".split()]
+        + [SHORT_FLAG[a] for a in "I II III IV".split()]
+        + [i for g in EXEMPTIONS for i in g["items"]]
+        + [g["cite"] for g in EXEMPTIONS]
+        + [EXEMPTIONS_WARNING]
+    )
+    for banned in (
+        "UBND cấp tỉnh",        # tham quyen cap (phan cap NQ 19)
+        "Bộ Công Thương",       # tham quyen cap
+        "gia hạn 1 lần",        # thu tuc
+        "Điều 30.4",            # khoi chuyen tiep
+        "Khoản 9",              # mien XUAT TRINH ho so
+        "xuất trình hồ sơ",     # ho so
+        "NĐ 113/2017",          # danh muc cu -> chi phuc vu khoi chuyen tiep
+        "NĐ 82/2022",
+        "NĐ 33/2024",
+    ):
+        assert banned not in blob, f"nội dung ngoài phạm vi quay lại: {banned}"
 
 
 def test_decree_cas_errata_corrected():
@@ -100,12 +131,6 @@ def test_short_flag_surfaces_dieu10_for_pl2():
     # SHORT_FLAG (trước là dead code) giờ được đưa lên bảng tóm tắt — cờ PL II
     # phải nhắc nghĩa vụ công bố / Giấy chứng nhận theo Điều 10.
     assert "Điều 10" in SHORT_FLAG["II"] and "công bố" in SHORT_FLAG["II"]
-
-
-def test_pl3_transitional_exemption_documented():
-    # Điều 30.4/30.5 (miễn xuất trình Giấy phép tới 31/12/2026) phải có trong
-    # quy tắc PL III để verdict "Cần Giấy phép" không bị hiểu là tuyệt đối.
-    assert "30.4" in IMPORT_RULES["III"] and "31/12/2026" in IMPORT_RULES["III"]
 
 
 def test_exemptions_cover_dieu_21_4_and_product_declaration():
@@ -145,57 +170,6 @@ def test_data_regenerated_from_official_nd24():
     assert annexes_for("10137-74-3") == {"II"} and annexes_for("10037-74-3") == set()  # errata giữ nguyên
 
 
-def test_transitional_old_chemical_is_definitive():
-    # P2P là tiền chất công nghiệp cũ (NĐ113) -> khẳng định 'cũ', KHÔNG được miễn.
-    st = transitional_status("103-79-7")
-    assert st is not None and st[0] == "cu"
-    assert "tiền chất công nghiệp" in st[1] and "KHÔNG thuộc diện miễn" in st[1]
-    assert "103-79-7" in OLD_TIEN_CHAT
-
-
-def test_nd82_nd33_resolve_previously_unknown_to_old():
-    # Điểm cốt lõi của 'bổ sung': các chất trước đây 'chưa rõ' (chỉ có NĐ113) giờ
-    # tra được là 'cũ' nhờ NĐ 82 (hạn chế SX-KD) và NĐ 33 (hóa chất Bảng).
-    st_bang = transitional_status("111-48-8")           # Thiodiglycol -> Bảng 2 (NĐ33)
-    assert st_bang is not None and st_bang[0] == "cu"
-    assert "hóa chất Bảng" in st_bang[1]
-    assert "111-48-8" in OLD_BANG
-
-    st_hc = transitional_status("1163-19-5")             # DBDE -> hạn chế SX-KD (NĐ82 PL II)
-    assert st_hc is not None and st_hc[0] == "cu"
-    assert "hạn chế SX-KD" in st_hc[1]
-    assert "1163-19-5" in OLD_HAN_CHE
-
-    # NĐ 82 Điều 1.19 bổ sung tiền chất công nghiệp nhóm 1 (STT 830-835).
-    assert "137-43-9" in OLD_TIEN_CHAT
-    # Chất 'SX-KD có điều kiện' (STT 820-829) và POP 'khai báo' KHÔNG được coi là cũ
-    # theo Điều 30.4 nếu không đồng thời thuộc 3 danh mục -> 7664-41-7 (amoniac) vắng.
-    assert "7664-41-7" not in (OLD_TIEN_CHAT | OLD_HAN_CHE | OLD_BANG)
-
-
-def test_transitional_non_pl3_returns_none():
-    # Chỉ hóa chất Phụ lục III mới có trạng thái chuyển tiếp Điều 30.4.
-    assert transitional_status("106-99-0") is None      # PL I/II/IV
-    assert transitional_flag_short("106-99-0") is None
-
-
-def test_transitional_failsafe_never_asserts_new_without_caveat():
-    # THUỘC TÍNH AN TOÀN: mọi hóa chất PL III chỉ rơi vào 'cu' hoặc 'moi'. Với 'moi'
-    # (đã đối chiếu đủ 3 danh mục), công cụ chỉ nói MIỄN XUẤT TRÌNH (không phải miễn
-    # Giấy phép) và luôn kèm cảnh báo Bảng 1/2 định nghĩa theo HỌ chất -> không miễn
-    # nhầm chất thuộc một họ CWC chưa liệt kê CAS rời.
-    pl3 = {r["cas"] for r in DATA if r["annex"] == "III"}
-    for cas in pl3:
-        st = transitional_status(cas)
-        assert st is not None and st[0] in ("cu", "moi")
-        if st[0] == "moi":
-            assert "miễn XUẤT TRÌNH" in st[1] or "miễn xuất trình" in st[1]
-            assert "HỌ" in st[1] or "họ CWC" in st[1]     # cảnh báo định nghĩa theo họ
-            assert "chưa có trong công cụ" not in st[1]   # NĐ82/NĐ33 đã tích hợp
-        # không câu chữ nào được khẳng định chắc chắn 'được miễn' mà bỏ điều kiện
-        assert "chắc chắn được miễn" not in st[1]
-
-
 if __name__ == "__main__":
     test_known_chemicals()
     test_highest_annex_prioritizes_permit_over_declaration()
@@ -204,16 +178,13 @@ if __name__ == "__main__":
     test_cas_status_non_annex_iii_flags_other_obligations()
     test_cas_status_plain_green_when_no_other_obligation()
     test_annex_iv_multiple_thresholds_flagged()
-    test_nq19_thresholds_and_devolution()
+    test_nq19_thresholds_kept()
+    test_moi_verdict_goi_dung_ten_giay()
+    test_khong_con_noi_dung_ho_so_trinh_tu_thu_tuc()
     test_decree_cas_errata_corrected()
     test_short_flag_surfaces_dieu10_for_pl2()
-    test_pl3_transitional_exemption_documented()
     test_exemptions_cover_dieu_21_4_and_product_declaration()
     test_congbo_is_not_a_customs_gate_pl2()
     test_pl3_splits_import_congbo_from_use_deadline()
     test_data_regenerated_from_official_nd24()
-    test_transitional_old_chemical_is_definitive()
-    test_nd82_nd33_resolve_previously_unknown_to_old()
-    test_transitional_non_pl3_returns_none()
-    test_transitional_failsafe_never_asserts_new_without_caveat()
     print("ok")

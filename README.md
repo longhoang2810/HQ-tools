@@ -61,23 +61,28 @@ python3 extract.py            # đọc nd24.md -> data/nd24_chemicals.json
 > ổn định hơn, và sửa được vài lỗi phân loại của bản cũ (POP về đúng PL III thay
 > vì PL IV; PL I không còn bị rớt chất).
 
-**Trạng thái chuyển tiếp Điều 30.4/30.5** — với hóa chất Phụ lục III, công cụ
-đối chiếu ĐỦ BA danh mục "quy định cũ" mà Điều 30.4 dẫn chiếu: tiền chất công
-nghiệp và hạn chế SX-KD theo **NĐ 113/2017** (`nd113.md`) hợp **NĐ 82/2022**
-(`nd82.md`), cùng Danh mục **hóa chất Bảng NĐ 33/2024** (`nd33.md`). Chất **"cũ"**
-(có trong ít nhất một danh mục) → KHÔNG được miễn Giấy phép; chất **"mới"** (không
-trùng CAS ở cả ba) → đủ căn cứ *miễn xuất trình* Giấy phép tới 31/12/2026 (không
-phải miễn Giấy phép). Verdict chính của PL III **luôn** là "Cần Giấy phép"; tập cũ
-trích từ `extract_old.py`:
-
-```
-python3 extract_old.py        # nd113.md + nd82.md + nd33.md -> data/old_cas.json
-```
-
 Phần **yêu cầu nhập khẩu / miễn trừ** (`IMPORT_RULES`, `EXEMPTIONS`,
-`SHORT_FLAG` trong `core.py`) là bản tóm tắt thủ tục từ **NĐ 26/2026/NĐ-CP** —
-toàn văn để đối chiếu nằm ở `nd26.txt` trong repo. Sửa tóm tắt trong `core.py`
-xong chạy lại `python3 build_html.py` để cập nhật trang HTML.
+`SHORT_FLAG` trong `core.py`) là bản tóm tắt từ **NĐ 26/2026/NĐ-CP** (ngưỡng miễn
+trừ cập nhật theo **NQ 19/2026/NQ-CP**) — toàn văn để đối chiếu nằm ở `nd26.txt`
+trong repo. Sửa tóm tắt trong `core.py` xong chạy lại `python3 build_html.py` để
+cập nhật trang HTML.
+
+## Phạm vi: "chất này cần GIẤY GÌ"
+
+Công cụ chỉ trả lời **hóa chất cần giấy gì**, nên luôn gọi đúng tên từng loại giấy:
+
+| Giấy | Cho hoạt động | Gặp ở |
+|---|---|---|
+| Giấy phép xuất khẩu, nhập khẩu hóa chất KSĐB | xuất/nhập khẩu | Phụ lục III |
+| Giấy chứng nhận đủ điều kiện SX-KD hóa chất có điều kiện | sản xuất, kinh doanh | Phụ lục II |
+| Giấy phép sản xuất, kinh doanh hóa chất KSĐB | sản xuất, kinh doanh | Phụ lục III |
+| Giấy chứng nhận đủ điều kiện hoạt động tồn trữ | tồn trữ (dịch vụ) | Điều 21.5 |
+
+**KHÔNG** đưa vào: hồ sơ gồm những gì, trình tự, thủ tục cấp, thẩm quyền cấp (phân
+cấp NQ 19), và khối chuyển tiếp Điều 30.4/30.5/30.6 — Điều 30.4 chỉ *miễn xuất
+trình hồ sơ* **Giấy phép SX-KD**, không đụng tới Giấy phép XNK, nên không đổi câu
+trả lời "cần giấy gì". Đó là việc của cơ quan cấp phép, không phải của trang tra cứu.
+`test_khong_con_noi_dung_ho_so_trinh_tu_thu_tuc` chặn các nội dung này quay lại.
 
 ## Giới hạn đã biết
 
@@ -87,13 +92,9 @@ xong chạy lại `python3 build_html.py` để cập nhật trang HTML.
   này khi không tìm thấy CAS.
 - Yêu cầu nhập khẩu trong `lookup.py` là bản tóm tắt điều luật, không thay
   thế văn bản gốc — luôn đối chiếu Điều được dẫn chiếu trước khi làm hồ sơ.
-- Trạng thái chuyển tiếp (Điều 30.4/30.5) đã đối chiếu đủ **NĐ 113/2017 + NĐ
-  82/2022** (tiền chất công nghiệp, hạn chế SX-KD) và **Danh mục hóa chất Bảng NĐ
-  33/2024**. Giới hạn còn lại: Bảng 1 & 2 của NĐ 33 định nghĩa nhiều chất theo
-  **HỌ** (các dẫn xuất không có CAS rời), nên chất báo "mới" tra theo CAS vẫn có
-  thể thuộc một họ CWC — đối chiếu công thức khi nghi ngờ. (Thiết kế fail-safe: PL
-  III luôn báo "Cần Giấy phép"; "miễn xuất trình" chỉ là ghi chú chuyển tiếp, thà
-  báo cần hơn miễn nhầm.)
+- Không tự nhận diện `% hàm lượng` để kết luận miễn trừ: hóa chất Phụ lục III
+  **luôn** báo "Cần Giấy phép XNK hóa chất KSĐB"; cán bộ tự đối chiếu ngưỡng Điều
+  21 bằng tài liệu khai báo gốc. (Fail-safe: thà báo cần hơn miễn nhầm.)
 - Phụ lục II mục 2 (hỗn hợp chất) và Phụ lục III mục II (hỗn hợp chất kiểm
   soát đặc biệt) là quy tắc theo ngưỡng hàm lượng %, không tra theo CAS —
   không nằm trong phạm vi tool này.

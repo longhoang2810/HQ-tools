@@ -1,8 +1,15 @@
 """Dữ liệu & quy tắc dùng chung cho lookup.py và scan.py.
-Nguồn: Phụ lục I-IV NĐ 24/2026/NĐ-CP; thủ tục NK tại NĐ 26/2026/NĐ-CP;
-ngưỡng miễn trừ & phân cấp thẩm quyền cấp phép cập nhật theo NQ 19/2026/NQ-CP;
-danh mục "quy định cũ" cho trạng thái chuyển tiếp Điều 30.4 lấy từ NĐ 113/2017,
-NĐ 82/2022 (tiền chất + hạn chế SX-KD) và NĐ 33/2024 (hóa chất Bảng).
+Nguồn: Phụ lục I-IV NĐ 24/2026/NĐ-CP; yêu cầu giấy tờ khi XNK tại NĐ 26/2026/NĐ-CP;
+ngưỡng miễn trừ cập nhật theo NQ 19/2026/NQ-CP.
+
+PHẠM VI: công cụ trả lời "hóa chất này CẦN GIẤY GÌ", nên luôn gọi đúng tên từng
+loại giấy. Bốn loại giấy có thể gặp:
+  1. Giấy phép xuất khẩu, nhập khẩu hóa chất KSĐB   -> khâu XNK (Phụ lục III)
+  2. Giấy chứng nhận đủ điều kiện SX-KD hóa chất có điều kiện -> khâu SX-KD (PL II)
+  3. Giấy phép sản xuất, kinh doanh hóa chất KSĐB   -> khâu SX-KD (PL III)
+  4. Giấy chứng nhận đủ điều kiện hoạt động tồn trữ -> khâu tồn trữ dịch vụ
+KHÔNG đưa vào: hồ sơ gồm những gì, trình tự, thủ tục cấp, thẩm quyền cấp — đó là
+việc của cơ quan cấp phép, không phải câu hỏi "chất này cần giấy gì".
 """
 import json
 import re
@@ -11,18 +18,7 @@ from pathlib import Path
 DATA = json.loads((Path(__file__).parent / "data" / "nd24_chemicals.json").read_text(encoding="utf-8"))
 CAS_RE = re.compile(r"\b\d{2,7}-\d{2}-\d\b")
 
-# Ba danh mục "quy định cũ" mà Điều 30.4/30.5 NĐ 26/2026 dẫn chiếu để xác định
-# trạng thái chuyển tiếp cho hóa chất Phụ lục III: tiền chất công nghiệp + hạn chế
-# SX-KD (NĐ 113/2017 hợp NĐ 82/2022) và hóa chất Bảng (NĐ 33/2024). Sinh từ
-# extract_old.py. Lưu ý: Bảng 1 & 2 của NĐ 33 định nghĩa nhiều chất theo HỌ (không
-# có CAS rời) nên tra theo CAS vẫn có thể sót -> giữ fail-safe (xem cas_status).
-_OLD = json.loads((Path(__file__).parent / "data" / "old_cas.json").read_text(encoding="utf-8"))
-OLD_TIEN_CHAT = set(_OLD["tien_chat_cong_nghiep"])
-OLD_HAN_CHE = set(_OLD["han_che_sxkd"])
-OLD_BANG = set(_OLD["hoa_chat_bang"])
-OLD_ALL = OLD_TIEN_CHAT | OLD_HAN_CHE | OLD_BANG
-
-# ponytail: tóm tắt thủ tục chính, không thay thế văn bản gốc — luôn đọc kèm
+# ponytail: tóm tắt yêu cầu giấy tờ, không thay thế văn bản gốc — luôn đọc kèm
 # Điều được dẫn chiếu trước khi làm hồ sơ thật.
 IMPORT_RULES = {
     "I": """Phụ lục I (hóa chất cơ bản trọng điểm) không tự nó phát sinh
@@ -32,8 +28,8 @@ IMPORT_RULES = {
   Điều 6); được miễn nếu nhập <10kg hoặc thuộc các trường hợp miễn trừ tại
   Điều 6.7.""",
     "II": """Phụ lục II (hóa chất sản xuất, kinh doanh có điều kiện):
-  - Nhập khẩu để KINH DOANH: phải có Giấy chứng nhận đủ điều kiện kinh
-    doanh hóa chất có điều kiện do UBND cấp tỉnh cấp (NĐ 26, Điều 8, 9, 10.2).
+  - Nhập khẩu để KINH DOANH: phải có Giấy chứng nhận đủ điều kiện sản xuất,
+    kinh doanh hóa chất có điều kiện (NĐ 26, Điều 8, 9, 10.2).
   - Nhập khẩu để tự sử dụng (không kinh doanh): không cần Giấy chứng nhận,
     nhưng phải công bố mục đích sử dụng trên Cơ sở dữ liệu chuyên ngành hóa
     chất (NĐ 26, Điều 10.3). Lưu ý: Điều 10.3 KHÔNG ấn định thời hạn và KHÔNG
@@ -46,16 +42,8 @@ IMPORT_RULES = {
     trên đều phải khai báo, trừ trường hợp được miễn trừ tại Điều 6.7.""",
     "III": """Phụ lục III (hóa chất cần kiểm soát đặc biệt — tiền chất công
   nghiệp / hóa chất Bảng 2, 3 / Công ước Rotterdam-Stockholm):
-  - Bắt buộc có Giấy phép xuất khẩu, nhập khẩu hóa chất cần kiểm soát đặc
-    biệt, là điều kiện để thông quan (NĐ 26, Điều 14.2, 14.4). THẨM QUYỀN
-    CẤP: từ 29/5/2026 theo NQ 19/2026/NQ-CP (phân cấp), Giấy phép XNK hóa
-    chất KSĐB NHÓM 1 và Giấy phép nhập khẩu hóa chất cấm (phần thuộc thẩm
-    quyền Bộ Công Thương) do UBND cấp tỉnh cấp thay vì Bộ Công Thương; hóa
-    chất KSĐB Nhóm 2 (Bảng 2, 3) vẫn do Bộ Công Thương cấp. Hồ sơ: văn bản
-    đề nghị, hóa đơn thương mại, Phiếu an toàn hóa chất, báo cáo tình hình
-    XNK/sử dụng/tồn trữ theo giấy phép đã cấp, và Giấy phép sản xuất/kinh
-    doanh hóa chất kiểm soát đặc biệt tương ứng (NĐ 26, Điều 14.5). Thời hạn
-    giấy phép: 06 tháng, gia hạn 1 lần.
+  - PHẢI CÓ: Giấy phép xuất khẩu, nhập khẩu hóa chất cần kiểm soát đặc biệt.
+    Đây là điều kiện để thông quan (NĐ 26, Điều 14.2, 14.4).
   - MIỄN Giấy phép XNK nếu hóa chất chỉ xuất hiện trong hỗn hợp ở nồng độ
     dưới ngưỡng: Nhóm 1 ≤1%, Nhóm 2 ≤5% khối lượng hỗn hợp (NĐ 26 Điều 21.2,
     ngưỡng cập nhật theo NQ 19/2026/NQ-CP) — hàng nguyên chất/nồng độ trên
@@ -72,13 +60,10 @@ IMPORT_RULES = {
     gắn với khâu SỬ DỤNG, không phải khâu nhập khẩu (NĐ 26, Điều 15.1).
   - Nếu là tiền chất công nghiệp và XUẤT KHẨU (không phải nhập khẩu): cần
     thêm văn bản chấp thuận của Bộ Công an (NĐ 26, Điều 14.6.d).
-  - CHUYỂN TIẾP (đang hiệu lực): hóa chất kiểm soát đặc biệt do NĐ 24 mới đưa
-    vào Danh mục — KHÔNG thuộc Danh mục tiền chất/hạn chế SX-KD cũ (NĐ 113/2017,
-    NĐ 82/2022) hay Danh mục hóa chất Bảng (NĐ 33/2024) — được MIỄN xuất trình
-    hồ sơ Giấy phép XK/NK hóa chất kiểm soát đặc biệt đến trước 31/12/2026 (NĐ
-    26, Điều 30.4). Tiền chất công nghiệp mới đưa vào được dùng Giấy chứng nhận
-    đủ ĐK SX-KD cũ thay cho Giấy phép đến 31/12/2027 (Điều 30.5). Phải đối chiếu
-    danh mục cũ để biết hóa chất có thuộc diện "mới" hay không.""",
+  - PHÂN BIỆT GIẤY: Giấy phép XNK (khâu XNK, Điều 14.2) là giấy khác với
+    Giấy phép sản xuất, kinh doanh hóa chất KSĐB (khâu SX-KD).
+    Chất thuộc Phụ lục III luôn cần Giấy phép XNK khi xuất/nhập khẩu, bất kể
+    khâu SX-KD có giấy gì.""",
     "IV": """Phụ lục IV (Bảng A — phải xây dựng Kế hoạch/Biện pháp phòng
   ngừa, ứng phó sự cố hóa chất): đây KHÔNG phải điều kiện nhập khẩu, mà là
   nghĩa vụ an toàn khi tồn trữ. Nếu khối lượng tồn trữ tại một thời điểm
@@ -90,30 +75,40 @@ IMPORT_RULES = {
 }
 
 # Cờ ngắn gọn cho bảng tóm tắt (dùng khi quét nhiều CAS cùng lúc).
+# Mỗi cờ phải gọi ĐÚNG TÊN loại giấy — không dùng chữ "Giấy phép" trống nghĩa.
 SHORT_FLAG = {
-    "I": "Chỉ cần khai báo NK (nếu thuộc HS 28/29)",
-    "II": "Không cần Giấy phép. NK để kinh doanh: cần GCN đủ điều kiện KD (Điều 10.2). NK để tự dùng: công bố mục đích sử dụng trên CSDL chuyên ngành — doanh nghiệp CHỦ ĐỘNG thời điểm, KHÔNG phải điều kiện thông quan (Điều 10.3). Bước bắt buộc trước thông quan là khai báo NK (Điều 6)",
-    "III": "⚠ BẮT BUỘC Giấy phép XNK — trừ khi nồng độ dưới ngưỡng miễn trừ (Điều 21) hoặc là chất mới do NĐ24 đưa vào được miễn xuất trình Giấy phép tới 31/12/2026 (Điều 30.4). Cấp phép: KSĐB Nhóm 1 & hóa chất cấm → UBND cấp tỉnh (từ 29/5/2026, NQ 19); Nhóm 2 → Bộ Công Thương",
-    "IV": "Có ngưỡng tồn trữ — cần KH/BP ứng phó sự cố nếu vượt ngưỡng",
+    "I": "Không cần giấy phép nào — chỉ khai báo hóa chất nhập khẩu qua Cổng một cửa (Điều 6) nếu thuộc HS 28/29",
+    "II": "Không cần Giấy phép XNK. NK để kinh doanh: cần Giấy chứng nhận đủ điều kiện SX-KD hóa chất có điều kiện (Điều 10.2). NK để tự dùng: công bố mục đích sử dụng trên CSDL chuyên ngành — doanh nghiệp CHỦ ĐỘNG thời điểm, KHÔNG phải điều kiện thông quan (Điều 10.3). Bước bắt buộc trước thông quan là khai báo NK (Điều 6)",
+    "III": "⚠ BẮT BUỘC Giấy phép xuất khẩu, nhập khẩu hóa chất cần kiểm soát đặc biệt — điều kiện thông quan (Điều 14.2). Chỉ được miễn nếu rơi vào Điều 21: nồng độ dưới ngưỡng (khoản 2 — Nhóm 1 ≤1%, Nhóm 2 ≤5%), nằm trong sản phẩm hoàn chỉnh (khoản 6), thí nghiệm ≤1mg (khoản 7), hoặc XNK tại chỗ (khoản 8)",
+    "IV": "Không liên quan Giấy phép XNK — nghĩa vụ tồn trữ: cần Kế hoạch/Biện pháp ứng phó sự cố nếu vượt ngưỡng",
 }
 
 # Nghĩa vụ song song NGOÀI Giấy phép XNK (cho hóa chất KHÔNG thuộc PL III) —
 # để trạng thái "xanh" không bị đọc là "không phải làm gì". Dùng chung CLI/HTML.
 OBLIGATIONS = {
-    "II": "Phụ lục II — GCN đủ điều kiện KD (nếu NK để KD) hoặc công bố mục đích sử dụng (nếu tự dùng)",
+    "II": "Phụ lục II — Giấy chứng nhận đủ điều kiện SX-KD hóa chất có điều kiện (nếu NK để kinh doanh) hoặc công bố mục đích sử dụng (nếu NK để tự dùng)",
     "IV": "Phụ lục IV — Kế hoạch/Biện pháp ứng phó sự cố nếu tồn trữ vượt ngưỡng",
 }
 
 # Nguồn duy nhất cho mục "Các trường hợp được miễn trừ" — dùng chung cho
 # CLI (lookup.py/scan.py) và trang HTML (build_html.py) để tránh lệch nội
 # dung giữa hai nơi. Nguồn: NĐ 26/2026/NĐ-CP Điều 21.
-# ponytail: các ngưỡng nồng độ dưới đây cập nhật theo NQ 19/2026/NQ-CP (hiệu
-# lực 29/4/2026, hết hiệu lực 01/3/2027) — KHÔNG phải giá trị gốc của NĐ 26.
-# NQ 19 nới: khoản 1 & 5 (<0,1% → ≤1%), khoản 2 đổi biên (< → ≤), GIỮ khoản 3
-# (<0,1%), và thêm khoản 7, 8, 9. Phân cấp thẩm quyền cấp phép (Bộ Công Thương
-# → UBND cấp tỉnh cho KSĐB Nhóm 1 & hóa chất cấm) hiệu lực 29/5/2026 (chậm 30
-# ngày — Điều 3 + Phụ lục I NQ 19). Tới 01/3/2027 nếu chưa có VBQPPL thường
-# thay thế thì đối chiếu lại NĐ 26 gốc (khoản 1/5 = <0,1%).
+# ponytail: các ngưỡng nồng độ dưới đây theo NQ 19/2026/NQ-CP — KHÔNG phải giá
+# trị gốc của NĐ 26. NQ 19 nới: khoản 1 & 5 (<0,1% → ≤1%), khoản 2 đổi biên
+# (< → ≤), GIỮ khoản 3 (<0,1%), và thêm khoản 7, 8 (NĐ 26 gốc chỉ tới khoản 6).
+#
+# CƠ CHẾ (vì sao dùng số của NQ 19 dù NĐ 26 vẫn ghi <0,1%): NQ 19 không sửa chữ
+# trong NĐ 26 mà ĐÈ LÊN khi áp dụng — Điều 8.4 NQ 19: "nếu quy định về thẩm
+# quyền... điều kiện kinh doanh, trình tự, thủ tục trong Nghị quyết này khác với
+# các VBQPPL có liên quan thì thực hiện theo quy định tại Nghị quyết này". Ngưỡng
+# Điều 21 nằm ở Phụ lục III NQ 19 ("cắt giảm, đơn giản hóa TTHC") nên thuộc diện
+# được đè. Hiệu lực 29/4/2026; NQ 19 tự hết hiệu lực 01/3/2027, hoặc SỚM HƠN khi
+# có nghị định quy định cùng nội dung có hiệu lực (Điều 8.3) — khi đó phải đối
+# chiếu lại NĐ 26 gốc: khoản 1/5 = <0,1%, khoản 2 = <1% (Nhóm 1) / <5% (Nhóm 2),
+# và bỏ khoản 7, 8.
+#
+# NQ 19 KHÔNG thêm/bớt hóa chất nào (không chứa mã CAS); phần phân cấp thẩm quyền
+# cấp phép của NQ 19 là "hồ sơ, trình tự, thủ tục" -> ngoài phạm vi công cụ này.
 EXEMPTIONS = [
     {
         "title": "1. Miễn khai báo hóa chất nhập khẩu",
@@ -169,25 +164,22 @@ EXEMPTIONS = [
         ],
     },
     {
-        "title": "6. Miễn Giấy phép XNK bổ sung & miễn xuất trình hồ sơ (NQ 19 thêm mới)",
-        "cite": "Điều 21, khoản 7-9 (NQ 19/2026/NQ-CP bổ sung, NĐ 26 gốc chỉ tới khoản 6)",
+        "title": "6. Miễn Giấy phép XNK bổ sung (NQ 19 thêm mới)",
+        "cite": "Điều 21, khoản 7-8 (NQ 19/2026/NQ-CP bổ sung, NĐ 26 gốc chỉ tới khoản 6)",
         "items": [
             "Khoản 7 — MIỄN CẤP Giấy phép XUẤT KHẨU, NHẬP KHẨU hóa chất cần kiểm soát đặc biệt dùng trong lĩnh vực thí nghiệm, khối lượng ≤ 1mg/lần nhập khẩu.",
             "Khoản 8 — MIỄN CẤP Giấy phép XUẤT KHẨU, NHẬP KHẨU hóa chất cần kiểm soát đặc biệt với xuất khẩu, nhập khẩu tại chỗ; và mua bán hóa chất giữa doanh nghiệp trong khu hải quan riêng với doanh nghiệp nội địa.",
-            "Khoản 9 — MIỄN XUẤT TRÌNH hồ sơ về Giấy phép sản xuất, kinh doanh hóa chất cần kiểm soát đặc biệt, đến trước 31/12/2026, khi XNK hóa chất thuộc Danh mục KSĐB của NĐ 24 mà trước đây KHÔNG là hạn chế SX-KD và không là tiền chất công nghiệp theo NĐ 113/2017 & NĐ 82/2022. (Đây là miễn xuất trình hồ sơ Giấy phép SX-KD — khác Điều 30.4 vốn miễn xuất trình Giấy phép XK/NK; trạng thái từng CAS xem mục 'Trạng thái chuyển tiếp'.)",
         ],
     },
 ]
 
 EXEMPTIONS_WARNING = (
     "Phụ lục III (hóa chất cần kiểm soát đặc biệt): hàng nguyên chất hoặc "
-    "nồng độ trên ngưỡng luôn bắt buộc có Giấy phép xuất/nhập khẩu (Điều "
-    "14.2) — TRỪ khi rơi vào một trong các trường hợp miễn ở Điều 21: nồng "
-    "độ dưới ngưỡng (khoản 2: Nhóm 1 ≤1%, Nhóm 2 ≤5%), hóa chất nằm trong "
-    "sản phẩm hoàn chỉnh (khoản 6), thí nghiệm ≤1mg (khoản 7), hoặc XNK tại "
-    "chỗ (khoản 8). THẨM QUYỀN CẤP: từ 29/5/2026 theo NQ 19/2026/NQ-CP, Giấy "
-    "phép của KSĐB Nhóm 1 và hóa chất cấm (phần thuộc Bộ Công Thương) do UBND "
-    "cấp tỉnh cấp; hóa chất KSĐB Nhóm 2 vẫn do Bộ Công Thương cấp."
+    "nồng độ trên ngưỡng luôn bắt buộc có Giấy phép xuất khẩu, nhập khẩu hóa "
+    "chất cần kiểm soát đặc biệt (Điều 14.2) — TRỪ khi rơi vào một trong các "
+    "trường hợp miễn ở Điều 21: nồng độ dưới ngưỡng (khoản 2: Nhóm 1 ≤1%, "
+    "Nhóm 2 ≤5%), hóa chất nằm trong sản phẩm hoàn chỉnh (khoản 6), thí "
+    "nghiệm ≤1mg (khoản 7), hoặc XNK tại chỗ (khoản 8)."
 )
 
 NOTE_GAP = """Lưu ý: bộ dữ liệu này trích từ NĐ 24/2026 (Phụ lục I-IV) — KHÔNG
@@ -246,71 +238,15 @@ def cas_status(cas):
         return ("unknown", "Không rõ", None)
     present = annexes_for(cas)
     if "III" in present:
-        return ("warn", "Cần Giấy phép", None)
+        return ("warn", "Cần Giấy phép XNK hóa chất KSĐB", None)
     # Không thuộc PL III: không cần Giấy phép XNK, nhưng vẫn có thể có nghĩa vụ
-    # Phụ lục II (GCN/công bố) và/hoặc Phụ lục IV (KH ứng phó sự cố) — nêu rõ
-    # để "xanh" không bị đọc là "không phải làm gì".
+    # Phụ lục II (Giấy chứng nhận/công bố) và/hoặc Phụ lục IV (KH ứng phó sự cố)
+    # — nêu rõ để "xanh" không bị đọc là "không phải làm gì".
     extra = [OBLIGATIONS[a] for a in ("II", "IV") if a in present]
     if extra:
         note = "Không cần Giấy phép XNK, nhưng có nghĩa vụ khác: " + "; ".join(extra) + "."
         return ("ok", "Không cần Giấy phép XNK — có nghĩa vụ khác", note)
-    return ("ok", "Không cần Giấy phép", None)
-
-
-def transitional_status(cas):
-    """Trạng thái chuyển tiếp NĐ 26 Điều 30.4/30.5 cho hóa chất Phụ lục III
-    (kiểm soát đặc biệt). Trả (state, text) hoặc None nếu CAS không thuộc PL III.
-
-    state:
-      - "cu"  : có trong ≥1 trong ba danh mục cũ -> KHÔNG được miễn Điều 30.4.
-      - "moi" : không trùng CAS ở cả ba danh mục -> đủ căn cứ áp dụng miễn Điều 30.4.
-
-    Đã tích hợp đủ ba danh mục Điều 30.4 dẫn chiếu (tiền chất + hạn chế SX-KD theo
-    NĐ 113/2017 hợp NĐ 82/2022; hóa chất Bảng NĐ 33/2024). Vẫn giữ fail-safe: verdict
-    chính của PL III luôn là 'Cần Giấy phép' (cas_status), đây chỉ là ghi chú chuyển
-    tiếp; và Bảng 1/2 định nghĩa theo HỌ chất nên 'moi' chưa loại trừ tuyệt đối.
-    """
-    if "III" not in annexes_for(cas):
-        return None
-    if cas in OLD_ALL:
-        which = []
-        if cas in OLD_TIEN_CHAT:
-            which.append("tiền chất công nghiệp")
-        if cas in OLD_HAN_CHE:
-            which.append("hạn chế SX-KD")
-        if cas in OLD_BANG:
-            which.append("hóa chất Bảng (NĐ 33/2024)")
-        return (
-            "cu",
-            "Hóa chất CŨ — đã có trong danh mục cũ ("
-            + " & ".join(which)
-            + "). KHÔNG thuộc diện miễn xuất trình Giấy phép của Điều 30.4; vẫn cần "
-            "Giấy phép, nhưng có thể dùng giấy tờ cũ thay thế: tiền chất công nghiệp "
-            "-> Giấy chứng nhận đủ điều kiện (Điều 30.5, đến 31/12/2027); hóa chất "
-            "Bảng / hạn chế SX-KD -> Giấy phép SX-KD đã cấp (Điều 30.6, đến khi hết "
-            "hạn). Đối chiếu văn bản gốc.",
-        )
-    return (
-        "moi",
-        "Không trùng CAS ở CẢ BA danh mục cũ đã tích hợp (tiền chất công nghiệp & "
-        "hạn chế SX-KD theo NĐ 113/2017 + NĐ 82/2022; hóa chất Bảng theo NĐ 33/2024) "
-        "-> ĐỦ CĂN CỨ áp dụng miễn xuất trình Giấy phép XNK tới 31/12/2026 (Điều "
-        "30.4). LƯU Ý: đây là miễn XUẤT TRÌNH giấy phép, không phải miễn Giấy phép; "
-        "và Bảng 1 & 2 của NĐ 33 định nghĩa nhiều chất theo HỌ (dẫn xuất không có CAS "
-        "rời) — nếu chất thuộc một họ CWC thì vẫn là hóa chất Bảng, đối chiếu công "
-        "thức khi nghi ngờ.",
-    )
-
-
-def transitional_flag_short(cas):
-    """Cờ ngắn cho bảng quét (scan). None nếu không phải PL III."""
-    st = transitional_status(cas)
-    if not st:
-        return None
-    state, _ = st
-    if state == "cu":
-        return "Chuyển tiếp Điều 30.4: hóa chất CŨ (có trong NĐ 113/2017, NĐ 82/2022 hoặc Bảng NĐ 33/2024) — KHÔNG được miễn, vẫn cần Giấy phép"
-    return "Chuyển tiếp Điều 30.4: đủ căn cứ MIỄN xuất trình Giấy phép tới 31/12/2026 (không thuộc 3 danh mục cũ NĐ 113/82/33) — lưu ý Bảng 1/2 định nghĩa theo họ chất"
+    return ("ok", "Không cần Giấy phép XNK", None)
 
 
 def format_exemptions():
@@ -359,10 +295,4 @@ def format_report(cas):
             lines.append(f"== Yêu cầu nhập khẩu (Phụ lục {annex}) ==")
             lines.append(IMPORT_RULES[annex])
             lines.append("")
-            if annex == "III":
-                st = transitional_status(cas)
-                if st:
-                    lines.append("-- Trạng thái chuyển tiếp (NĐ 26, Điều 30.4/30.5) --")
-                    lines.append(st[1])
-                    lines.append("")
     return "\n".join(lines)
