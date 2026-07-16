@@ -231,6 +231,25 @@ def test_import_rules_khong_be_dong_cung():
             assert b == b.strip(), f"PL {annex}: gạch đầu dòng thừa khoảng trắng"
 
 
+def test_bang_scan_thang_cot_khi_co_cas_khong_tra_ra():
+    # Hỗn hợp thật của DN hay lẫn 1 mã CAS không có trong dữ liệu. Bề rộng cột tên
+    # từng chỉ đo các chất CÓ dữ liệu -> "(không có trong dữ liệu)" (24 ký tự) tràn
+    # cột, đẩy lệch Phụ lục/Trạng thái của riêng dòng đó. Mọi dòng phải thẳng cột.
+    import io
+    import contextlib
+
+    import scan
+
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        scan.print_summary(["108-88-3", "64-17-5", "75-09-2"])   # Toluene, Etanol, không có
+    rows = [l for l in buf.getvalue().split("\n") if l and not l.startswith("-")][2:]
+    assert len(rows) == 3
+    moc = [r.index("PL III") if "PL III" in r else r.index("PL I") if "PL I" in r else r.index("—")
+           for r in rows]
+    assert len(set(moc)) == 1, f"cột Phụ lục lệch giữa các dòng: {moc}"
+
+
 def test_khong_con_tong_ket_cuoi_chi_tiet():
     # Đoạn tổng kết cuối (p.obl) chép lại y nguyên nghĩa vụ mà khối IMPORT_RULES
     # của PL II/IV ngay trên đã nói -> hai nguồn phải đồng bộ tay, đúng cái bẫy
@@ -268,6 +287,7 @@ if __name__ == "__main__":
     test_html_khong_lech_khoi_core()
     test_pl3_an_khoi_pl1_vi_da_mien_khai_bao()
     test_import_rules_khong_be_dong_cung()
+    test_bang_scan_thang_cot_khi_co_cas_khong_tra_ra()
     test_khong_con_tong_ket_cuoi_chi_tiet()
     test_unknown_khong_con_ghi_chu()
     test_khong_con_noi_dung_ho_so_trinh_tu_thu_tuc()

@@ -26,6 +26,7 @@ from core import (
 )
 
 ANNEX_LABEL = {"I": "PL I", "II": "PL II", "III": "PL III", "IV": "PL IV", None: "—"}
+NO_DATA = "(không có trong dữ liệu)"
 
 
 def read_input():
@@ -39,19 +40,24 @@ def read_input():
     return sys.stdin.read()
 
 
+def name_of(cas):
+    rows = rows_for(cas)
+    return rows[0]["name_vn"] if rows else NO_DATA
+
+
 def print_summary(entries):
     print(f"Tìm thấy {len(entries)} mã CAS trong mô tả:\n")
-    name_w = max((len(rows_for(c)[0]["name_vn"]) for c in entries if rows_for(c)), default=10)
-    name_w = min(max(name_w, 8), 40)
+    # Đo bề rộng cột trên CHÍNH những chuỗi sẽ in ra (kể cả NO_DATA). Trước đây
+    # chỉ đo tên các chất CÓ dữ liệu, nên một mã CAS không tra ra là NO_DATA (24
+    # ký tự) tràn cột và đẩy lệch "Phụ lục"/"Trạng thái" của đúng dòng đó.
+    names = {c: name_of(c) for c in entries}
+    name_w = min(max(max((len(n) for n in names.values()), default=10), 8), 40)
     header = f"{'CAS':<14}{'Tên chất':<{name_w}}  {'Phụ lục':<8}  Trạng thái"
     print(header)
     print("-" * len(header))
     for cas in entries:
-        rows = rows_for(cas)
-        name = rows[0]["name_vn"][:name_w] if rows else "(không có trong dữ liệu)"
-        annex = highest_annex(cas)
         _, text = cas_status(cas)
-        print(f"{cas:<14}{name:<{name_w}}  {ANNEX_LABEL.get(annex, '—'):<8}  {text}")
+        print(f"{cas:<14}{names[cas][:name_w]:<{name_w}}  {ANNEX_LABEL.get(highest_annex(cas), '—'):<8}  {text}")
     print()
 
 
