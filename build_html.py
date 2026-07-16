@@ -228,9 +228,10 @@ function esc(s) {
 
 function detailFor(cas, note) {
   const rows = rowsFor(cas);
-  if (rows.length === 0) {
-    return `Không tìm thấy trong Phụ lục I-IV của NĐ 24/2026/NĐ-CP.\\n\\n${NOTE_GAP}`;
-  }
+  // Khong lap lai "khong tim thay": pill verdict, cot Ten chat, chip thong ke va
+  // tieu de the da noi roi. Chi giu ghi chu vung du lieu chua phu (thu duy nhat
+  // o day tra loi "vay can giay gi").
+  if (rows.length === 0) return `<p class="note">${esc(NOTE_GAP)}</p>`;
   let out = "";
   const seenAnnex = new Set();
   for (const r of rows) {

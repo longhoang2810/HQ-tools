@@ -10,6 +10,7 @@ from core import (
     EXEMPTIONS,
     EXEMPTIONS_WARNING,
     IMPORT_RULES,
+    NOTE_GAP,
     OBLIGATIONS,
     VERDICT,
     annexes_for,
@@ -226,12 +227,28 @@ def test_pl3_an_khoi_pl1_vi_da_mien_khai_bao():
 def test_import_rules_khong_be_dong_cung():
     # Trước đây IMPORT_RULES là chuỗi đã bẻ dòng + thụt lề -> HTML (pre-wrap) hiện
     # thụt lề giữa câu, xuống dòng loạn. Mỗi ý phải là MỘT dòng liền, để người
-    # render tự ngắt theo bề rộng của họ.
+    # render tự ngắt theo bề rộng của họ. NOTE_GAP dính đúng lỗi này (bẻ dòng cứng
+    # + thụt lề, mà .body đã bỏ pre-wrap) -> gộp luôn vào đây.
     for annex, bullets in IMPORT_RULES.items():
         assert isinstance(bullets, list), f"PL {annex}: phải là list gạch đầu dòng"
         for b in bullets:
             assert "\n" not in b, f"PL {annex}: gạch đầu dòng còn bẻ dòng cứng: {b[:40]}"
             assert b == b.strip(), f"PL {annex}: gạch đầu dòng thừa khoảng trắng"
+    assert "\n" not in NOTE_GAP and NOTE_GAP == NOTE_GAP.strip()
+
+
+def test_unknown_khong_lap_lai_khong_tim_thay():
+    # Chất "Không rõ": pill, cột Tên chất, chip thống kê và tiêu đề thẻ đã nói
+    # "không có trong dữ liệu" -> chi tiết KHÔNG nhắc lại lần thứ 5, chỉ còn ghi chú
+    # vùng chưa phủ (Bảng 1 / hóa chất cấm) vì đó mới là thứ trả lời "cần giấy gì".
+    src = Path(__file__).with_name("build_html.py").read_text(encoding="utf-8")
+    assert "Không tìm thấy trong Phụ lục" not in src, "JS viết tay lại câu 'không tìm thấy'"
+    assert 'esc(NOTE_GAP)' in src, "chi tiết chất Không rõ phải lấy NOTE_GAP từ core.py"
+    # ...nhưng CLI (lookup.py in mỗi format_report, không có tiêu đề thẻ) vẫn phải
+    # tự nói tra ra gì, nếu không người dùng chỉ thấy ghi chú trống không.
+    rep = format_report("000-00-0")
+    assert rep.startswith("CAS 000-00-0: không có trong dữ liệu")
+    assert "Bảng 1" in rep
 
 
 if __name__ == "__main__":
@@ -247,6 +264,7 @@ if __name__ == "__main__":
     test_html_khong_lech_khoi_core()
     test_pl3_an_khoi_pl1_vi_da_mien_khai_bao()
     test_import_rules_khong_be_dong_cung()
+    test_unknown_khong_lap_lai_khong_tim_thay()
     test_khong_con_noi_dung_ho_so_trinh_tu_thu_tuc()
     test_decree_cas_errata_corrected()
     test_exemptions_cover_dieu_21_4_and_product_declaration()

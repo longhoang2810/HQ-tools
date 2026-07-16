@@ -180,11 +180,13 @@ EXEMPTIONS_WARNING = (
     "nghiệm ≤1mg (khoản 7), hoặc XNK tại chỗ (khoản 8)."
 )
 
-NOTE_GAP = """Lưu ý: bộ dữ liệu này trích từ NĐ 24/2026 (Phụ lục I-IV) — KHÔNG
-  bao trùm danh mục "hóa chất cấm" (Mục 4 NĐ 26) hay "Hóa chất Bảng 1" của
-  Công ước vũ khí hóa học, vì hai văn bản này không liệt kê CAS cụ thể cho
-  nhóm đó (chỉ có Bảng 2, Bảng 3). Nếu hóa chất có thể là Bảng 1 hoặc hóa
-  chất cấm, kiểm tra thủ công NĐ 26 Điều 16-18 và Điều 3 Luật Hóa chất."""
+NOTE_GAP = (
+    'Không có trong dữ liệu KHÔNG có nghĩa là không cần giấy: bộ dữ liệu này trích từ '
+    'Phụ lục I-IV NĐ 24/2026, không bao trùm danh mục "hóa chất cấm" (Mục 4 NĐ 26) hay '
+    '"Hóa chất Bảng 1" của Công ước vũ khí hóa học — hai văn bản này không liệt kê CAS '
+    'cụ thể cho nhóm đó (chỉ có Bảng 2, Bảng 3). Kiểm tra thủ công NĐ 26 Điều 16-18 và '
+    'Điều 3 Luật Hóa chất.'
+)
 
 ANNEX_ORDER = ["III", "II", "I", "IV"]  # ưu tiên hiển thị mức kiểm soát cao nhất trước
 
@@ -263,8 +265,11 @@ def format_report(cas):
     rows = rows_for(cas)
     lines = []
     if not rows:
-        lines.append(f"Không tìm thấy CAS {cas} trong Phụ lục I-IV của NĐ 24/2026/NĐ-CP.")
-        lines.append(NOTE_GAP)
+        # CLI in báo cáo đứng một mình (lookup.py) nên phải tự nói tra ra gì; trang
+        # HTML thì tiêu đề thẻ đã ghi "— không có trong dữ liệu", không lặp lại.
+        lines.append(f"CAS {cas}: không có trong dữ liệu NĐ 24 (Phụ lục I-IV).")
+        lines.append("")
+        lines.append(textwrap.fill(NOTE_GAP, width=78))
         return "\n".join(lines)
     lines.append(f"CAS {cas}: {rows[0]['name_vn']} ({rows[0]['name_en']})\n")
     seen_annex = set()
