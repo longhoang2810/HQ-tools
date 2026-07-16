@@ -10,9 +10,11 @@ from core import (
     EXEMPTIONS,
     PENALTY_WARNING,
     IMPORT_RULES,
+    OTHER_OBLIGATIONS,
     OTHER_OBLIGATION_ANNEXES,
     VERDICT,
     annexes_for,
+    annex_labels,
     cas_status,
     extract_cas,
     format_report,
@@ -39,6 +41,7 @@ def test_known_chemicals():
 def test_highest_annex_prioritizes_permit_over_declaration():
     # Methanol la ca PL I lan PL III (Bang 2) -> phai uu tien canh bao PL III.
     assert highest_annex("67-56-1") == "III"
+    assert annex_labels("67-56-1") == "PL I, PL III, PL IV"
 
 
 def test_extract_cas_from_free_text():
@@ -54,11 +57,10 @@ def test_cas_status_annex_iii_always_needs_permit():
 
 
 def test_cas_status_non_annex_iii_flags_other_obligations():
-    # 106-99-0 = PL I/II/IV, khong PL III -> xanh nhung verdict phai noi con
-    # nghia vu khac, de "khong can Giay phep" khong bi doc thanh "khong phai lam gi".
-    # Nghia vu CU THE do khoi IMPORT_RULES cua PL II/IV noi -> khong tom tat lai.
+    # 106-99-0 = PL I/II/IV, khong PL III -> PL II van tao nghia vu khac;
+    # PL IV khong lien quan den verdict nhap khau.
     assert cas_status("106-99-0") == ("ok", "Không cần Giấy phép XNK — có nghĩa vụ khác")
-    assert set(OTHER_OBLIGATION_ANNEXES) == {"II", "IV"}
+    assert set(OTHER_OBLIGATION_ANNEXES) == {"II"}
 
 
 def test_cas_status_plain_green_when_no_other_obligation():
@@ -68,11 +70,10 @@ def test_cas_status_plain_green_when_no_other_obligation():
     assert cas_status(plain) == ("ok", "Không cần Giấy phép XNK")
 
 
-def test_annex_iv_multiple_thresholds_flagged():
-    # 624-83-9 co 2 nguong PL IV khac nhau (150 / 5.000) -> phai canh bao,
-    # khong duoc gop lai thanh mot.
+def test_annex_iv_storage_omitted_from_import_report():
+    # Nguong ton tru PL IV khong thuoc khau nhap khau va khong hien trong bao cao.
     rep = format_report("624-83-9")
-    assert "150" in rep and "5.000" in rep and "nhiều ngưỡng tồn trữ" in rep
+    assert "tồn trữ" not in rep and "Phụ lục IV" not in rep
 
 
 def test_nq19_thresholds_kept():
@@ -100,8 +101,8 @@ def test_moi_verdict_goi_dung_ten_giay():
     assert VERDICT["none"] == "Không cần Giấy phép XNK"
     r = norm_rules()
     assert "giấy phép xuất khẩu, nhập khẩu hóa chất cần kiểm soát đặc biệt" in r["III"]
-    assert "giấy chứng nhận đủ điều kiện sản xuất, kinh doanh hóa chất có điều kiện" in r["II"]
-    assert "kế hoạch phòng ngừa, ứng phó sự cố hóa chất" in r["IV"]
+    other = re.sub(r"\s+", " ", " ".join(OTHER_OBLIGATIONS)).lower()
+    assert "giấy chứng nhận đủ điều kiện sản xuất, kinh doanh hóa chất có điều kiện" in other
     assert "các trường hợp được miễn giấy phép xnk quy định tại điều 21" in r["III"]
 
 
@@ -118,12 +119,16 @@ def test_html_khong_lech_khoi_core():
     # nếu không nó sẽ mốc lại y như lần "Cần Giấy phép" cũ nằm ở dòng trợ giúp.
     assert "Cần Giấy phép" not in src, "chữ verdict viết tay trong build_html.py — dùng __VERDICT_PL3__"
     assert "__VERDICT_JSON__" in src and "VERDICT.pl3" in src
+    # Duyệt đúng các khóa thật của IMPORT_RULES; PL II đã chuyển xuống khối
+    # "Nghĩa vụ khác", hard-code II ở đây sẽ gọi undefined.map và làm nút Tra cứu chết.
+    assert "for (const annex of Object.keys(IMPORT_RULES))" in src
     # ...và artifact đã commit phải khớp core.py (chạy lại build_html.py nếu đỏ).
     html = Path(__file__).with_name("Tra cứu hóa chất NĐ24.html")
     if html.exists():
         page = html.read_text(encoding="utf-8")
         assert VERDICT["pl3"] in page, "HTML đã commit cũ hơn core.py — chạy python3 build_html.py"
         assert PENALTY_WARNING in page, "HTML cũ hơn core.py — chạy python3 build_html.py"
+        assert "Nghĩa vụ khác" in page
 
 
 def test_html_co_nut_vi_du_ngau_nhien():
@@ -134,12 +139,20 @@ def test_html_co_nut_vi_du_ngau_nhien():
     assert 'sample.map(row => `${row.name_vn} (CAS ${row.cas})`)' in src
 
 
+def test_html_can_deu_chu_thich_va_luu_y():
+    src = Path(__file__).with_name("build_html.py").read_text(encoding="utf-8")
+    assert "details.detail .body" in src and "text-align: justify" in src
+    assert ".exempt li" in src and ".exempt .warn-note" in src
+    assert ".instructions li" in src and ".note" in src
+
+
 def test_khong_con_noi_dung_ho_so_trinh_tu_thu_tuc():
     # PHAM VI: trang tra cuu "can giay gi" -> khong chua ho so/trinh tu/thu tuc cap,
     # tham quyen cap (phan cap NQ 19), hay khoi chuyen tiep Dieu 30.4 (mien XUAT
     # TRINH ho so GP SX-KD). Chan viec chung quay lai.
     blob = " ".join(
-        [" ".join(IMPORT_RULES[a]) for a in "I II III IV".split()]
+        [" ".join(IMPORT_RULES[a]) for a in "I III".split()]
+        + [" ".join(OTHER_OBLIGATIONS)]
         + [i for g in EXEMPTIONS for i in g["items"]]
         + [g["cite"] for g in EXEMPTIONS]
         + [PENALTY_WARNING]
@@ -175,13 +188,13 @@ def test_exemptions_cover_dieu_21_4_and_product_declaration():
 def test_congbo_is_not_a_customs_gate_pl2():
     # Điều 10.3: công bố mục đích sử dụng KHÔNG phải điều kiện thông quan và
     # doanh nghiệp CHỦ ĐỘNG thời điểm; điều kiện thông quan là khai báo NK
-    # (Điều 6). Bảng tóm tắt nay chỉ có pill -> IMPORT_RULES["II"] (hiện ngay dưới
-    # bảng) là nơi DUY NHẤT nói sự phân biệt này, nên phải nói đủ.
-    rule = norm_rules()["II"]
+    # (Điều 6). Nghĩa vụ Phụ lục II hiện ở khối "Nghĩa vụ khác" bên dưới mục miễn trừ.
+    rule = re.sub(r"\s+", " ", " ".join(OTHER_OBLIGATIONS)).lower()
     # cửa thông quan = khai báo (Điều 6), KHÔNG phải công bố
     assert "điều kiện thông quan là khai báo hóa chất nhập khẩu" in rule
     assert "điều 6" in rule
-    assert "công bố không phải điều kiện thông quan" in rule
+    assert "phản hồi khai báo mới được thông quan" in rule
+    assert "chương 28, 29" in rule
     assert "chủ động chọn thời điểm công bố" in rule
     assert "điều 10.3" in rule
     # ...và phải gọi đúng tên giấy cho khâu kinh doanh (Điều 10.2).
@@ -217,9 +230,9 @@ def test_pl3_an_khoi_pl1_vi_da_mien_khai_bao():
     # Phụ lục I chỉ nói về khai báo, nên với chất PL III nó vừa thừa vừa gây hiểu
     # nhầm "vẫn phải khai báo". 9 chất vừa PL I vừa PL III (Metanol, Toluene...).
     assert core.annexes_to_explain({"I", "III"}) == ["III"]
-    assert core.annexes_to_explain({"I", "III", "IV"}) == ["III", "IV"]
+    assert core.annexes_to_explain({"I", "III", "IV"}) == ["III"]
     assert core.annexes_to_explain({"I"}) == ["I"]          # không có III thì vẫn hiện
-    assert core.annexes_to_explain({"II", "III"}) == ["II", "III"]  # PL II giữ (giấy khác)
+    assert core.annexes_to_explain({"II", "III"}) == ["III"]  # PL II ở khối Nghĩa vụ khác
     rep = format_report("67-56-1")                          # Metanol = PL I + III + IV
     assert "Yêu cầu nhập khẩu (Phụ lục I)" not in rep
     assert "Yêu cầu nhập khẩu (Phụ lục III)" in rep
@@ -251,8 +264,7 @@ def test_bang_scan_thang_cot_khi_co_cas_khong_tra_ra():
         scan.print_summary(["108-88-3", "64-17-5", "75-09-2"])   # Toluene, Etanol, không có
     rows = [l for l in buf.getvalue().split("\n") if l and not l.startswith("-")][2:]
     assert len(rows) == 3
-    moc = [r.index("PL III") if "PL III" in r else r.index("PL I") if "PL I" in r else r.index("—")
-           for r in rows]
+    moc = [r.index(annex_labels(cas)) for r, cas in zip(rows, ["108-88-3", "64-17-5", "75-09-2"])]
     assert len(set(moc)) == 1, f"cột Phụ lục lệch giữa các dòng: {moc}"
 
 
@@ -287,7 +299,7 @@ if __name__ == "__main__":
     test_cas_status_annex_iii_always_needs_permit()
     test_cas_status_non_annex_iii_flags_other_obligations()
     test_cas_status_plain_green_when_no_other_obligation()
-    test_annex_iv_multiple_thresholds_flagged()
+    test_annex_iv_storage_omitted_from_import_report()
     test_nq19_thresholds_kept()
     test_moi_verdict_goi_dung_ten_giay()
     test_html_khong_lech_khoi_core()

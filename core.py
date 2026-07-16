@@ -32,11 +32,6 @@ IMPORT_RULES = {
         "Không phát sinh giấy phép riêng.",
         "Nếu thuộc chương 28/29 Danh mục HS: phải khai báo hóa chất nhập khẩu qua Cổng một cửa quốc gia trước thông quan, kèm hóa đơn thương mại và Phiếu an toàn hóa chất (Điều 6). Miễn khai báo nếu nhập dưới 10 kg (Điều 6.7).",
     ],
-    "II": [
-        "Nhập khẩu để KINH DOANH: phải có Giấy chứng nhận đủ điều kiện sản xuất, kinh doanh hóa chất có điều kiện (Điều 8, 9, 10.2).",
-        "Nhập khẩu để TỰ DÙNG: không cần Giấy chứng nhận, chỉ công bố mục đích sử dụng (Điều 10.3). Công bố KHÔNG phải điều kiện thông quan và không có thời hạn cứng — doanh nghiệp chủ động chọn thời điểm công bố.",
-        "Điều kiện thông quan là khai báo hóa chất nhập khẩu qua Cổng một cửa quốc gia (Điều 6), phải có phản hồi khai báo mới làm được thủ tục (Điều 6.3.c).",
-    ],
     "III": [
         "PHẢI CÓ: Giấy phép xuất khẩu, nhập khẩu hóa chất cần kiểm soát đặc biệt — đây là điều kiện thông quan (Điều 14.2).",
         "Đã được cấp Giấy phép nhập khẩu thì MIỄN khai báo hóa chất (Điều 6.7.a).",
@@ -45,12 +40,9 @@ IMPORT_RULES = {
         "Đưa vào SỬ DỤNG lần đầu, hoặc đổi mục đích đã công bố: phải công bố TRƯỚC 30 NGÀY — mốc này gắn với khâu SỬ DỤNG, không phải khâu nhập khẩu (Điều 15.1).",
         "Xuất khẩu tiền chất công nghiệp: cần thêm văn bản chấp thuận của Bộ Công an (Điều 14.6.d).",
     ],
-    "IV": [
-        "KHÔNG phải điều kiện nhập khẩu — đây là nghĩa vụ an toàn khi tồn trữ.",
-        "Tồn trữ tại một thời điểm vượt ngưỡng: phải có Kế hoạch phòng ngừa, ứng phó sự cố hóa chất được cơ quan có thẩm quyền phê duyệt, hoặc Biện pháp tự ban hành (NĐ 24 Điều 3; NĐ 26 Điều 4.4).",
-        "Vẫn áp dụng song song yêu cầu của Phụ lục I/II/III nếu chất cũng thuộc các phụ lục đó.",
-    ],
 }
+
+IMPORT_ANNEXES = ("I", "III")
 
 # Ẩn khối phụ lục nào khi phụ lục khác đã có mặt. Điều 6.7.a: hóa chất KSĐB đã
 # được cấp Giấy phép nhập khẩu thì MIỄN khai báo -> với chất Phụ lục III, khối
@@ -62,7 +54,7 @@ SUPPRESS_ANNEX = {"III": ["I"]}
 def annexes_to_explain(present):
     """Các phụ lục cần in phần 'Yêu cầu nhập khẩu', theo thứ tự, đã bỏ khối bị ẩn."""
     hidden = {h for a in present for h in SUPPRESS_ANNEX.get(a, [])}
-    return [a for a in ["I", "II", "III", "IV"] if a in present and a not in hidden]
+    return [a for a in IMPORT_ANNEXES if a in present and a not in hidden]
 
 # Bảng tóm tắt chỉ hiện verdict (pill). KHÔNG còn cờ tóm tắt kèm mỗi dòng: nội
 # dung của chúng lặp lại y nguyên IMPORT_RULES, vốn đã hiện ngay dưới bảng cho
@@ -81,7 +73,15 @@ VERDICT = {
 # Phụ lục làm verdict "xanh" thành "xanh nhưng còn nghĩa vụ khác" — để không bị
 # đọc thành "không phải làm gì". Chỉ dùng để CHỌN CHỮ VERDICT; nghĩa vụ cụ thể do
 # khối IMPORT_RULES của chính phụ lục đó nói, không tóm tắt lại lần nữa ở cuối.
-OTHER_OBLIGATION_ANNEXES = ("II", "IV")
+OTHER_OBLIGATION_ANNEXES = ("II",)
+
+# Nghĩa vụ Phụ lục II không phải Giấy phép XNK. Hiển thị một lần ở cuối mục
+# miễn trừ thay vì lặp lại trong chi tiết từng CAS.
+OTHER_OBLIGATIONS = [
+    "Nhập khẩu để KINH DOANH: phải có Giấy chứng nhận đủ điều kiện sản xuất, kinh doanh hóa chất có điều kiện (Điều 8, 9, 10.2).",
+    "Nhập khẩu để TỰ DÙNG: không cần Giấy chứng nhận, chỉ công bố mục đích sử dụng (Điều 10.3). Công bố KHÔNG phải điều kiện thông quan và không có thời hạn cứng — doanh nghiệp chủ động chọn thời điểm công bố.",
+    "Điều kiện thông quan là khai báo hóa chất nhập khẩu qua Cổng một cửa quốc gia (Điều 6), phải có phản hồi khai báo mới được thông quan (Điều 6.3.c) đối với hóa chất thuộc chương 28, 29.",
+]
 
 # Nguồn duy nhất cho mục "Các trường hợp được miễn trừ" — dùng chung cho
 # CLI (lookup.py/scan.py) và trang HTML (build_html.py) để tránh lệch nội
@@ -178,15 +178,11 @@ PENALTY_WARNING = (
 )
 
 ANNEX_ORDER = ["III", "II", "I", "IV"]  # ưu tiên hiển thị mức kiểm soát cao nhất trước
+ANNEX_DISPLAY_ORDER = ["I", "II", "III", "IV"]
 
 
 def rows_for(cas):
     return [r for r in DATA if r["cas"] == cas]
-
-
-def _kg(threshold):
-    """'5.000' -> 5000, '150 (net)' -> 150. Dùng để so sánh ngưỡng theo số."""
-    return int(re.sub(r"\D", "", threshold.split("(")[0]))
 
 
 def extract_cas(text):
@@ -201,6 +197,12 @@ def extract_cas(text):
 
 def annexes_for(cas):
     return {r["annex"] for r in rows_for(cas)}
+
+
+def annex_labels(cas):
+    """Liệt kê đầy đủ phụ lục của CAS theo thứ tự I-IV để hiển thị trong bảng."""
+    present = annexes_for(cas)
+    return ", ".join(f"PL {a}" for a in ANNEX_DISPLAY_ORDER if a in present) or "—"
 
 
 def highest_annex(cas):
@@ -229,8 +231,7 @@ def cas_status(cas):
     if "III" in present:
         return ("warn", VERDICT["pl3"])
     # Không thuộc PL III: không cần Giấy phép XNK, nhưng còn nghĩa vụ Phụ lục II
-    # (Giấy chứng nhận/công bố) và/hoặc IV (KH ứng phó sự cố) -> verdict phải nói
-    # "còn nghĩa vụ khác"; chi tiết để khối IMPORT_RULES của phụ lục đó nói.
+    # (Giấy chứng nhận/công bố) -> verdict phải nói "còn nghĩa vụ khác".
     if any(a in present for a in OTHER_OBLIGATION_ANNEXES):
         return ("ok", VERDICT["other_obligation"])
     return ("ok", VERDICT["none"])
@@ -246,6 +247,8 @@ def format_exemptions():
             lines.append(f"  - {item}")
         lines.append("")
     lines.append(textwrap.fill(PENALTY_WARNING, width=78))
+    lines.extend(["", "NGHĨA VỤ KHÁC", ""])
+    lines.extend(f"  - {item}" for item in OTHER_OBLIGATIONS)
     return "\n".join(lines)
 
 
@@ -258,25 +261,14 @@ def format_report(cas):
         return f"CAS {cas}: không có trong dữ liệu NĐ 24 (Phụ lục I-IV)."
     lines.append(f"CAS {cas}: {rows[0]['name_vn']} ({rows[0]['name_en']})\n")
     seen_annex = set()
-    for r in rows:
+    import_rows = [r for r in rows if r["annex"] in IMPORT_ANNEXES]
+    for r in import_rows:
         lines.append(f"- {r['category']}")
-        if "threshold_kg" in r:
-            lines.append(f"  Ngưỡng khối lượng tồn trữ: {r['threshold_kg']} kg")
         seen_annex.add(r["annex"])
-    # Một chất có thể được liệt kê ở Phụ lục IV với nhiều ngưỡng tồn trữ khác
-    # nhau tùy phân loại (hóa chất KSĐB / hóa chất cấm). Dữ liệu không mang nhãn
-    # phân loại theo từng ngưỡng -> cảnh báo thay vì đoán.
-    iv_thr = {r["threshold_kg"] for r in rows if r["annex"] == "IV" and "threshold_kg" in r}
-    if len(iv_thr) > 1:
-        ordered = sorted(iv_thr, key=_kg)
-        lines.append(
-            f"  ⚠ Chất này có nhiều ngưỡng tồn trữ Phụ lục IV khác nhau "
-            f"({', '.join(ordered)} kg) tùy phân loại (hóa chất cần kiểm soát "
-            f"đặc biệt / hóa chất cấm) — xác định đúng phân loại để áp ngưỡng "
-            f"phù hợp; nếu chưa rõ, ngưỡng thấp nhất ({ordered[0]} kg) là mức "
-            f"thận trọng."
-        )
     lines.append("")
+    if not import_rows:
+        lines.append("Không phát sinh yêu cầu nhập khẩu riêng.")
+        return "\n".join(lines)
     for annex in annexes_to_explain(seen_annex):
         lines.append(f"== Yêu cầu nhập khẩu (Phụ lục {annex}) ==")
         for bullet in IMPORT_RULES[annex]:

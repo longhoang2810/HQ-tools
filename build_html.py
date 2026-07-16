@@ -21,6 +21,7 @@ IMPORT_RULES_JSON = json.dumps(core.IMPORT_RULES, ensure_ascii=False)
 OTHER_OBLIGATION_ANNEXES_JSON = json.dumps(core.OTHER_OBLIGATION_ANNEXES, ensure_ascii=False)
 VERDICT_JSON = json.dumps(core.VERDICT, ensure_ascii=False)
 SUPPRESS_ANNEX_JSON = json.dumps(core.SUPPRESS_ANNEX, ensure_ascii=False)
+ANNEX_DISPLAY_ORDER_JSON = json.dumps(core.ANNEX_DISPLAY_ORDER, ensure_ascii=False)
 
 
 def esc(s):
@@ -35,6 +36,8 @@ def exemptions_html():
             parts.append(f'<p class="lead">{esc(group["lead"])}</p>')
         parts.append("<ul>" + "".join(f"<li>{esc(item)}</li>" for item in group["items"]) + "</ul>")
     parts.append(f'<div class="warn-note">{esc(core.PENALTY_WARNING)}</div>')
+    parts.append('<h2>Nghĩa vụ khác</h2>')
+    parts.append("<ul>" + "".join(f"<li>{esc(item)}</li>" for item in core.OTHER_OBLIGATIONS) + "</ul>")
     return "\n  ".join(parts)
 
 
@@ -66,7 +69,7 @@ HTML = """<!doctype html>
   .instructions { display: flex; gap: 12px; align-items: flex-start; }
   .instructions .icon { font-size: 1.4rem; line-height: 1; }
   .instructions ol { margin: 8px 0 0; padding-left: 20px; }
-  .instructions li { margin-bottom: 4px; }
+  .instructions li { margin-bottom: 4px; text-align: justify; }
   .instructions h2 { margin: 0; font-size: 1.05rem; }
 
   .input-row { display: flex; gap: 12px; align-items: stretch; }
@@ -106,7 +109,7 @@ HTML = """<!doctype html>
   details.detail summary::-webkit-details-marker { display: none; }
   details.detail summary::before { content: "▸"; color: var(--muted); transition: transform .12s; }
   details.detail[open] summary::before { transform: rotate(90deg); }
-  details.detail .body { padding: 2px 16px 16px; font-size: 0.93rem; color: #333; border-top: 1px solid var(--line); margin-top: 4px; padding-top: 12px; }
+  details.detail .body { padding: 2px 16px 16px; font-size: 0.93rem; color: #333; border-top: 1px solid var(--line); margin-top: 4px; padding-top: 12px; text-align: justify; }
   details.detail .cats { white-space: pre-wrap; color: var(--muted); font-size: 0.9rem; }
   details.detail h4 { margin: 14px 0 6px; font-size: 0.9rem; color: var(--blue-dark); }
   details.detail ul.rules { margin: 0; padding-left: 20px; }
@@ -115,12 +118,13 @@ HTML = """<!doctype html>
   .exempt h2 { font-size: 1.1rem; margin: 0 0 4px; }
   .exempt h3 { font-size: 0.95rem; margin: 16px 0 6px; color: var(--blue-dark); }
   .exempt ul { margin: 4px 0 0; padding-left: 20px; }
-  .exempt li { margin-bottom: 4px; }
+  .exempt li { margin-bottom: 4px; text-align: justify; }
+  .exempt .lead, .exempt .warn-note { text-align: justify; }
   .exempt .warn-note { background: var(--red-bg); border: 1px solid var(--red-line); border-radius: 8px; padding: 10px 14px; margin-top: 14px; color: var(--red-ink); font-size: 0.93rem; }
   .exempt .cite { color: var(--muted); font-size: 0.85rem; }
   .exempt .lead { font-weight: 600; margin: 6px 0 4px; }
 
-  .note { color: var(--muted); font-size: 0.88rem; }
+  .note { color: var(--muted); font-size: 0.88rem; text-align: justify; }
   footer { text-align: center; color: var(--muted); font-size: 0.82rem; margin-top: 30px; }
 
   @media print {
@@ -178,6 +182,7 @@ const IMPORT_RULES = __IMPORT_RULES_JSON__;
 const OTHER_OBLIGATION_ANNEXES = __OTHER_OBLIGATION_ANNEXES_JSON__;
 const VERDICT = __VERDICT_JSON__;
 const SUPPRESS_ANNEX = __SUPPRESS_ANNEX_JSON__;
+const ANNEX_DISPLAY_ORDER = __ANNEX_DISPLAY_ORDER_JSON__;
 
 const ANNEX_ORDER = ["III", "II", "I", "IV"];
 const ANNEX_LABEL = { "I": "PL I", "II": "PL II", "III": "PL III", "IV": "PL IV" };
@@ -192,6 +197,11 @@ function highestAnnex(cas) {
   const present = new Set(rowsFor(cas).map(r => r.annex));
   for (const a of ANNEX_ORDER) if (present.has(a)) return a;
   return null;
+}
+
+function annexLabels(cas) {
+  const present = new Set(rowsFor(cas).map(r => r.annex));
+  return ANNEX_DISPLAY_ORDER.filter(a => present.has(a)).map(a => ANNEX_LABEL[a]).join(", ") || "—";
 }
 
 // Doi xung voi extract_cas() trong core.py.
@@ -211,8 +221,8 @@ function casStatus(cas) {
   if (!rows.length) return { badge: "unknown", text: VERDICT.unknown };
   const present = new Set(rows.map(r => r.annex));
   if (present.has("III")) return { badge: "warn", text: VERDICT.pl3 };
-  // Khong thuoc PL III: khong can Giay phep XNK nhung con nghia vu PL II/IV ->
-  // verdict phai noi "con nghia vu khac"; chi tiet de khoi IMPORT_RULES noi.
+  // Khong thuoc PL III: khong can Giay phep XNK nhung con nghia vu PL II ->
+  // verdict phai noi "con nghia vu khac"; PL IV khong thuoc khau XNK.
   if (OTHER_OBLIGATION_ANNEXES.some(a => present.has(a))) {
     return { badge: "ok", text: VERDICT.other_obligation };
   }
@@ -228,23 +238,17 @@ function detailFor(cas) {
   const rows = rowsFor(cas);
   let out = "";
   const seenAnnex = new Set();
-  for (const r of rows) {
+  const importRows = rows.filter(r => ["I", "II", "III"].includes(r.annex));
+  for (const r of importRows) {
     out += `- ${r.category}\\n`;
-    if (r.threshold_kg) out += `  Ngưỡng khối lượng tồn trữ: ${r.threshold_kg} kg\\n`;
     seenAnnex.add(r.annex);
   }
-  // Đối xứng với cảnh báo nhiều ngưỡng PL IV trong format_report() của core.py.
-  const ivThr = [...new Set(rows.filter(r => r.annex === "IV" && r.threshold_kg).map(r => r.threshold_kg))];
-  if (ivThr.length > 1) {
-    const kg = t => parseInt(t.split("(")[0].replace(/\\D/g, ""), 10);
-    ivThr.sort((a, b) => kg(a) - kg(b));
-    out += `  ⚠ Chất này có nhiều ngưỡng tồn trữ Phụ lục IV khác nhau (${ivThr.join(", ")} kg) tùy phân loại (hóa chất cần kiểm soát đặc biệt / hóa chất cấm) — xác định đúng phân loại để áp ngưỡng phù hợp; nếu chưa rõ, ngưỡng thấp nhất (${ivThr[0]} kg) là mức thận trọng.\\n`;
-  }
+  if (!importRows.length) return `<div class="cats">Không phát sinh yêu cầu nhập khẩu riêng.</div>`;
   let html = `<div class="cats">${esc(out.trim())}</div>`;
   // Cùng quy tắc ẩn khối với core.annexes_to_explain (SUPPRESS_ANNEX nhúng từ core.py).
   const hidden = new Set();
   for (const a of seenAnnex) for (const h of (SUPPRESS_ANNEX[a] || [])) hidden.add(h);
-  for (const annex of ["I", "II", "III", "IV"]) {
+  for (const annex of Object.keys(IMPORT_RULES)) {
     if (!seenAnnex.has(annex) || hidden.has(annex)) continue;
     const items = IMPORT_RULES[annex].map(b => `<li>${esc(b)}</li>`).join("");
     html += `<h4>Yêu cầu nhập khẩu (Phụ lục ${annex})</h4><ul class="rules">${items}</ul>`;
@@ -281,10 +285,9 @@ function run() {
     <div class="table-wrap"><table><tr><th>CAS</th><th>Tên chất</th><th>Phụ lục</th><th>Trạng thái</th></tr>`;
   entries.forEach((cas, i) => {
     const rows = rowsFor(cas);
-    const annex = highestAnnex(cas);
     const name = rows.length ? rows[0].name_vn : "(không có trong dữ liệu)";
     const { badge, text: statusText } = statuses[i];
-    table += `<tr class="${badge}"><td class="cas">${esc(cas)}</td><td>${esc(name)}</td><td>${annex ? ANNEX_LABEL[annex] : "—"}</td><td><span class="pill ${badge}">${esc(statusText)}</span></td></tr>`;
+    table += `<tr class="${badge}"><td class="cas">${esc(cas)}</td><td>${esc(name)}</td><td>${esc(annexLabels(cas))}</td><td><span class="pill ${badge}">${esc(statusText)}</span></td></tr>`;
   });
   table += "</table></div>";
 
@@ -344,6 +347,7 @@ out = (
     .replace("__OTHER_OBLIGATION_ANNEXES_JSON__", OTHER_OBLIGATION_ANNEXES_JSON)
     .replace("__VERDICT_JSON__", VERDICT_JSON)
     .replace("__SUPPRESS_ANNEX_JSON__", SUPPRESS_ANNEX_JSON)
+    .replace("__ANNEX_DISPLAY_ORDER_JSON__", ANNEX_DISPLAY_ORDER_JSON)
     .replace("__VERDICT_PL3__", core.VERDICT["pl3"])
 )
 Path(__file__).parent.joinpath("Tra cứu hóa chất NĐ24.html").write_text(out, encoding="utf-8")

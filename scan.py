@@ -17,15 +17,14 @@ import sys
 from pathlib import Path
 
 from core import (
+    annex_labels,
     cas_status,
     extract_cas,
     format_exemptions,
     format_report,
-    highest_annex,
     rows_for,
 )
 
-ANNEX_LABEL = {"I": "PL I", "II": "PL II", "III": "PL III", "IV": "PL IV", None: "—"}
 NO_DATA = "(không có trong dữ liệu)"
 
 
@@ -51,13 +50,15 @@ def print_summary(entries):
     # chỉ đo tên các chất CÓ dữ liệu, nên một mã CAS không tra ra là NO_DATA (24
     # ký tự) tràn cột và đẩy lệch "Phụ lục"/"Trạng thái" của đúng dòng đó.
     names = {c: name_of(c) for c in entries}
+    annexes = {c: annex_labels(c) for c in entries}
     name_w = min(max(max((len(n) for n in names.values()), default=10), 8), 40)
-    header = f"{'CAS':<14}{'Tên chất':<{name_w}}  {'Phụ lục':<8}  Trạng thái"
+    annex_w = max(max((len(a) for a in annexes.values()), default=8), 8)
+    header = f"{'CAS':<14}{'Tên chất':<{name_w}}  {'Phụ lục':<{annex_w}}  Trạng thái"
     print(header)
     print("-" * len(header))
     for cas in entries:
         _, text = cas_status(cas)
-        print(f"{cas:<14}{names[cas][:name_w]:<{name_w}}  {ANNEX_LABEL.get(highest_annex(cas), '—'):<8}  {text}")
+        print(f"{cas:<14}{names[cas][:name_w]:<{name_w}}  {annexes[cas]:<{annex_w}}  {text}")
     print()
 
 
