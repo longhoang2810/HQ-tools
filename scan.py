@@ -17,7 +17,6 @@ import sys
 from pathlib import Path
 
 from core import (
-    SHORT_FLAG,
     cas_status,
     extract_cas,
     format_exemptions,
@@ -53,9 +52,6 @@ def print_summary(entries):
         annex = highest_annex(cas)
         _, text, _ = cas_status(cas)
         print(f"{cas:<14}{name:<{name_w}}  {ANNEX_LABEL.get(annex, '—'):<8}  {text}")
-        flag = SHORT_FLAG.get(annex)
-        if flag:
-            print(f"{'':<14}└─ {flag}")
     print()
 
 

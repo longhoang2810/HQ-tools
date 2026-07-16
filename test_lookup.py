@@ -1,5 +1,6 @@
 """Smallest possible regression check: known CAS -> known annex(es), and
 that scanning a pasted DN description pulls every CAS out of free text."""
+import re
 from pathlib import Path
 
 from core import (
@@ -8,7 +9,6 @@ from core import (
     EXEMPTIONS_WARNING,
     IMPORT_RULES,
     OBLIGATIONS,
-    SHORT_FLAG,
     VERDICT,
     annexes_for,
     cas_status,
@@ -16,6 +16,13 @@ from core import (
     format_report,
     highest_annex,
 )
+
+
+def norm_rules():
+    """IMPORT_RULES là chuỗi nhiều dòng -> cụm từ hay bị NGẮT QUA DÒNG, khiến
+    `assert "x y" in rule` đỏ oan (đã dính 3 lần trong lúc refactor). Chuẩn hóa
+    khoảng trắng + hạ chữ thường rồi mới so."""
+    return {k: re.sub(r"\s+", " ", v).lower() for k, v in IMPORT_RULES.items()}
 
 
 def test_known_chemicals():
@@ -89,13 +96,16 @@ def test_nq19_thresholds_kept():
 
 def test_moi_verdict_goi_dung_ten_giay():
     # Nguyen tac: cong cu tra loi "chat nay CAN GIAY GI" -> moi cho hien thi phai
-    # goi dung ten giay, khong dung chu "Giay phep" trong nghia.
-    assert "Giấy phép xuất khẩu, nhập khẩu hóa chất cần kiểm soát đặc biệt" in SHORT_FLAG["III"]
-    assert "Giấy chứng nhận đủ điều kiện SX-KD hóa chất có điều kiện" in SHORT_FLAG["II"]
-    assert "Không cần giấy phép nào" in SHORT_FLAG["I"]      # PL I khong co giay phep
-    assert "Không liên quan Giấy phép XNK" in SHORT_FLAG["IV"]
+    # goi dung ten giay, khong dung chu "Giay phep" trong nghia. Bang tom tat chi
+    # con pill (khong con SHORT_FLAG) -> ten giay duoc khoa o VERDICT va IMPORT_RULES.
+    assert VERDICT["pl3"] == "Cần Giấy phép XNK hóa chất KSĐB"
+    assert VERDICT["none"] == "Không cần Giấy phép XNK"
+    r = norm_rules()
+    assert "giấy phép xuất khẩu, nhập khẩu hóa chất cần kiểm soát đặc biệt" in r["III"]
+    assert "giấy chứng nhận đủ điều kiện sản xuất, kinh doanh hóa chất có điều kiện" in r["II"]
+    assert "kế hoạch phòng ngừa, ứng phó sự cố hóa chất" in r["IV"]
     # PL III phai neu ro GP XNK khac GP san xuat, kinh doanh KSDB.
-    assert "Giấy phép sản xuất, kinh doanh hóa chất KSĐB" in IMPORT_RULES["III"]
+    assert "giấy phép sản xuất, kinh doanh hóa chất ksđb" in r["III"]
 
 
 def test_html_khong_lech_khoi_core():
@@ -124,7 +134,6 @@ def test_khong_con_noi_dung_ho_so_trinh_tu_thu_tuc():
     # TRINH ho so GP SX-KD). Chan viec chung quay lai.
     blob = " ".join(
         [IMPORT_RULES[a] for a in "I II III IV".split()]
-        + [SHORT_FLAG[a] for a in "I II III IV".split()]
         + [i for g in EXEMPTIONS for i in g["items"]]
         + [g["cite"] for g in EXEMPTIONS]
         + [EXEMPTIONS_WARNING]
@@ -150,12 +159,6 @@ def test_decree_cas_errata_corrected():
     assert annexes_for("7746-08-4") == set() and annexes_for("7446-08-4") == {"II"}    # Selen dioxit
 
 
-def test_short_flag_surfaces_dieu10_for_pl2():
-    # SHORT_FLAG (trước là dead code) giờ được đưa lên bảng tóm tắt — cờ PL II
-    # phải nhắc nghĩa vụ công bố / Giấy chứng nhận theo Điều 10.
-    assert "Điều 10" in SHORT_FLAG["II"] and "công bố" in SHORT_FLAG["II"]
-
-
 def test_exemptions_cover_dieu_21_4_and_product_declaration():
     cites = " | ".join(g["cite"] for g in EXEMPTIONS)
     assert "khoản 4" in cites  # san chiết, pha chế nội bộ (Điều 21.4)
@@ -165,12 +168,16 @@ def test_exemptions_cover_dieu_21_4_and_product_declaration():
 
 def test_congbo_is_not_a_customs_gate_pl2():
     # Điều 10.3: công bố mục đích sử dụng KHÔNG phải điều kiện thông quan và
-    # doanh nghiệp chủ động thời điểm; điều kiện thông quan là khai báo NK
-    # (Điều 6). Cả IMPORT_RULES lẫn SHORT_FLAG phải nói rõ sự phân biệt này.
-    rule = IMPORT_RULES["II"]
-    assert "Điều 6" in rule and "trước khi thông quan" in rule
-    assert "không phải cửa" in rule or "KHÔNG đặt việc công bố làm điều kiện thông quan" in rule
-    assert "CHỦ ĐỘNG" in SHORT_FLAG["II"] and "Điều 6" in SHORT_FLAG["II"]
+    # doanh nghiệp CHỦ ĐỘNG thời điểm; điều kiện thông quan là khai báo NK
+    # (Điều 6). Bảng tóm tắt nay chỉ có pill -> IMPORT_RULES["II"] (hiện ngay dưới
+    # bảng) là nơi DUY NHẤT nói sự phân biệt này, nên phải nói đủ.
+    rule = norm_rules()["II"]
+    assert "điều 6" in rule and "trước khi thông quan" in rule
+    assert "không đặt việc công bố làm điều kiện thông quan" in rule
+    assert "chủ động chọn thời điểm công bố" in rule
+    assert "điều 10.3" in rule
+    # ...và phải gọi đúng tên giấy cho khâu kinh doanh (Điều 10.2).
+    assert "giấy chứng nhận đủ điều kiện" in rule and "10.2" in rule
 
 
 def test_pl3_splits_import_congbo_from_use_deadline():
@@ -206,7 +213,6 @@ if __name__ == "__main__":
     test_html_khong_lech_khoi_core()
     test_khong_con_noi_dung_ho_so_trinh_tu_thu_tuc()
     test_decree_cas_errata_corrected()
-    test_short_flag_surfaces_dieu10_for_pl2()
     test_exemptions_cover_dieu_21_4_and_product_declaration()
     test_congbo_is_not_a_customs_gate_pl2()
     test_pl3_splits_import_congbo_from_use_deadline()

@@ -4,7 +4,7 @@ Nhúng luôn data/nd24_chemicals.json + toàn bộ quy tắc từ core.py vào f
 HTML nên chỉ cần double-click mở bằng trình duyệt là chạy được, kể cả
 không có mạng.
 
-Lấy IMPORT_RULES/SHORT_FLAG/EXEMPTIONS trực tiếp từ core.py (json.dumps)
+Lấy IMPORT_RULES/EXEMPTIONS trực tiếp từ core.py (json.dumps)
 thay vì gõ tay lại trong JS — tránh HTML và CLI lệch nội dung với nhau
 (đây chính là nguyên nhân Điều 21 bị thiếu ở bản trước).
 
@@ -19,13 +19,8 @@ import core
 DATA_JSON = json.dumps(core.DATA, ensure_ascii=False)
 IMPORT_RULES_JSON = json.dumps(core.IMPORT_RULES, ensure_ascii=False)
 NOTE_GAP_JSON = json.dumps(core.NOTE_GAP, ensure_ascii=False)
-SHORT_FLAG_JSON = json.dumps(core.SHORT_FLAG, ensure_ascii=False)
 OBLIGATIONS_JSON = json.dumps(core.OBLIGATIONS, ensure_ascii=False)
 VERDICT_JSON = json.dumps(core.VERDICT, ensure_ascii=False)
-
-# Tính sẵn trạng thái chuyển tiếp (Điều 30.4/30.5) cho từng CAS Phụ lục III từ
-# core.py rồi nhúng vào HTML — KHÔNG chép lại logic/nội dung tiếng Việt sang JS,
-# tránh HTML lệch với CLI (đúng nguyên tắc single-source ở docstring trên).
 
 
 def esc(s):
@@ -103,7 +98,6 @@ HTML = """<!doctype html>
   .pill.warn { background: var(--red-ink); color: #fff; }
   .pill.ok { background: #2f7d3c; color: #fff; }
   .pill.unknown { background: #9a7a12; color: #fff; }
-  td .flag { display: block; font-size: 0.78rem; color: var(--muted); margin-top: 6px; line-height: 1.35; max-width: 40ch; }
 
   details.detail { border: 1px solid var(--line); border-radius: 8px; margin-top: 10px; background: #fbfcfd; overflow: hidden; }
   details.detail[open] { border-color: #c9d3de; }
@@ -175,7 +169,6 @@ HTML = """<!doctype html>
 const DATA = __DATA_JSON__;
 const IMPORT_RULES = __IMPORT_RULES_JSON__;
 const NOTE_GAP = __NOTE_GAP_JSON__;
-const SHORT_FLAG = __SHORT_FLAG_JSON__;
 const OBLIGATIONS = __OBLIGATIONS_JSON__;
 const VERDICT = __VERDICT_JSON__;
 
@@ -287,8 +280,7 @@ function run() {
     const annex = highestAnnex(cas);
     const name = rows.length ? rows[0].name_vn : "(không có trong dữ liệu)";
     const { badge, text: statusText } = statuses[i];
-    const flag = annex ? (SHORT_FLAG[annex] || "") : "";
-    table += `<tr class="${badge}"><td class="cas">${esc(cas)}</td><td>${esc(name)}</td><td>${annex ? ANNEX_LABEL[annex] : "—"}</td><td><span class="pill ${badge}">${esc(statusText)}</span>${flag ? `<div class="flag">${esc(flag)}</div>` : ""}</td></tr>`;
+    table += `<tr class="${badge}"><td class="cas">${esc(cas)}</td><td>${esc(name)}</td><td>${annex ? ANNEX_LABEL[annex] : "—"}</td><td><span class="pill ${badge}">${esc(statusText)}</span></td></tr>`;
   });
   table += "</table></div>";
 
@@ -331,7 +323,6 @@ out = (
     .replace("__DATA_JSON__", DATA_JSON)
     .replace("__IMPORT_RULES_JSON__", IMPORT_RULES_JSON)
     .replace("__NOTE_GAP_JSON__", NOTE_GAP_JSON)
-    .replace("__SHORT_FLAG_JSON__", SHORT_FLAG_JSON)
     .replace("__OBLIGATIONS_JSON__", OBLIGATIONS_JSON)
     .replace("__VERDICT_JSON__", VERDICT_JSON)
     .replace("__VERDICT_PL3__", core.VERDICT["pl3"])

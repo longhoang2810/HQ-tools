@@ -74,15 +74,10 @@ IMPORT_RULES = {
   cũng thuộc các phụ lục đó.""",
 }
 
-# Cờ ngắn gọn cho bảng tóm tắt (dùng khi quét nhiều CAS cùng lúc).
-# Mỗi cờ phải gọi ĐÚNG TÊN loại giấy — không dùng chữ "Giấy phép" trống nghĩa.
-SHORT_FLAG = {
-    "I": "Không cần giấy phép nào — chỉ khai báo hóa chất nhập khẩu qua Cổng một cửa (Điều 6) nếu thuộc HS 28/29",
-    "II": "Không cần Giấy phép XNK. NK để kinh doanh: cần Giấy chứng nhận đủ điều kiện SX-KD hóa chất có điều kiện (Điều 10.2). NK để tự dùng: công bố mục đích sử dụng trên CSDL chuyên ngành — doanh nghiệp CHỦ ĐỘNG thời điểm, KHÔNG phải điều kiện thông quan (Điều 10.3). Bước bắt buộc trước thông quan là khai báo NK (Điều 6)",
-    "III": "⚠ BẮT BUỘC Giấy phép xuất khẩu, nhập khẩu hóa chất cần kiểm soát đặc biệt — điều kiện thông quan (Điều 14.2). Chỉ được miễn nếu rơi vào Điều 21: nồng độ dưới ngưỡng (khoản 2 — Nhóm 1 ≤1%, Nhóm 2 ≤5%), nằm trong sản phẩm hoàn chỉnh (khoản 6), thí nghiệm ≤1mg (khoản 7), hoặc XNK tại chỗ (khoản 8)",
-    "IV": "Không liên quan Giấy phép XNK — nghĩa vụ tồn trữ: cần Kế hoạch/Biện pháp ứng phó sự cố nếu vượt ngưỡng",
-}
-
+# Bảng tóm tắt chỉ hiện verdict (pill). KHÔNG còn cờ tóm tắt kèm mỗi dòng: nội
+# dung của chúng lặp lại y nguyên IMPORT_RULES, vốn đã hiện ngay dưới bảng cho
+# MỌI phụ lục mà chất thuộc về. Giữ hai nơi = hai nguồn phải đồng bộ tay.
+#
 # Chữ verdict — nguồn DUY NHẤT, dùng chung CLI và HTML (build_html.py nhúng qua
 # JSON). Từng lệch thật: JS hard-code "Cần Giấy phép" trong khi core.py đã đổi
 # thành tên đầy đủ -> trang HTML mất luôn phần "giấy gì". Đừng viết tay lại trong JS.
