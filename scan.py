@@ -50,7 +50,7 @@ def print_summary(entries):
         rows = rows_for(cas)
         name = rows[0]["name_vn"][:name_w] if rows else "(không có trong dữ liệu)"
         annex = highest_annex(cas)
-        _, text, _ = cas_status(cas)
+        _, text = cas_status(cas)
         print(f"{cas:<14}{name:<{name_w}}  {ANNEX_LABEL.get(annex, '—'):<8}  {text}")
     print()
 

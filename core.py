@@ -34,9 +34,8 @@ IMPORT_RULES = {
     ],
     "II": [
         "Nhập khẩu để KINH DOANH: phải có Giấy chứng nhận đủ điều kiện sản xuất, kinh doanh hóa chất có điều kiện (Điều 8, 9, 10.2).",
-        "Nhập khẩu để TỰ DÙNG: không cần Giấy chứng nhận; chỉ công bố mục đích sử dụng trên Cơ sở dữ liệu chuyên ngành hóa chất (Điều 10.3).",
-        "Việc công bố KHÔNG phải điều kiện thông quan và không có thời hạn cứng — doanh nghiệp chủ động chọn thời điểm công bố (Điều 10.3).",
-        "Điều kiện thông quan là khai báo hóa chất nhập khẩu qua Cổng một cửa quốc gia (Điều 6); phản hồi khai báo mới có giá trị pháp lý để làm thủ tục (Điều 6.3.c).",
+        "Nhập khẩu để TỰ DÙNG: không cần Giấy chứng nhận, chỉ công bố mục đích sử dụng (Điều 10.3). Công bố KHÔNG phải điều kiện thông quan và không có thời hạn cứng — doanh nghiệp chủ động chọn thời điểm công bố.",
+        "Điều kiện thông quan là khai báo hóa chất nhập khẩu qua Cổng một cửa quốc gia (Điều 6), phải có phản hồi khai báo mới làm được thủ tục (Điều 6.3.c).",
     ],
     "III": [
         "PHẢI CÓ: Giấy phép xuất khẩu, nhập khẩu hóa chất cần kiểm soát đặc biệt — đây là điều kiện thông quan (Điều 14.2).",
@@ -78,15 +77,12 @@ VERDICT = {
     "pl3": "Cần Giấy phép XNK hóa chất KSĐB",
     "other_obligation": "Không cần Giấy phép XNK — có nghĩa vụ khác",
     "none": "Không cần Giấy phép XNK",
-    "note_prefix": "Không cần Giấy phép XNK, nhưng có nghĩa vụ khác: ",
 }
 
-# Nghĩa vụ song song NGOÀI Giấy phép XNK (cho hóa chất KHÔNG thuộc PL III) —
-# để trạng thái "xanh" không bị đọc là "không phải làm gì". Dùng chung CLI/HTML.
-OBLIGATIONS = {
-    "II": "Phụ lục II — Giấy chứng nhận đủ điều kiện SX-KD hóa chất có điều kiện (nếu NK để kinh doanh) hoặc công bố mục đích sử dụng (nếu NK để tự dùng)",
-    "IV": "Phụ lục IV — Kế hoạch/Biện pháp ứng phó sự cố nếu tồn trữ vượt ngưỡng",
-}
+# Phụ lục làm verdict "xanh" thành "xanh nhưng còn nghĩa vụ khác" — để không bị
+# đọc thành "không phải làm gì". Chỉ dùng để CHỌN CHỮ VERDICT; nghĩa vụ cụ thể do
+# khối IMPORT_RULES của chính phụ lục đó nói, không tóm tắt lại lần nữa ở cuối.
+OTHER_OBLIGATION_ANNEXES = ("II", "IV")
 
 # Nguồn duy nhất cho mục "Các trường hợp được miễn trừ" — dùng chung cho
 # CLI (lookup.py/scan.py) và trang HTML (build_html.py) để tránh lệch nội
@@ -216,7 +212,7 @@ def highest_annex(cas):
 
 
 def cas_status(cas):
-    """Trạng thái hiển thị cho 1 CAS. Trả (badge, text, note) — badge in
+    """Trạng thái hiển thị cho 1 CAS. Trả (badge, text) — badge in
     {"ok","warn","unknown"}.
 
     ponytail: không tự nhận diện % hàm lượng từ mô tả (khai báo tự do dễ bị
@@ -227,17 +223,16 @@ def cas_status(cas):
     """
     rows = rows_for(cas)
     if not rows:
-        return ("unknown", VERDICT["unknown"], None)
+        return ("unknown", VERDICT["unknown"])
     present = annexes_for(cas)
     if "III" in present:
-        return ("warn", VERDICT["pl3"], None)
-    # Không thuộc PL III: không cần Giấy phép XNK, nhưng vẫn có thể có nghĩa vụ
-    # Phụ lục II (Giấy chứng nhận/công bố) và/hoặc Phụ lục IV (KH ứng phó sự cố)
-    # — nêu rõ để "xanh" không bị đọc là "không phải làm gì".
-    extra = [OBLIGATIONS[a] for a in ("II", "IV") if a in present]
-    if extra:
-        return ("ok", VERDICT["other_obligation"], VERDICT["note_prefix"] + "; ".join(extra) + ".")
-    return ("ok", VERDICT["none"], None)
+        return ("warn", VERDICT["pl3"])
+    # Không thuộc PL III: không cần Giấy phép XNK, nhưng còn nghĩa vụ Phụ lục II
+    # (Giấy chứng nhận/công bố) và/hoặc IV (KH ứng phó sự cố) -> verdict phải nói
+    # "còn nghĩa vụ khác"; chi tiết để khối IMPORT_RULES của phụ lục đó nói.
+    if any(a in present for a in OTHER_OBLIGATION_ANNEXES):
+        return ("ok", VERDICT["other_obligation"])
+    return ("ok", VERDICT["none"])
 
 
 def format_exemptions():

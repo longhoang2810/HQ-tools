@@ -18,7 +18,7 @@ import core
 
 DATA_JSON = json.dumps(core.DATA, ensure_ascii=False)
 IMPORT_RULES_JSON = json.dumps(core.IMPORT_RULES, ensure_ascii=False)
-OBLIGATIONS_JSON = json.dumps(core.OBLIGATIONS, ensure_ascii=False)
+OTHER_OBLIGATION_ANNEXES_JSON = json.dumps(core.OTHER_OBLIGATION_ANNEXES, ensure_ascii=False)
 VERDICT_JSON = json.dumps(core.VERDICT, ensure_ascii=False)
 SUPPRESS_ANNEX_JSON = json.dumps(core.SUPPRESS_ANNEX, ensure_ascii=False)
 
@@ -110,7 +110,6 @@ HTML = """<!doctype html>
   details.detail h4 { margin: 14px 0 6px; font-size: 0.9rem; color: var(--blue-dark); }
   details.detail ul.rules { margin: 0; padding-left: 20px; }
   details.detail ul.rules li { margin-bottom: 5px; text-align: left; }
-  details.detail p.obl { margin: 12px 0 0; padding: 8px 12px; background: var(--green-bg); border: 1px solid var(--green-line); border-radius: 6px; }
 
   .exempt h2 { font-size: 1.1rem; margin: 0 0 4px; }
   .exempt h3 { font-size: 0.95rem; margin: 16px 0 6px; color: var(--blue-dark); }
@@ -173,7 +172,7 @@ HTML = """<!doctype html>
 <script>
 const DATA = __DATA_JSON__;
 const IMPORT_RULES = __IMPORT_RULES_JSON__;
-const OBLIGATIONS = __OBLIGATIONS_JSON__;
+const OTHER_OBLIGATION_ANNEXES = __OTHER_OBLIGATION_ANNEXES_JSON__;
 const VERDICT = __VERDICT_JSON__;
 const SUPPRESS_ANNEX = __SUPPRESS_ANNEX_JSON__;
 
@@ -206,18 +205,15 @@ function extractCas(text) {
 // sai): hoa chat Phu luc III luon bao "Can Giay phep".
 function casStatus(cas) {
   const rows = rowsFor(cas);
-  if (!rows.length) return { badge: "unknown", text: VERDICT.unknown, note: null };
+  if (!rows.length) return { badge: "unknown", text: VERDICT.unknown };
   const present = new Set(rows.map(r => r.annex));
-  if (present.has("III")) return { badge: "warn", text: VERDICT.pl3, note: null };
-  // Không thuộc PL III: không cần Giấy phép XNK, nhưng nêu rõ nghĩa vụ PL II/IV
-  // để "xanh" không bị đọc là "không phải làm gì".
-  const extra = ["II", "IV"].filter(a => present.has(a)).map(a => OBLIGATIONS[a]);
-  if (extra.length) return {
-    badge: "ok",
-    text: VERDICT.other_obligation,
-    note: VERDICT.note_prefix + extra.join("; ") + ".",
-  };
-  return { badge: "ok", text: VERDICT.none, note: null };
+  if (present.has("III")) return { badge: "warn", text: VERDICT.pl3 };
+  // Khong thuoc PL III: khong can Giay phep XNK nhung con nghia vu PL II/IV ->
+  // verdict phai noi "con nghia vu khac"; chi tiet de khoi IMPORT_RULES noi.
+  if (OTHER_OBLIGATION_ANNEXES.some(a => present.has(a))) {
+    return { badge: "ok", text: VERDICT.other_obligation };
+  }
+  return { badge: "ok", text: VERDICT.none };
 }
 
 function esc(s) {
@@ -225,7 +221,7 @@ function esc(s) {
 }
 
 // Chi goi cho CAS CO trong du lieu — CAS khong co thi khong dung the chi tiet.
-function detailFor(cas, note) {
+function detailFor(cas) {
   const rows = rowsFor(cas);
   let out = "";
   const seenAnnex = new Set();
@@ -250,7 +246,6 @@ function detailFor(cas, note) {
     const items = IMPORT_RULES[annex].map(b => `<li>${esc(b)}</li>`).join("");
     html += `<h4>Yêu cầu nhập khẩu (Phụ lục ${annex})</h4><ul class="rules">${items}</ul>`;
   }
-  if (note) html += `<p class="obl">${esc(note)}</p>`;
   return html;
 }
 
@@ -297,11 +292,11 @@ function run() {
     // -> khong dung the chi tiet (bam ra rong thi con te hon la khong co).
     if (!rows.length) return;
     const annex = highestAnnex(cas);
-    const { badge, note } = statuses[i];
+    const { badge } = statuses[i];
     const title = `${cas} — ${rows[0].name_vn} (${rows[0].name_en})`;
     // Chi mo san chi tiet chat can chu y (do/vang); chat on thi thu gon.
     const open = badge === "ok" ? "" : " open";
-    details += `<details class="detail"${open}><summary><span class="pill ${badge}">${ANNEX_LABEL[annex]}</span> ${esc(title)}</summary><div class="body">${detailFor(cas, note)}</div></details>`;
+    details += `<details class="detail"${open}><summary><span class="pill ${badge}">${ANNEX_LABEL[annex]}</span> ${esc(title)}</summary><div class="body">${detailFor(cas)}</div></details>`;
   });
 
   resultsEl.innerHTML = table + details + "</div>";
@@ -329,7 +324,7 @@ out = (
     HTML.replace("__EXEMPTIONS_HTML__", exemptions_html())
     .replace("__DATA_JSON__", DATA_JSON)
     .replace("__IMPORT_RULES_JSON__", IMPORT_RULES_JSON)
-    .replace("__OBLIGATIONS_JSON__", OBLIGATIONS_JSON)
+    .replace("__OTHER_OBLIGATION_ANNEXES_JSON__", OTHER_OBLIGATION_ANNEXES_JSON)
     .replace("__VERDICT_JSON__", VERDICT_JSON)
     .replace("__SUPPRESS_ANNEX_JSON__", SUPPRESS_ANNEX_JSON)
     .replace("__VERDICT_PL3__", core.VERDICT["pl3"])

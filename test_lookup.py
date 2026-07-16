@@ -10,7 +10,7 @@ from core import (
     EXEMPTIONS,
     EXEMPTIONS_WARNING,
     IMPORT_RULES,
-    OBLIGATIONS,
+    OTHER_OBLIGATION_ANNEXES,
     VERDICT,
     annexes_for,
     cas_status,
@@ -50,31 +50,27 @@ def test_cas_status_annex_iii_always_needs_permit():
     # Khong tu nhan dien % nua -> hoa chat PL III luon bao can giay phep,
     # du thuc te co the duoc mien theo nong do (can doi chieu thu cong).
     # Verdict phai goi DUNG TEN giay, khong noi "Giay phep" trong nghia.
-    badge, text, note = cas_status("67-56-1")
-    assert badge == "warn" and text == "Cần Giấy phép XNK hóa chất KSĐB" and note is None
+    assert cas_status("67-56-1") == ("warn", "Cần Giấy phép XNK hóa chất KSĐB")
 
 
 def test_cas_status_non_annex_iii_flags_other_obligations():
-    # 106-99-0 = PL I/II/IV, khong PL III -> xanh nhung phai neu nghia vu PL II/IV
-    # de "khong can Giay phep" khong bi doc thanh "khong phai lam gi".
-    badge, text, note = cas_status("106-99-0")
-    assert badge == "ok"
-    assert text == "Không cần Giấy phép XNK — có nghĩa vụ khác"
-    assert note and "Phụ lục II" in note and "Phụ lục IV" in note
+    # 106-99-0 = PL I/II/IV, khong PL III -> xanh nhung verdict phai noi con
+    # nghia vu khac, de "khong can Giay phep" khong bi doc thanh "khong phai lam gi".
+    # Nghia vu CU THE do khoi IMPORT_RULES cua PL II/IV noi -> khong tom tat lai.
+    assert cas_status("106-99-0") == ("ok", "Không cần Giấy phép XNK — có nghĩa vụ khác")
+    assert set(OTHER_OBLIGATION_ANNEXES) == {"II", "IV"}
 
 
 def test_cas_status_plain_green_when_no_other_obligation():
-    # Chat chi thuoc PL I (khong PL II/III/IV) -> xanh thuan, note None.
+    # Chat chi thuoc PL I (khong PL II/III/IV) -> xanh thuan.
     plain = next((r["cas"] for r in DATA if annexes_for(r["cas"]) == {"I"}), None)
     assert plain is not None
-    badge, text, note = cas_status(plain)
-    assert badge == "ok" and text == "Không cần Giấy phép XNK" and note is None
+    assert cas_status(plain) == ("ok", "Không cần Giấy phép XNK")
 
 
 def test_annex_iv_multiple_thresholds_flagged():
     # 624-83-9 co 2 nguong PL IV khac nhau (150 / 5.000) -> phai canh bao,
-    # khong duoc gop lai thanh mot; OBLIGATIONS phai co du II/IV.
-    assert set(OBLIGATIONS) == {"II", "IV"}
+    # khong duoc gop lai thanh mot.
     rep = format_report("624-83-9")
     assert "150" in rep and "5.000" in rep and "nhiều ngưỡng tồn trữ" in rep
 
@@ -234,6 +230,18 @@ def test_import_rules_khong_be_dong_cung():
             assert b == b.strip(), f"PL {annex}: gạch đầu dòng thừa khoảng trắng"
 
 
+def test_khong_con_tong_ket_cuoi_chi_tiet():
+    # Đoạn tổng kết cuối (p.obl) chép lại y nguyên nghĩa vụ mà khối IMPORT_RULES
+    # của PL II/IV ngay trên đã nói -> hai nguồn phải đồng bộ tay, đúng cái bẫy
+    # đã làm HTML lệch core.py một lần. Bỏ hẳn; verdict pill giữ vai trò cảnh báo.
+    src = Path(__file__).with_name("build_html.py").read_text(encoding="utf-8")
+    for dead in ("p.obl", "note_prefix", "OBLIGATIONS[", "detailFor(cas, note)"):
+        assert dead not in src, f"tàn dư tổng kết cuối trong build_html.py: {dead}"
+    assert "note_prefix" not in VERDICT and not hasattr(core, "OBLIGATIONS")
+    # cas_status chỉ còn (badge, text) — không còn note để render.
+    assert len(cas_status("106-99-0")) == 2
+
+
 def test_unknown_khong_con_ghi_chu():
     # Chất không có trong dữ liệu: bảng đã nói đủ (cột Tên chất, pill trạng thái,
     # chip thống kê) -> trang KHÔNG dựng thẻ chi tiết, và không còn NOTE_GAP.
@@ -259,6 +267,7 @@ if __name__ == "__main__":
     test_html_khong_lech_khoi_core()
     test_pl3_an_khoi_pl1_vi_da_mien_khai_bao()
     test_import_rules_khong_be_dong_cung()
+    test_khong_con_tong_ket_cuoi_chi_tiet()
     test_unknown_khong_con_ghi_chu()
     test_khong_con_noi_dung_ho_so_trinh_tu_thu_tuc()
     test_decree_cas_errata_corrected()
