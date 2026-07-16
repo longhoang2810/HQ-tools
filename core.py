@@ -133,7 +133,7 @@ EXEMPTIONS = [
         "title": "4. Miễn trừ khác",
         "cite": "Điều 21, khoản 4 & 5",
         "items": [
-            "(Điều 21.4) San chiết, pha chế hóa chất nhằm phục vụ TRỰC TIẾP cho hoạt động sản xuất nội bộ của chính tổ chức, cá nhân thực hiện việc san chiết, pha chế: miễn cấp Giấy chứng nhận / Giấy phép sản xuất, kinh doanh.",
+            "(Điều 21.4) San chiết, pha chế hóa chất nhằm phục vụ TRỰC TIẾP cho hoạt động sản xuất nội bộ của chính tổ chức, cá nhân thực hiện việc san chiết, pha chế: miễn cấp Giấy chứng nhận / Giấy phép SẢN XUẤT. (Khoản 4 chỉ miễn giấy khâu sản xuất — không nói tới kinh doanh, khác khoản 1.)",
             "(Điều 21.5) Tổ chức cho thuê đất KHÔNG kèm cơ sở vật chất để tồn trữ hóa chất; hoặc dịch vụ tồn trữ hóa chất có điều kiện / kiểm soát đặc biệt hàm lượng ≤ 1%: miễn Giấy chứng nhận đủ điều kiện hoạt động dịch vụ tồn trữ. (NQ 19 nới từ <0,1%.)",
         ],
     },
@@ -275,3 +275,18 @@ def format_report(cas):
             lines.append(textwrap.fill(bullet, width=78, initial_indent="  - ", subsequent_indent="    "))
         lines.append("")
     return "\n".join(lines)
+
+
+def format_lookup(cas):
+    """Báo cáo cho lookup.py (tra 1 CAS đứng một mình). Khác scan.py — vốn đã có
+    bảng verdict + mục 'NGHĨA VỤ KHÁC' cuối kết quả — lookup.py chỉ in mỗi báo
+    cáo này, nên chất Phụ lục II phải tự nói nghĩa vụ của nó, không thì người
+    tra đọc 'Không phát sinh yêu cầu nhập khẩu riêng' thành 'không phải làm gì'."""
+    parts = [format_report(cas)]
+    if "II" in annexes_for(cas):
+        parts.append("== Nghĩa vụ khác (Phụ lục II) ==")
+        parts.extend(
+            textwrap.fill(o, width=78, initial_indent="  - ", subsequent_indent="    ")
+            for o in OTHER_OBLIGATIONS
+        )
+    return "\n".join(parts)

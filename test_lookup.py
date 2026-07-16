@@ -122,6 +122,11 @@ def test_html_khong_lech_khoi_core():
     # Duyệt đúng các khóa thật của IMPORT_RULES; PL II đã chuyển xuống khối
     # "Nghĩa vụ khác", hard-code II ở đây sẽ gọi undefined.map và làm nút Tra cứu chết.
     assert "for (const annex of Object.keys(IMPORT_RULES))" in src
+    # Bộ lọc dòng category cũng phải nhúng từ core — JS từng hard-code
+    # ["I","II","III"] trong khi core.IMPORT_ANNEXES = ("I","III"), làm chất
+    # chỉ thuộc PL II hiện khác nhau giữa HTML và CLI.
+    assert "IMPORT_ANNEXES.includes(r.annex)" in src and "__IMPORT_ANNEXES_JSON__" in src
+    assert '["I", "II", "III"]' not in src, "bộ lọc phụ lục viết tay trong JS — dùng __IMPORT_ANNEXES_JSON__"
     # ...và artifact đã commit phải khớp core.py (chạy lại build_html.py nếu đỏ).
     html = Path(__file__).with_name("Tra cứu hóa chất NĐ24.html")
     if html.exists():
@@ -183,6 +188,21 @@ def test_exemptions_cover_dieu_21_4_and_product_declaration():
     assert "khoản 4" in cites  # san chiết, pha chế nội bộ (Điều 21.4)
     all_items = " ".join(i for g in EXEMPTIONS for i in g["items"])
     assert "Điều 28, 29" in all_items  # nghĩa vụ công bố hàm lượng trong sản phẩm
+    # Đ21.4 nguyên văn chỉ miễn "Giấy chứng nhận, Giấy phép SẢN XUẤT" — không có
+    # "kinh doanh" (khác khoản 1). Từng viết rộng hơn luật.
+    k4 = next(i for g in EXEMPTIONS for i in g["items"] if "Điều 21.4" in i)
+    assert "Giấy phép SẢN XUẤT" in k4 and "Giấy phép sản xuất, kinh doanh" not in k4
+
+
+def test_lookup_pl2_tu_noi_nghia_vu():
+    # lookup.py chỉ in mỗi báo cáo (không có bảng verdict + mục 'NGHĨA VỤ KHÁC'
+    # như scan.py) -> chất Phụ lục II phải tự nói nghĩa vụ, không thì
+    # "Không phát sinh yêu cầu nhập khẩu riêng" bị đọc thành "không phải làm gì".
+    rep = core.format_lookup("10137-74-3")  # Canxi clorat, chỉ PL II
+    assert "Nghĩa vụ khác (Phụ lục II)" in rep
+    assert "Giấy chứng nhận đủ điều kiện" in rep
+    # Chất không thuộc PL II thì không kèm khối này.
+    assert "Nghĩa vụ khác" not in core.format_lookup("103-79-7")  # chỉ PL III
 
 
 def test_congbo_is_not_a_customs_gate_pl2():
@@ -293,25 +313,9 @@ def test_unknown_khong_con_ghi_chu():
 
 
 if __name__ == "__main__":
-    test_known_chemicals()
-    test_highest_annex_prioritizes_permit_over_declaration()
-    test_extract_cas_from_free_text()
-    test_cas_status_annex_iii_always_needs_permit()
-    test_cas_status_non_annex_iii_flags_other_obligations()
-    test_cas_status_plain_green_when_no_other_obligation()
-    test_annex_iv_storage_omitted_from_import_report()
-    test_nq19_thresholds_kept()
-    test_moi_verdict_goi_dung_ten_giay()
-    test_html_khong_lech_khoi_core()
-    test_pl3_an_khoi_pl1_vi_da_mien_khai_bao()
-    test_import_rules_khong_be_dong_cung()
-    test_bang_scan_thang_cot_khi_co_cas_khong_tra_ra()
-    test_khong_con_tong_ket_cuoi_chi_tiet()
-    test_unknown_khong_con_ghi_chu()
-    test_khong_con_noi_dung_ho_so_trinh_tu_thu_tuc()
-    test_decree_cas_errata_corrected()
-    test_exemptions_cover_dieu_21_4_and_product_declaration()
-    test_congbo_is_not_a_customs_gate_pl2()
-    test_pl3_splits_import_congbo_from_use_deadline()
-    test_data_regenerated_from_official_nd24()
-    print("ok")
+    # Máy không có pytest nên đây là runner thật. Duyệt tự động thay vì gọi tay
+    # từng test — danh sách tay đã từng quên 2 test HTML, thành chữ chết.
+    tests = [f for name, f in sorted(globals().items()) if name.startswith("test_")]
+    for f in tests:
+        f()
+    print(f"ok ({len(tests)} tests)")

@@ -9,10 +9,10 @@ Usage:
 """
 import sys
 
-from core import format_report
+from core import format_lookup
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print(__doc__)
         sys.exit(1)
-    print(format_report(sys.argv[1].strip()))
+    print(format_lookup(sys.argv[1].strip()))

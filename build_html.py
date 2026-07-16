@@ -18,6 +18,7 @@ import core
 
 DATA_JSON = json.dumps(core.DATA, ensure_ascii=False)
 IMPORT_RULES_JSON = json.dumps(core.IMPORT_RULES, ensure_ascii=False)
+IMPORT_ANNEXES_JSON = json.dumps(core.IMPORT_ANNEXES, ensure_ascii=False)
 OTHER_OBLIGATION_ANNEXES_JSON = json.dumps(core.OTHER_OBLIGATION_ANNEXES, ensure_ascii=False)
 VERDICT_JSON = json.dumps(core.VERDICT, ensure_ascii=False)
 SUPPRESS_ANNEX_JSON = json.dumps(core.SUPPRESS_ANNEX, ensure_ascii=False)
@@ -179,6 +180,7 @@ HTML = """<!doctype html>
 <script>
 const DATA = __DATA_JSON__;
 const IMPORT_RULES = __IMPORT_RULES_JSON__;
+const IMPORT_ANNEXES = __IMPORT_ANNEXES_JSON__;
 const OTHER_OBLIGATION_ANNEXES = __OTHER_OBLIGATION_ANNEXES_JSON__;
 const VERDICT = __VERDICT_JSON__;
 const SUPPRESS_ANNEX = __SUPPRESS_ANNEX_JSON__;
@@ -238,7 +240,10 @@ function detailFor(cas) {
   const rows = rowsFor(cas);
   let out = "";
   const seenAnnex = new Set();
-  const importRows = rows.filter(r => ["I", "II", "III"].includes(r.annex));
+  // IMPORT_ANNEXES nhúng từ core.py — trước đây JS hard-code ["I","II","III"]
+  // nên chất chỉ thuộc PL II hiện category trong HTML còn CLI lại nói
+  // "Không phát sinh yêu cầu nhập khẩu riêng" (hai nơi hai kiểu).
+  const importRows = rows.filter(r => IMPORT_ANNEXES.includes(r.annex));
   for (const r of importRows) {
     out += `- ${r.category}\\n`;
     seenAnnex.add(r.annex);
@@ -275,7 +280,7 @@ function run() {
 
   let stats = '<div class="stats">';
   if (counts.warn) stats += `<span class="chip warn">⚠ ${counts.warn} chất cần Giấy phép</span>`;
-  if (counts.ok) stats += `<span class="chip ok">✓ ${counts.ok} chất không cần / được miễn</span>`;
+  if (counts.ok) stats += `<span class="chip ok">✓ ${counts.ok} chất không cần Giấy phép XNK</span>`;
   if (counts.unknown) stats += `<span class="chip unknown">? ${counts.unknown} chất không có trong dữ liệu</span>`;
   stats += "</div>";
 
@@ -305,7 +310,7 @@ function run() {
     details += `<details class="detail"${open}><summary><span class="pill ${badge}">${ANNEX_LABEL[annex]}</span> ${esc(title)}</summary><div class="body">${detailFor(cas)}</div></details>`;
   });
 
-  resultsEl.innerHTML = table + details + "</div>";
+  resultsEl.innerHTML = table + details;
   resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -344,6 +349,7 @@ out = (
     HTML.replace("__EXEMPTIONS_HTML__", exemptions_html())
     .replace("__DATA_JSON__", DATA_JSON)
     .replace("__IMPORT_RULES_JSON__", IMPORT_RULES_JSON)
+    .replace("__IMPORT_ANNEXES_JSON__", IMPORT_ANNEXES_JSON)
     .replace("__OTHER_OBLIGATION_ANNEXES_JSON__", OTHER_OBLIGATION_ANNEXES_JSON)
     .replace("__VERDICT_JSON__", VERDICT_JSON)
     .replace("__SUPPRESS_ANNEX_JSON__", SUPPRESS_ANNEX_JSON)
