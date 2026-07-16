@@ -127,6 +127,9 @@ def test_html_khong_lech_khoi_core():
     # chỉ thuộc PL II hiện khác nhau giữa HTML và CLI.
     assert "IMPORT_ANNEXES.includes(r.annex)" in src and "__IMPORT_ANNEXES_JSON__" in src
     assert '["I", "II", "III"]' not in src, "bộ lọc phụ lục viết tay trong JS — dùng __IMPORT_ANNEXES_JSON__"
+    # Thứ tự ưu tiên phụ lục cũng nhúng từ core — JS từng hard-code bản riêng.
+    assert "__ANNEX_ORDER_JSON__" in src
+    assert '["III", "II", "I", "IV"]' not in src, "ANNEX_ORDER viết tay trong JS — dùng __ANNEX_ORDER_JSON__"
     # ...và artifact đã commit phải khớp core.py (chạy lại build_html.py nếu đỏ).
     html = Path(__file__).with_name("Tra cứu hóa chất NĐ24.html")
     if html.exists():

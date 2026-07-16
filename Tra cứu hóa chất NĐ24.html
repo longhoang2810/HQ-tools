@@ -160,7 +160,6 @@ const SUPPRESS_ANNEX = {"III": ["I"]};
 const ANNEX_DISPLAY_ORDER = ["I", "II", "III", "IV"];
 
 const ANNEX_ORDER = ["III", "II", "I", "IV"];
-const ANNEX_LABEL = { "I": "PL I", "II": "PL II", "III": "PL III", "IV": "PL IV" };
 
 const CAS_RE = /\b\d{2,7}-\d{2}-\d\b/g;
 
@@ -176,7 +175,7 @@ function highestAnnex(cas) {
 
 function annexLabels(cas) {
   const present = new Set(rowsFor(cas).map(r => r.annex));
-  return ANNEX_DISPLAY_ORDER.filter(a => present.has(a)).map(a => ANNEX_LABEL[a]).join(", ") || "—";
+  return ANNEX_DISPLAY_ORDER.filter(a => present.has(a)).map(a => `PL ${a}`).join(", ") || "—";
 }
 
 // Doi xung voi extract_cas() trong core.py.
@@ -280,7 +279,7 @@ function run() {
     const title = `${cas} — ${rows[0].name_vn} (${rows[0].name_en})`;
     // Chi mo san chi tiet chat can chu y (do/vang); chat on thi thu gon.
     const open = badge === "ok" ? "" : " open";
-    details += `<details class="detail"${open}><summary><span class="pill ${badge}">${ANNEX_LABEL[annex]}</span> ${esc(title)}</summary><div class="body">${detailFor(cas)}</div></details>`;
+    details += `<details class="detail"${open}><summary><span class="pill ${badge}">PL ${annex}</span> ${esc(title)}</summary><div class="body">${detailFor(cas)}</div></details>`;
   });
 
   resultsEl.innerHTML = table + details;

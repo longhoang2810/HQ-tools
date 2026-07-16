@@ -259,16 +259,17 @@ def format_report(cas):
         # CLI in báo cáo đứng một mình (lookup.py) nên phải tự nói tra ra gì; trang
         # HTML thì bảng đã ghi "Không rõ" nên bỏ hẳn thẻ chi tiết, không in dòng này.
         return f"CAS {cas}: không có trong dữ liệu NĐ 24 (Phụ lục I-IV)."
-    lines.append(f"CAS {cas}: {rows[0]['name_vn']} ({rows[0]['name_en']})\n")
+    lines.append(f"CAS {cas}: {rows[0]['name_vn']} ({rows[0]['name_en']})")
+    lines.append("")
     seen_annex = set()
     import_rows = [r for r in rows if r["annex"] in IMPORT_ANNEXES]
     for r in import_rows:
         lines.append(f"- {r['category']}")
         seen_annex.add(r["annex"])
-    lines.append("")
     if not import_rows:
         lines.append("Không phát sinh yêu cầu nhập khẩu riêng.")
         return "\n".join(lines)
+    lines.append("")
     for annex in annexes_to_explain(seen_annex):
         lines.append(f"== Yêu cầu nhập khẩu (Phụ lục {annex}) ==")
         for bullet in IMPORT_RULES[annex]:

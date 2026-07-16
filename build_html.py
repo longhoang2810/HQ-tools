@@ -19,6 +19,7 @@ import core
 DATA_JSON = json.dumps(core.DATA, ensure_ascii=False)
 IMPORT_RULES_JSON = json.dumps(core.IMPORT_RULES, ensure_ascii=False)
 IMPORT_ANNEXES_JSON = json.dumps(core.IMPORT_ANNEXES, ensure_ascii=False)
+ANNEX_ORDER_JSON = json.dumps(core.ANNEX_ORDER, ensure_ascii=False)
 OTHER_OBLIGATION_ANNEXES_JSON = json.dumps(core.OTHER_OBLIGATION_ANNEXES, ensure_ascii=False)
 VERDICT_JSON = json.dumps(core.VERDICT, ensure_ascii=False)
 SUPPRESS_ANNEX_JSON = json.dumps(core.SUPPRESS_ANNEX, ensure_ascii=False)
@@ -186,8 +187,7 @@ const VERDICT = __VERDICT_JSON__;
 const SUPPRESS_ANNEX = __SUPPRESS_ANNEX_JSON__;
 const ANNEX_DISPLAY_ORDER = __ANNEX_DISPLAY_ORDER_JSON__;
 
-const ANNEX_ORDER = ["III", "II", "I", "IV"];
-const ANNEX_LABEL = { "I": "PL I", "II": "PL II", "III": "PL III", "IV": "PL IV" };
+const ANNEX_ORDER = __ANNEX_ORDER_JSON__;
 
 const CAS_RE = /\\b\\d{2,7}-\\d{2}-\\d\\b/g;
 
@@ -203,7 +203,7 @@ function highestAnnex(cas) {
 
 function annexLabels(cas) {
   const present = new Set(rowsFor(cas).map(r => r.annex));
-  return ANNEX_DISPLAY_ORDER.filter(a => present.has(a)).map(a => ANNEX_LABEL[a]).join(", ") || "—";
+  return ANNEX_DISPLAY_ORDER.filter(a => present.has(a)).map(a => `PL ${a}`).join(", ") || "—";
 }
 
 // Doi xung voi extract_cas() trong core.py.
@@ -307,7 +307,7 @@ function run() {
     const title = `${cas} — ${rows[0].name_vn} (${rows[0].name_en})`;
     // Chi mo san chi tiet chat can chu y (do/vang); chat on thi thu gon.
     const open = badge === "ok" ? "" : " open";
-    details += `<details class="detail"${open}><summary><span class="pill ${badge}">${ANNEX_LABEL[annex]}</span> ${esc(title)}</summary><div class="body">${detailFor(cas)}</div></details>`;
+    details += `<details class="detail"${open}><summary><span class="pill ${badge}">PL ${annex}</span> ${esc(title)}</summary><div class="body">${detailFor(cas)}</div></details>`;
   });
 
   resultsEl.innerHTML = table + details;
@@ -350,6 +350,7 @@ out = (
     .replace("__DATA_JSON__", DATA_JSON)
     .replace("__IMPORT_RULES_JSON__", IMPORT_RULES_JSON)
     .replace("__IMPORT_ANNEXES_JSON__", IMPORT_ANNEXES_JSON)
+    .replace("__ANNEX_ORDER_JSON__", ANNEX_ORDER_JSON)
     .replace("__OTHER_OBLIGATION_ANNEXES_JSON__", OTHER_OBLIGATION_ANNEXES_JSON)
     .replace("__VERDICT_JSON__", VERDICT_JSON)
     .replace("__SUPPRESS_ANNEX_JSON__", SUPPRESS_ANNEX_JSON)
