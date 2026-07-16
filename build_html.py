@@ -18,7 +18,6 @@ import core
 
 DATA_JSON = json.dumps(core.DATA, ensure_ascii=False)
 IMPORT_RULES_JSON = json.dumps(core.IMPORT_RULES, ensure_ascii=False)
-NOTE_GAP_JSON = json.dumps(core.NOTE_GAP, ensure_ascii=False)
 OBLIGATIONS_JSON = json.dumps(core.OBLIGATIONS, ensure_ascii=False)
 VERDICT_JSON = json.dumps(core.VERDICT, ensure_ascii=False)
 SUPPRESS_ANNEX_JSON = json.dumps(core.SUPPRESS_ANNEX, ensure_ascii=False)
@@ -174,7 +173,6 @@ HTML = """<!doctype html>
 <script>
 const DATA = __DATA_JSON__;
 const IMPORT_RULES = __IMPORT_RULES_JSON__;
-const NOTE_GAP = __NOTE_GAP_JSON__;
 const OBLIGATIONS = __OBLIGATIONS_JSON__;
 const VERDICT = __VERDICT_JSON__;
 const SUPPRESS_ANNEX = __SUPPRESS_ANNEX_JSON__;
@@ -226,12 +224,9 @@ function esc(s) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+// Chi goi cho CAS CO trong du lieu — CAS khong co thi khong dung the chi tiet.
 function detailFor(cas, note) {
   const rows = rowsFor(cas);
-  // Khong lap lai "khong tim thay": pill verdict, cot Ten chat, chip thong ke va
-  // tieu de the da noi roi. Chi giu ghi chu vung du lieu chua phu (thu duy nhat
-  // o day tra loi "vay can giay gi").
-  if (rows.length === 0) return `<p class="note">${esc(NOTE_GAP)}</p>`;
   let out = "";
   const seenAnnex = new Set();
   for (const r of rows) {
@@ -298,14 +293,15 @@ function run() {
   let details = "";
   entries.forEach((cas, i) => {
     const rows = rowsFor(cas);
+    // CAS khong co trong du lieu: khong co gi de noi ngoai dieu bang da noi
+    // -> khong dung the chi tiet (bam ra rong thi con te hon la khong co).
+    if (!rows.length) return;
     const annex = highestAnnex(cas);
     const { badge, note } = statuses[i];
-    const title = rows.length
-      ? `${cas} — ${rows[0].name_vn} (${rows[0].name_en})`
-      : `${cas} — không có trong dữ liệu`;
+    const title = `${cas} — ${rows[0].name_vn} (${rows[0].name_en})`;
     // Chi mo san chi tiet chat can chu y (do/vang); chat on thi thu gon.
     const open = badge === "ok" ? "" : " open";
-    details += `<details class="detail"${open}><summary><span class="pill ${badge}">${annex ? ANNEX_LABEL[annex] : "?"}</span> ${esc(title)}</summary><div class="body">${detailFor(cas, note)}</div></details>`;
+    details += `<details class="detail"${open}><summary><span class="pill ${badge}">${ANNEX_LABEL[annex]}</span> ${esc(title)}</summary><div class="body">${detailFor(cas, note)}</div></details>`;
   });
 
   resultsEl.innerHTML = table + details + "</div>";
@@ -333,7 +329,6 @@ out = (
     HTML.replace("__EXEMPTIONS_HTML__", exemptions_html())
     .replace("__DATA_JSON__", DATA_JSON)
     .replace("__IMPORT_RULES_JSON__", IMPORT_RULES_JSON)
-    .replace("__NOTE_GAP_JSON__", NOTE_GAP_JSON)
     .replace("__OBLIGATIONS_JSON__", OBLIGATIONS_JSON)
     .replace("__VERDICT_JSON__", VERDICT_JSON)
     .replace("__SUPPRESS_ANNEX_JSON__", SUPPRESS_ANNEX_JSON)

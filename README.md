@@ -88,8 +88,9 @@ trả lời "cần giấy gì". Đó là việc của cơ quan cấp phép, khô
 
 - Không có danh mục "Hóa chất Bảng 1" (Công ước vũ khí hóa học) hay "hóa
   chất cấm" (Mục 4 NĐ 26) — hai văn bản nguồn không liệt kê CAS cụ thể cho
-  nhóm này trong Phụ lục III (chỉ có Bảng 2, Bảng 3). Tool sẽ tự nhắc điều
-  này khi không tìm thấy CAS.
+  nhóm này trong Phụ lục III (chỉ có Bảng 2, Bảng 3). CAS không tra ra chỉ
+  báo **"Không rõ"** — tool không nhắc gì thêm; "không có trong dữ liệu"
+  không đồng nghĩa "không cần giấy".
 - Yêu cầu nhập khẩu trong `lookup.py` là bản tóm tắt điều luật, không thay
   thế văn bản gốc — luôn đối chiếu Điều được dẫn chiếu trước khi làm hồ sơ.
 - Không tự nhận diện `% hàm lượng` để kết luận miễn trừ: hóa chất Phụ lục III
