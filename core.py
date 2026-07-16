@@ -17,7 +17,10 @@ import textwrap
 from pathlib import Path
 
 DATA = json.loads((Path(__file__).parent / "data" / "nd24_chemicals.json").read_text(encoding="utf-8"))
-CAS_RE = re.compile(r"\b\d{2,7}-\d{2}-\d\b")
+# re.ASCII: \b của Python mặc định là unicode nên "ấ67-56-1" KHÔNG match (coi "ấ"
+# là word char), trong khi \b của JS (build_html.py) là ASCII nên match — CLI từng
+# sót CAS dính chữ có dấu mà trang HTML lại thấy. ASCII làm hai bên hành xử y hệt.
+CAS_RE = re.compile(r"\b\d{2,7}-\d{2}-\d\b", re.ASCII)
 
 # ponytail: tóm tắt yêu cầu giấy tờ, không thay thế văn bản gốc — luôn đọc kèm
 # Điều được dẫn chiếu trước khi làm hồ sơ thật.
@@ -148,7 +151,7 @@ EXEMPTIONS = [
         ),
         "items": [
             "Dược phẩm, chế phẩm diệt khuẩn/côn trùng, thực phẩm, mỹ phẩm.",
-            "Thức ăn chăn nuôi/thủy sản, thuốc thú y, thuốc BVTV, phân bón hữu cơ/sinh học/khoáng.",
+            "Thức ăn chăn nuôi/thủy sản, thuốc thú y, thuốc BVTV, phân bón hữu cơ/sinh học/khoáng; sản phẩm bảo quản, chế biến nông sản, lâm sản, hải sản và thực phẩm.",
             "Chất phóng xạ, vật liệu xây dựng, sơn, mực in.",
             "Sản phẩm gia dụng: keo dán, chất tẩy rửa, hóa mỹ phẩm.",
             "Xăng, dầu, condensate, naphta dùng chế biến xăng dầu.",

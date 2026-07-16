@@ -49,6 +49,24 @@ def test_extract_cas_from_free_text():
     assert extract_cas(text) == ["67-56-1", "75-07-0", "103-79-7"]
 
 
+def test_extract_cas_ascii_boundary_nhu_js():
+    # \b Python mặc định là unicode: "ấ67-56-1" KHÔNG match vì "ấ" là word char,
+    # trong khi \b của JS là ASCII nên match -> CLI sót CAS mà HTML thấy.
+    # re.ASCII bắt hai bên hành xử y hệt trên chữ có dấu.
+    assert extract_cas("ấ67-56-1") == ["67-56-1"]
+    # Chữ ASCII dính liền thì cả hai bên cùng KHÔNG match — giữ nguyên.
+    assert extract_cas("a67-56-1") == []
+
+
+def test_khong_con_ten_rong_trong_data():
+    # nd24.md có dòng tiếp diễn chỉ chứa CAS (|  |  |  | 134237-51-7 |  |) — CAS
+    # thứ 2+ của chất dòng trên. extract.py từng không kế thừa tên -> 6 mã CAS
+    # tên rỗng, lookup in "CAS ...:  ()".
+    assert all(r["name_vn"].strip() and r["name_en"].strip() for r in DATA)
+    hbcd = next(r for r in DATA if r["cas"] == "134237-51-7")
+    assert "Hexabrom" in hbcd["name_vn"]
+
+
 def test_cas_status_annex_iii_always_needs_permit():
     # Khong tu nhan dien % nua -> hoa chat PL III luon bao can giay phep,
     # du thuc te co the duoc mien theo nong do (can doi chieu thu cong).
@@ -195,6 +213,9 @@ def test_exemptions_cover_dieu_21_4_and_product_declaration():
     # "kinh doanh" (khác khoản 1). Từng viết rộng hơn luật.
     k4 = next(i for g in EXEMPTIONS for i in g["items"] if "Điều 21.4" in i)
     assert "Giấy phép SẢN XUẤT" in k4 and "Giấy phép sản xuất, kinh doanh" not in k4
+    # Đ21.6.b có cả "sản phẩm bảo quản, chế biến nông sản..." — từng bị rớt khỏi
+    # danh sách miễn trừ (sót một diện miễn = đòi giấy phép oan).
+    assert "bảo quản, chế biến nông sản, lâm sản, hải sản" in all_items
 
 
 def test_lookup_pl2_tu_noi_nghia_vu():

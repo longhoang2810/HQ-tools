@@ -62,6 +62,7 @@ def parse():
     annex = None
     category = None
     collecting = True  # False sau khi vào Bảng B của PL IV (không còn CAS riêng lẻ)
+    prev_names = ("", "")  # tên dòng dữ liệu gần nhất — cho dòng tiếp diễn chỉ có CAS
 
     for line in lines:
         st = line.strip()
@@ -121,6 +122,12 @@ def parse():
         if not cas_list:
             continue  # dòng '---' / ô CAS trống (chất không có 1 CAS đơn) -> bỏ
         name_en, name_vn = cells[1], cells[2]
+        # Dòng tiếp diễn (|  |  |  | <CAS> |  |): CAS thứ 2+ của chất ở dòng trên,
+        # kế thừa tên — không thì 6 mã CAS ra tên rỗng, lookup in "CAS ...:  ()".
+        if not name_en and not name_vn:
+            name_en, name_vn = prev_names
+        else:
+            prev_names = (name_en, name_vn)
         threshold = None
         if annex == "IV" and len(cells) > 5 and cells[5]:
             threshold = cells[5]
