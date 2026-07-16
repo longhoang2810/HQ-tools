@@ -62,15 +62,16 @@ python3 extract.py            # đọc nd24.md -> data/nd24_chemicals.json
 > vì PL IV; PL I không còn bị rớt chất).
 
 **Trạng thái chuyển tiếp Điều 30.4/30.5** — với hóa chất Phụ lục III, công cụ
-đối chiếu **NĐ 113/2017/NĐ-CP** (`nd113.md`) để cho biết chất đó là **"cũ"** (đã
-có trong danh mục tiền chất công nghiệp / hạn chế SX-KD của NĐ 113 → KHÔNG được
-miễn Giấy phép) hay **"chưa rõ"** (không có trong NĐ 113 → *có thể* là chất mới
-được miễn tới 31/12/2026, nhưng phải đối chiếu thêm **NĐ 82/2022** và **Danh mục
-hóa chất Bảng NĐ 33/2024** — hai văn bản này chưa có trong công cụ). Công cụ
-**không bao giờ** tự kết luận "được miễn"; tập cũ trích từ `extract_nd113.py`:
+đối chiếu ĐỦ BA danh mục "quy định cũ" mà Điều 30.4 dẫn chiếu: tiền chất công
+nghiệp và hạn chế SX-KD theo **NĐ 113/2017** (`nd113.md`) hợp **NĐ 82/2022**
+(`nd82.md`), cùng Danh mục **hóa chất Bảng NĐ 33/2024** (`nd33.md`). Chất **"cũ"**
+(có trong ít nhất một danh mục) → KHÔNG được miễn Giấy phép; chất **"mới"** (không
+trùng CAS ở cả ba) → đủ căn cứ *miễn xuất trình* Giấy phép tới 31/12/2026 (không
+phải miễn Giấy phép). Verdict chính của PL III **luôn** là "Cần Giấy phép"; tập cũ
+trích từ `extract_old.py`:
 
 ```
-python3 extract_nd113.py      # đọc nd113.md -> data/nd113_old_cas.json
+python3 extract_old.py        # nd113.md + nd82.md + nd33.md -> data/old_cas.json
 ```
 
 Phần **yêu cầu nhập khẩu / miễn trừ** (`IMPORT_RULES`, `EXEMPTIONS`,
@@ -86,11 +87,13 @@ xong chạy lại `python3 build_html.py` để cập nhật trang HTML.
   này khi không tìm thấy CAS.
 - Yêu cầu nhập khẩu trong `lookup.py` là bản tóm tắt điều luật, không thay
   thế văn bản gốc — luôn đối chiếu Điều được dẫn chiếu trước khi làm hồ sơ.
-- Trạng thái chuyển tiếp (Điều 30.4/30.5) chỉ đối chiếu được với **NĐ 113/2017**;
-  **chưa** có **NĐ 82/2022** và **Danh mục hóa chất Bảng NĐ 33/2024**. Vì vậy
-  công cụ chỉ khẳng định chắc "cũ", còn "chưa rõ" nghĩa là *phải tự đối chiếu
-  thêm* — không đồng nghĩa với "được miễn". (Thiết kế fail-safe: thà báo cần
-  Giấy phép còn hơn miễn nhầm.)
+- Trạng thái chuyển tiếp (Điều 30.4/30.5) đã đối chiếu đủ **NĐ 113/2017 + NĐ
+  82/2022** (tiền chất công nghiệp, hạn chế SX-KD) và **Danh mục hóa chất Bảng NĐ
+  33/2024**. Giới hạn còn lại: Bảng 1 & 2 của NĐ 33 định nghĩa nhiều chất theo
+  **HỌ** (các dẫn xuất không có CAS rời), nên chất báo "mới" tra theo CAS vẫn có
+  thể thuộc một họ CWC — đối chiếu công thức khi nghi ngờ. (Thiết kế fail-safe: PL
+  III luôn báo "Cần Giấy phép"; "miễn xuất trình" chỉ là ghi chú chuyển tiếp, thà
+  báo cần hơn miễn nhầm.)
 - Phụ lục II mục 2 (hỗn hợp chất) và Phụ lục III mục II (hỗn hợp chất kiểm
   soát đặc biệt) là quy tắc theo ngưỡng hàm lượng %, không tra theo CAS —
   không nằm trong phạm vi tool này.

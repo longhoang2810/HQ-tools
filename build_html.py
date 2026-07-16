@@ -20,6 +20,7 @@ DATA_JSON = json.dumps(core.DATA, ensure_ascii=False)
 IMPORT_RULES_JSON = json.dumps(core.IMPORT_RULES, ensure_ascii=False)
 NOTE_GAP_JSON = json.dumps(core.NOTE_GAP, ensure_ascii=False)
 SHORT_FLAG_JSON = json.dumps(core.SHORT_FLAG, ensure_ascii=False)
+OBLIGATIONS_JSON = json.dumps(core.OBLIGATIONS, ensure_ascii=False)
 
 # Tính sẵn trạng thái chuyển tiếp (Điều 30.4/30.5) cho từng CAS Phụ lục III từ
 # core.py rồi nhúng vào HTML — KHÔNG chép lại logic/nội dung tiếng Việt sang JS,
@@ -180,6 +181,7 @@ const DATA = __DATA_JSON__;
 const IMPORT_RULES = __IMPORT_RULES_JSON__;
 const NOTE_GAP = __NOTE_GAP_JSON__;
 const SHORT_FLAG = __SHORT_FLAG_JSON__;
+const OBLIGATIONS = __OBLIGATIONS_JSON__;
 const TRANSITIONAL = __TRANSITIONAL_JSON__;
 
 const ANNEX_ORDER = ["III", "II", "I", "IV"];
@@ -212,9 +214,17 @@ function extractCas(text) {
 function casStatus(cas) {
   const rows = rowsFor(cas);
   if (!rows.length) return { badge: "unknown", text: "Không rõ", note: null };
-  const annex = highestAnnex(cas);
-  if (annex !== "III") return { badge: "ok", text: "Không cần Giấy phép", note: null };
-  return { badge: "warn", text: "Cần Giấy phép", note: null };
+  const present = new Set(rows.map(r => r.annex));
+  if (present.has("III")) return { badge: "warn", text: "Cần Giấy phép", note: null };
+  // Không thuộc PL III: không cần Giấy phép XNK, nhưng nêu rõ nghĩa vụ PL II/IV
+  // để "xanh" không bị đọc là "không phải làm gì".
+  const extra = ["II", "IV"].filter(a => present.has(a)).map(a => OBLIGATIONS[a]);
+  if (extra.length) return {
+    badge: "ok",
+    text: "Không cần Giấy phép XNK — có nghĩa vụ khác",
+    note: "Không cần Giấy phép XNK, nhưng có nghĩa vụ khác: " + extra.join("; ") + ".",
+  };
+  return { badge: "ok", text: "Không cần Giấy phép", note: null };
 }
 
 function esc(s) {
@@ -232,6 +242,13 @@ function detailFor(cas, note) {
     out += `- ${r.category}\\n`;
     if (r.threshold_kg) out += `  Ngưỡng khối lượng tồn trữ: ${r.threshold_kg} kg\\n`;
     seenAnnex.add(r.annex);
+  }
+  // Đối xứng với cảnh báo nhiều ngưỡng PL IV trong format_report() của core.py.
+  const ivThr = [...new Set(rows.filter(r => r.annex === "IV" && r.threshold_kg).map(r => r.threshold_kg))];
+  if (ivThr.length > 1) {
+    const kg = t => parseInt(t.split("(")[0].replace(/\\D/g, ""), 10);
+    ivThr.sort((a, b) => kg(a) - kg(b));
+    out += `  ⚠ Chất này có nhiều ngưỡng tồn trữ Phụ lục IV khác nhau (${ivThr.join(", ")} kg) tùy phân loại (hóa chất cần kiểm soát đặc biệt / hóa chất cấm) — xác định đúng phân loại để áp ngưỡng phù hợp; nếu chưa rõ, ngưỡng thấp nhất (${ivThr[0]} kg) là mức thận trọng.\\n`;
   }
   out += "\\n";
   for (const annex of ["I", "II", "III", "IV"]) {
@@ -324,6 +341,7 @@ out = (
     .replace("__IMPORT_RULES_JSON__", IMPORT_RULES_JSON)
     .replace("__NOTE_GAP_JSON__", NOTE_GAP_JSON)
     .replace("__SHORT_FLAG_JSON__", SHORT_FLAG_JSON)
+    .replace("__OBLIGATIONS_JSON__", OBLIGATIONS_JSON)
     .replace("__TRANSITIONAL_JSON__", TRANSITIONAL_JSON)
 )
 Path(__file__).parent.joinpath("Tra cứu hóa chất NĐ24.html").write_text(out, encoding="utf-8")
