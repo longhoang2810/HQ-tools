@@ -43,7 +43,7 @@ IMPORT_RULES = {
     "III": """Phụ lục III (hóa chất cần kiểm soát đặc biệt — tiền chất công
   nghiệp / hóa chất Bảng 2, 3 / Công ước Rotterdam-Stockholm):
   - PHẢI CÓ: Giấy phép xuất khẩu, nhập khẩu hóa chất cần kiểm soát đặc biệt.
-    Đây là điều kiện để thông quan (NĐ 26, Điều 14.2, 14.4).
+    Đây là điều kiện để thông quan (NĐ 26, Điều 14.2).
   - MIỄN Giấy phép XNK nếu hóa chất chỉ xuất hiện trong hỗn hợp ở nồng độ
     dưới ngưỡng: Nhóm 1 ≤1%, Nhóm 2 ≤5% khối lượng hỗn hợp (NĐ 26 Điều 21.2,
     ngưỡng cập nhật theo NQ 19/2026/NQ-CP) — hàng nguyên chất/nồng độ trên
@@ -81,6 +81,17 @@ SHORT_FLAG = {
     "II": "Không cần Giấy phép XNK. NK để kinh doanh: cần Giấy chứng nhận đủ điều kiện SX-KD hóa chất có điều kiện (Điều 10.2). NK để tự dùng: công bố mục đích sử dụng trên CSDL chuyên ngành — doanh nghiệp CHỦ ĐỘNG thời điểm, KHÔNG phải điều kiện thông quan (Điều 10.3). Bước bắt buộc trước thông quan là khai báo NK (Điều 6)",
     "III": "⚠ BẮT BUỘC Giấy phép xuất khẩu, nhập khẩu hóa chất cần kiểm soát đặc biệt — điều kiện thông quan (Điều 14.2). Chỉ được miễn nếu rơi vào Điều 21: nồng độ dưới ngưỡng (khoản 2 — Nhóm 1 ≤1%, Nhóm 2 ≤5%), nằm trong sản phẩm hoàn chỉnh (khoản 6), thí nghiệm ≤1mg (khoản 7), hoặc XNK tại chỗ (khoản 8)",
     "IV": "Không liên quan Giấy phép XNK — nghĩa vụ tồn trữ: cần Kế hoạch/Biện pháp ứng phó sự cố nếu vượt ngưỡng",
+}
+
+# Chữ verdict — nguồn DUY NHẤT, dùng chung CLI và HTML (build_html.py nhúng qua
+# JSON). Từng lệch thật: JS hard-code "Cần Giấy phép" trong khi core.py đã đổi
+# thành tên đầy đủ -> trang HTML mất luôn phần "giấy gì". Đừng viết tay lại trong JS.
+VERDICT = {
+    "unknown": "Không rõ",
+    "pl3": "Cần Giấy phép XNK hóa chất KSĐB",
+    "other_obligation": "Không cần Giấy phép XNK — có nghĩa vụ khác",
+    "none": "Không cần Giấy phép XNK",
+    "note_prefix": "Không cần Giấy phép XNK, nhưng có nghĩa vụ khác: ",
 }
 
 # Nghĩa vụ song song NGOÀI Giấy phép XNK (cho hóa chất KHÔNG thuộc PL III) —
@@ -235,18 +246,17 @@ def cas_status(cas):
     """
     rows = rows_for(cas)
     if not rows:
-        return ("unknown", "Không rõ", None)
+        return ("unknown", VERDICT["unknown"], None)
     present = annexes_for(cas)
     if "III" in present:
-        return ("warn", "Cần Giấy phép XNK hóa chất KSĐB", None)
+        return ("warn", VERDICT["pl3"], None)
     # Không thuộc PL III: không cần Giấy phép XNK, nhưng vẫn có thể có nghĩa vụ
     # Phụ lục II (Giấy chứng nhận/công bố) và/hoặc Phụ lục IV (KH ứng phó sự cố)
     # — nêu rõ để "xanh" không bị đọc là "không phải làm gì".
     extra = [OBLIGATIONS[a] for a in ("II", "IV") if a in present]
     if extra:
-        note = "Không cần Giấy phép XNK, nhưng có nghĩa vụ khác: " + "; ".join(extra) + "."
-        return ("ok", "Không cần Giấy phép XNK — có nghĩa vụ khác", note)
-    return ("ok", "Không cần Giấy phép XNK", None)
+        return ("ok", VERDICT["other_obligation"], VERDICT["note_prefix"] + "; ".join(extra) + ".")
+    return ("ok", VERDICT["none"], None)
 
 
 def format_exemptions():

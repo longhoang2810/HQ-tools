@@ -1,5 +1,7 @@
 """Smallest possible regression check: known CAS -> known annex(es), and
 that scanning a pasted DN description pulls every CAS out of free text."""
+from pathlib import Path
+
 from core import (
     DATA,
     EXEMPTIONS,
@@ -7,6 +9,7 @@ from core import (
     IMPORT_RULES,
     OBLIGATIONS,
     SHORT_FLAG,
+    VERDICT,
     annexes_for,
     cas_status,
     extract_cas,
@@ -95,6 +98,26 @@ def test_moi_verdict_goi_dung_ten_giay():
     assert "Giấy phép sản xuất, kinh doanh hóa chất KSĐB" in IMPORT_RULES["III"]
 
 
+def test_html_khong_lech_khoi_core():
+    # build_html.py dựng lại logic hiển thị bằng JS -> ĐÃ TỪNG LỆCH THẬT: JS
+    # hard-code "Cần Giấy phép" trong khi core.py đã đổi thành "Cần Giấy phép XNK
+    # hóa chất KSĐB" => trang HTML (thứ cán bộ thực sự mở) mất phần "giấy gì",
+    # còn CLI thì đúng. Test Python thuần không bắt được vì nó chỉ soi core.py.
+    # Chốt: mọi chữ verdict phải đến TỪ core.VERDICT, không viết tay trong JS.
+    src = Path(__file__).with_name("build_html.py").read_text(encoding="utf-8")
+    for key, text in VERDICT.items():
+        assert text not in src, f"verdict '{key}' viết tay trong build_html.py, phải lấy từ core.VERDICT"
+    # Kể cả TRÍCH DẪN verdict trong chữ tĩnh của trang cũng phải qua placeholder —
+    # nếu không nó sẽ mốc lại y như lần "Cần Giấy phép" cũ nằm ở dòng trợ giúp.
+    assert "Cần Giấy phép" not in src, "chữ verdict viết tay trong build_html.py — dùng __VERDICT_PL3__"
+    assert "__VERDICT_JSON__" in src and "VERDICT.pl3" in src
+    # ...và artifact đã commit phải khớp core.py (chạy lại build_html.py nếu đỏ).
+    html = Path(__file__).with_name("Tra cứu hóa chất NĐ24.html")
+    if html.exists():
+        page = html.read_text(encoding="utf-8")
+        assert VERDICT["pl3"] in page, "HTML đã commit cũ hơn core.py — chạy python3 build_html.py"
+
+
 def test_khong_con_noi_dung_ho_so_trinh_tu_thu_tuc():
     # PHAM VI: trang tra cuu "can giay gi" -> khong chua ho so/trinh tu/thu tuc cap,
     # tham quyen cap (phan cap NQ 19), hay khoi chuyen tiep Dieu 30.4 (mien XUAT
@@ -180,6 +203,7 @@ if __name__ == "__main__":
     test_annex_iv_multiple_thresholds_flagged()
     test_nq19_thresholds_kept()
     test_moi_verdict_goi_dung_ten_giay()
+    test_html_khong_lech_khoi_core()
     test_khong_con_noi_dung_ho_so_trinh_tu_thu_tuc()
     test_decree_cas_errata_corrected()
     test_short_flag_surfaces_dieu10_for_pl2()

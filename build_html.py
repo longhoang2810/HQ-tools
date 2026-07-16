@@ -21,6 +21,7 @@ IMPORT_RULES_JSON = json.dumps(core.IMPORT_RULES, ensure_ascii=False)
 NOTE_GAP_JSON = json.dumps(core.NOTE_GAP, ensure_ascii=False)
 SHORT_FLAG_JSON = json.dumps(core.SHORT_FLAG, ensure_ascii=False)
 OBLIGATIONS_JSON = json.dumps(core.OBLIGATIONS, ensure_ascii=False)
+VERDICT_JSON = json.dumps(core.VERDICT, ensure_ascii=False)
 
 # Tính sẵn trạng thái chuyển tiếp (Điều 30.4/30.5) cho từng CAS Phụ lục III từ
 # core.py rồi nhúng vào HTML — KHÔNG chép lại logic/nội dung tiếng Việt sang JS,
@@ -146,7 +147,7 @@ HTML = """<!doctype html>
     <ol>
       <li>Copy nguyên mô tả hàng hóa của doanh nghiệp — không cần tách tay từng mã CAS.</li>
       <li>Dán vào ô bên dưới rồi bấm <b>Tra cứu</b>. Công cụ tự tìm mọi mã CAS xuất hiện trong đoạn văn.</li>
-      <li>Công cụ không tự tính % hàm lượng — hóa chất Phụ lục III luôn báo "Cần Giấy phép"; đối chiếu ngưỡng miễn trừ nồng độ ở mục "Các trường hợp được miễn trừ" bên dưới bằng tài liệu khai báo gốc.</li>
+      <li>Công cụ không tự tính % hàm lượng — hóa chất Phụ lục III luôn báo "__VERDICT_PL3__"; đối chiếu ngưỡng miễn trừ nồng độ ở mục "Các trường hợp được miễn trừ" bên dưới bằng tài liệu khai báo gốc.</li>
     </ol>
   </div>
 </div>
@@ -176,6 +177,7 @@ const IMPORT_RULES = __IMPORT_RULES_JSON__;
 const NOTE_GAP = __NOTE_GAP_JSON__;
 const SHORT_FLAG = __SHORT_FLAG_JSON__;
 const OBLIGATIONS = __OBLIGATIONS_JSON__;
+const VERDICT = __VERDICT_JSON__;
 
 const ANNEX_ORDER = ["III", "II", "I", "IV"];
 const ANNEX_LABEL = { "I": "PL I", "II": "PL II", "III": "PL III", "IV": "PL IV" };
@@ -206,18 +208,18 @@ function extractCas(text) {
 // sai): hoa chat Phu luc III luon bao "Can Giay phep".
 function casStatus(cas) {
   const rows = rowsFor(cas);
-  if (!rows.length) return { badge: "unknown", text: "Không rõ", note: null };
+  if (!rows.length) return { badge: "unknown", text: VERDICT.unknown, note: null };
   const present = new Set(rows.map(r => r.annex));
-  if (present.has("III")) return { badge: "warn", text: "Cần Giấy phép", note: null };
+  if (present.has("III")) return { badge: "warn", text: VERDICT.pl3, note: null };
   // Không thuộc PL III: không cần Giấy phép XNK, nhưng nêu rõ nghĩa vụ PL II/IV
   // để "xanh" không bị đọc là "không phải làm gì".
   const extra = ["II", "IV"].filter(a => present.has(a)).map(a => OBLIGATIONS[a]);
   if (extra.length) return {
     badge: "ok",
-    text: "Không cần Giấy phép XNK — có nghĩa vụ khác",
-    note: "Không cần Giấy phép XNK, nhưng có nghĩa vụ khác: " + extra.join("; ") + ".",
+    text: VERDICT.other_obligation,
+    note: VERDICT.note_prefix + extra.join("; ") + ".",
   };
-  return { badge: "ok", text: "Không cần Giấy phép", note: null };
+  return { badge: "ok", text: VERDICT.none, note: null };
 }
 
 function esc(s) {
@@ -331,6 +333,8 @@ out = (
     .replace("__NOTE_GAP_JSON__", NOTE_GAP_JSON)
     .replace("__SHORT_FLAG_JSON__", SHORT_FLAG_JSON)
     .replace("__OBLIGATIONS_JSON__", OBLIGATIONS_JSON)
+    .replace("__VERDICT_JSON__", VERDICT_JSON)
+    .replace("__VERDICT_PL3__", core.VERDICT["pl3"])
 )
 Path(__file__).parent.joinpath("Tra cứu hóa chất NĐ24.html").write_text(out, encoding="utf-8")
 print("Tra cứu hóa chất NĐ24.html written —", len(out), "bytes")
