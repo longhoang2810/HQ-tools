@@ -38,7 +38,7 @@ def exemptions_html():
             parts.append(f'<p class="lead">{esc(group["lead"])}</p>')
         parts.append("<ul>" + "".join(f"<li>{esc(item)}</li>" for item in group["items"]) + "</ul>")
     parts.append(f'<div class="warn-note">{esc(core.PENALTY_WARNING)}</div>')
-    parts.append('<h2>Nghĩa vụ khác</h2>')
+    parts.append(f'<h2>{esc(core.OTHER_OBLIGATIONS_TITLE)}</h2>')
     parts.append("<ul>" + "".join(f"<li>{esc(item)}</li>" for item in core.OTHER_OBLIGATIONS) + "</ul>")
     return "\n  ".join(parts)
 

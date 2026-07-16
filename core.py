@@ -79,7 +79,10 @@ VERDICT = {
 OTHER_OBLIGATION_ANNEXES = ("II",)
 
 # Nghĩa vụ Phụ lục II không phải Giấy phép XNK. Hiển thị một lần ở cuối mục
-# miễn trừ thay vì lặp lại trong chi tiết từng CAS.
+# miễn trừ thay vì lặp lại trong chi tiết từng CAS. In THƯỜNG TRỰC như mục miễn
+# trừ (tham khảo chung, không phải kết luận cho lô hàng) — tiêu đề phải tự nói
+# rõ phạm vi để không bị đọc thành "lô này cũng phải có Giấy chứng nhận".
+OTHER_OBLIGATIONS_TITLE = "Nghĩa vụ khác — chỉ áp dụng cho hóa chất Phụ lục II"
 OTHER_OBLIGATIONS = [
     "Nhập khẩu để KINH DOANH: phải có Giấy chứng nhận đủ điều kiện sản xuất, kinh doanh hóa chất có điều kiện (Điều 8, 9, 10.2).",
     "Nhập khẩu để TỰ DÙNG: không cần Giấy chứng nhận, chỉ công bố mục đích sử dụng (Điều 10.3). Công bố KHÔNG phải điều kiện thông quan và không có thời hạn cứng — doanh nghiệp chủ động chọn thời điểm công bố.",
@@ -250,7 +253,7 @@ def format_exemptions():
             lines.append(f"  - {item}")
         lines.append("")
     lines.append(textwrap.fill(PENALTY_WARNING, width=78))
-    lines.extend(["", "NGHĨA VỤ KHÁC", ""])
+    lines.extend(["", OTHER_OBLIGATIONS_TITLE.upper(), ""])
     lines.extend(f"  - {item}" for item in OTHER_OBLIGATIONS)
     return "\n".join(lines)
 
