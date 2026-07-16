@@ -167,13 +167,15 @@ EXEMPTIONS = [
     },
 ]
 
-EXEMPTIONS_WARNING = (
-    "Phụ lục III (hóa chất cần kiểm soát đặc biệt): hàng nguyên chất hoặc "
-    "nồng độ trên ngưỡng luôn bắt buộc có Giấy phép xuất khẩu, nhập khẩu hóa "
-    "chất cần kiểm soát đặc biệt (Điều 14.2) — TRỪ khi rơi vào một trong các "
-    "trường hợp miễn ở Điều 21: nồng độ dưới ngưỡng (khoản 2: Nhóm 1 ≤1%, "
-    "Nhóm 2 ≤5%), hóa chất nằm trong sản phẩm hoàn chỉnh (khoản 6), thí "
-    "nghiệm ≤1mg (khoản 7), hoặc XNK tại chỗ (khoản 8)."
+# Chế tài khi không xuất trình được giấy phép lúc đăng ký tờ khai — vế còn lại
+# của câu hỏi "cần giấy gì": không có giấy thì hậu quả là gì.
+# Nguồn NĐ 169/2026 KHÔNG có trong repo (khác nd24.md/nd26.txt) -> không tự sửa
+# câu này; đối chiếu Điều 19 bản gốc trước khi đổi.
+PENALTY_WARNING = (
+    "Lưu ý: Doanh nghiệp tại thời điểm đăng ký tờ khai hải quan không xuất trình "
+    "giấy phép xuất khẩu, nhập khẩu sẽ bị xử phạt theo Điều 19 Nghị định "
+    "169/2026/NĐ-CP ngày 15/5/2026 của Chính phủ quy định xử phạt vi phạm hành "
+    "chính trong lĩnh vực hải quan."
 )
 
 ANNEX_ORDER = ["III", "II", "I", "IV"]  # ưu tiên hiển thị mức kiểm soát cao nhất trước
@@ -244,7 +246,7 @@ def format_exemptions():
         for item in group["items"]:
             lines.append(f"  - {item}")
         lines.append("")
-    lines.append(EXEMPTIONS_WARNING)
+    lines.append(textwrap.fill(PENALTY_WARNING, width=78))
     return "\n".join(lines)
 
 

@@ -61,11 +61,15 @@ python3 extract.py            # đọc nd24.md -> data/nd24_chemicals.json
 > ổn định hơn, và sửa được vài lỗi phân loại của bản cũ (POP về đúng PL III thay
 > vì PL IV; PL I không còn bị rớt chất).
 
-Phần **yêu cầu nhập khẩu / miễn trừ** (`IMPORT_RULES`, `EXEMPTIONS`,
-`SHORT_FLAG` trong `core.py`) là bản tóm tắt từ **NĐ 26/2026/NĐ-CP** (ngưỡng miễn
-trừ cập nhật theo **NQ 19/2026/NQ-CP**) — toàn văn để đối chiếu nằm ở `nd26.txt`
-trong repo. Sửa tóm tắt trong `core.py` xong chạy lại `python3 build_html.py` để
-cập nhật trang HTML.
+Phần **yêu cầu nhập khẩu / miễn trừ** (`IMPORT_RULES`, `EXEMPTIONS` trong
+`core.py`) là bản tóm tắt từ **NĐ 26/2026/NĐ-CP** (ngưỡng miễn trừ cập nhật theo
+**NQ 19/2026/NQ-CP**) — toàn văn để đối chiếu nằm ở `nd26.txt` trong repo. Sửa
+tóm tắt trong `core.py` xong chạy lại `python3 build_html.py` để cập nhật trang
+HTML.
+
+`PENALTY_WARNING` (chế tài khi không xuất trình được giấy phép lúc đăng ký tờ
+khai — Điều 19 **NĐ 169/2026/NĐ-CP**) là ngoại lệ: **không có văn bản nguồn trong
+repo** để đối chiếu như `nd24.md`/`nd26.txt`. Đối chiếu bản gốc trước khi sửa câu này.
 
 ## Phạm vi: "chất này cần GIẤY GÌ"
 

@@ -8,7 +8,7 @@ import core
 from core import (
     DATA,
     EXEMPTIONS,
-    EXEMPTIONS_WARNING,
+    PENALTY_WARNING,
     IMPORT_RULES,
     OTHER_OBLIGATION_ANNEXES,
     VERDICT,
@@ -124,6 +124,7 @@ def test_html_khong_lech_khoi_core():
     if html.exists():
         page = html.read_text(encoding="utf-8")
         assert VERDICT["pl3"] in page, "HTML đã commit cũ hơn core.py — chạy python3 build_html.py"
+        assert PENALTY_WARNING in page, "HTML cũ hơn core.py — chạy python3 build_html.py"
 
 
 def test_khong_con_noi_dung_ho_so_trinh_tu_thu_tuc():
@@ -134,7 +135,7 @@ def test_khong_con_noi_dung_ho_so_trinh_tu_thu_tuc():
         [" ".join(IMPORT_RULES[a]) for a in "I II III IV".split()]
         + [i for g in EXEMPTIONS for i in g["items"]]
         + [g["cite"] for g in EXEMPTIONS]
-        + [EXEMPTIONS_WARNING]
+        + [PENALTY_WARNING]
     )
     for banned in (
         "UBND cấp tỉnh",        # tham quyen cap (phan cap NQ 19)

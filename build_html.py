@@ -34,7 +34,7 @@ def exemptions_html():
         if "lead" in group:
             parts.append(f'<p class="lead">{esc(group["lead"])}</p>')
         parts.append("<ul>" + "".join(f"<li>{esc(item)}</li>" for item in group["items"]) + "</ul>")
-    parts.append(f'<div class="warn-note">{esc(core.EXEMPTIONS_WARNING)}</div>')
+    parts.append(f'<div class="warn-note">{esc(core.PENALTY_WARNING)}</div>')
     return "\n  ".join(parts)
 
 
@@ -59,6 +59,7 @@ HTML = """<!doctype html>
   header::before { content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 64px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--blue), #2f7d3c); }
   h1 { font-size: 1.9rem; margin: 0 0 6px; letter-spacing: -0.01em; }
   header p { color: var(--muted); margin: 0; font-size: 1rem; }
+  header .author { margin-top: 8px; font-size: 0.85rem; font-weight: 600; color: var(--blue-dark); }
 
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(20,30,50,0.05); }
 
@@ -136,6 +137,7 @@ HTML = """<!doctype html>
 <header>
   <h1>Tra cứu hóa chất</h1>
   <p>Theo Phụ lục I–IV, Nghị định 24/2026/NĐ-CP &amp; yêu cầu nhập khẩu, Nghị định 26/2026/NĐ-CP</p>
+  <p class="author">Tác giả: Nguyễn Hoàng Long - HQ KCX&amp;KCN</p>
 </header>
 
 <div class="card instructions">
@@ -167,7 +169,7 @@ HTML = """<!doctype html>
   __EXEMPTIONS_HTML__
 </div>
 
-<footer>Bản tóm tắt để tra cứu nhanh — luôn đối chiếu điều luật gốc trước khi ra quyết định thông quan.<br>Tác giả: Nguyễn Hoàng Long - HQ KCX&amp;KCN</footer>
+<footer>Bản tóm tắt để tra cứu nhanh — luôn đối chiếu điều luật gốc trước khi ra quyết định thông quan.</footer>
 
 <script>
 const DATA = __DATA_JSON__;
