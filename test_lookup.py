@@ -21,6 +21,7 @@ from core import (
     cas_status,
     extract_cas,
     format_report,
+    rows_for,
     highest_annex,
 )
 
@@ -269,6 +270,45 @@ def test_che_do_cas_khong_de_ten_lot_vao_bang():
     assert got["cas_nhac_ten"], "chế độ CAS bỏ qua im lặng chất chỉ ghi tên — phải nhắc"
     assert got["ten_co_toluene"], "chế độ tên không dò ra chất chỉ ghi tên"
     assert got["ten_nhac_ma_cas"], "chế độ tên bỏ qua mã CAS trong đoạn mà không nhắc"
+
+
+def test_pl3_khong_ma_cas_khong_bi_bo_im_lang():
+    # Phụ lục III có mục ghi theo HỌ chất, ô CAS để "---" -> extract.py bỏ khỏi
+    # bảng tra (đúng, không có mã để tra), nhưng bỏ IM LẶNG thì công cụ giấu mất
+    # vùng mù: Asen trioxit (1327-53-3) chỉ có mã ở PL IV nên ra "không cần Giấy
+    # phép", trong khi mục 37 "Asen và các hợp chất của asen" của PL III phủ nó.
+    stt = {e["stt"] for e in core.PL3_NO_CAS}
+    assert {"37.", "38.", "39.", "40.", "41."} <= stt, f"thiếu họ nguyên tố: {sorted(stt)}"
+    assert len(core.PL3_NO_CAS) >= 13
+    assert all(e["ten"].strip() and e["category"] for e in core.PL3_NO_CAS)
+    # Ca cụ thể đã đo được: đừng ai "sửa" nó thành xanh sạch mà không đọc mục 37.
+    assert cas_status("1327-53-3")[1] == VERDICT["none"] and "III" not in annexes_for("1327-53-3")
+    khoi = core.format_pl3_no_cas()
+    assert "Asen và các hợp chất của asen" in khoi and "Các hợp chất xyanua" in khoi
+    # Danh sách phải sinh từ nd24.md, không gõ tay trong HTML.
+    src = Path(__file__).with_name("build_html.py").read_text(encoding="utf-8")
+    assert "__PL3_NO_CAS_HTML__" in src and "core.PL3_NO_CAS" in src
+    assert "Asen và các hợp chất" not in src, "danh sách gõ tay trong build_html.py — phải lấy từ core"
+    html = Path(__file__).with_name("Tra-cuu-hoa-chat-ND24.html")
+    if html.exists():
+        assert "Asen và các hợp chất của asen" in html.read_text(encoding="utf-8"), (
+            "HTML đã commit cũ hơn dữ liệu — chạy python3 build_html.py"
+        )
+
+
+def test_pl3_hoa_chat_khac_khong_bi_gan_nham_bang_2():
+    # nd24.md: Nhóm 1 có tiêu đề "Hóa chất khác" (mục 37-41 + 113 chất có mã CAS)
+    # nằm SAU khối B – Hóa chất Bảng 2. Parser không biết tiêu đề này thì cả 113
+    # chất mang category của khối trước -> trang nói Benzen thuộc "Công ước Vũ khí
+    # hóa học". Verdict vẫn đúng (đều PL III) nhưng CĂN CỨ hiện ra thì sai.
+    def cat3(cas):
+        return next(r["category"] for r in rows_for(cas) if r["annex"] == "III")
+
+    assert "Hóa chất khác" in cat3("71-43-2")        # Benzen
+    assert "Hóa chất khác" in cat3("625-45-6")       # Axit methoxy axetic
+    assert "Bảng 2" not in cat3("71-43-2")
+    # ...và chất Bảng 2 THẬT (mục 35, ngay trước tiêu đề đó) vẫn đúng là Bảng 2.
+    assert "Bảng 2" in cat3("111-48-8")              # Thiodiglycol
 
 
 def test_html_can_deu_chu_thich_va_luu_y():

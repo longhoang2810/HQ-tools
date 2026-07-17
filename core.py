@@ -17,6 +17,8 @@ import textwrap
 from pathlib import Path
 
 DATA = json.loads((Path(__file__).parent / "data" / "nd24_chemicals.json").read_text(encoding="utf-8"))
+# Mục Phụ lục III chỉ có tên, ô mã CAS ghi '---' (extract.py tách sang file riêng).
+PL3_NO_CAS = json.loads((Path(__file__).parent / "data" / "nd24_pl3_no_cas.json").read_text(encoding="utf-8"))
 # re.ASCII: \b của Python mặc định là unicode nên "ấ67-56-1" KHÔNG match (coi "ấ"
 # là word char), trong khi \b của JS (build_html.py) là ASCII nên match — CLI từng
 # sót CAS dính chữ có dấu mà trang HTML lại thấy. ASCII làm hai bên hành xử y hệt.
@@ -182,6 +184,44 @@ PENALTY_WARNING = (
     "169/2026/NĐ-CP ngày 15/5/2026 của Chính phủ quy định xử phạt vi phạm hành "
     "chính trong lĩnh vực hải quan."
 )
+
+# Cảnh báo vùng mù: các mục trên là HỌ chất, nghị định không cho mã CAS nào nên
+# tra theo mã KHÔNG BAO GIỜ ra chúng. Nguy hiểm thật, không phải giả định: Asen
+# trioxit (1327-53-3) chỉ được nghị định ghi mã ở Phụ lục IV, nên tool kết luận
+# "{VERDICT[none]}" trong khi mục 37 "Asen và các hợp chất của asen" của Phụ lục
+# III phủ nó. Tool KHÔNG tự suy ra chất nào thuộc họ nào (phải hiểu hóa học: hợp
+# chất nào là hợp chất của asen, Cr nào là Cr6+) -> in nguyên danh sách để cán bộ
+# tự đối chiếu, thay vì đoán rồi báo sai.
+PL3_NO_CAS_TITLE = "Vùng mù: mục Phụ lục III không có mã CAS — tra theo mã sẽ KHÔNG ra"
+PL3_NO_CAS_LEAD = (
+    f"Nghị định 24/2026/NĐ-CP xếp các mục dưới đây vào Phụ lục III (hóa chất cần kiểm soát đặc "
+    f'biệt) nhưng ghi theo HỌ CHẤT, ô mã CAS để trống "---". Công cụ tra theo mã CAS nên không '
+    f'bắt được chúng: chất thuộc các họ này có thể ra "{VERDICT["unknown"]}", hoặc ra "'
+    f'{VERDICT["none"]}" nếu nghị định có ghi mã của nó ở phụ lục khác. Đối chiếu thủ công danh '
+    f"sách này trước khi kết luận một lô hàng không cần Giấy phép."
+)
+PL3_NO_CAS_CITE = "Nguyên văn từ nd24.md — Phụ lục III, mục I. Chất cần kiểm soát đặc biệt"
+
+
+def format_pl3_no_cas(width=78):
+    lines = [PL3_NO_CAS_TITLE.upper(), f"({PL3_NO_CAS_CITE})", ""]
+    lines.append(textwrap.fill(PL3_NO_CAS_LEAD, width=width))
+    lines.append("")
+    for group in sorted({e["category"] for e in PL3_NO_CAS}):
+        lines.append(f"  {group}")
+        for e in PL3_NO_CAS:
+            if e["category"] == group:
+                lines.append(
+                    textwrap.fill(
+                        f"{e['stt']} {e['ten']}",
+                        width=width,
+                        initial_indent="    - ",
+                        subsequent_indent="      ",
+                    )
+                )
+        lines.append("")
+    return "\n".join(lines)
+
 
 ANNEX_ORDER = ["III", "II", "I", "IV"]  # ưu tiên hiển thị mức kiểm soát cao nhất trước
 ANNEX_DISPLAY_ORDER = ["I", "II", "III", "IV"]

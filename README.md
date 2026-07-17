@@ -12,7 +12,8 @@ có mạng — dữ liệu đã nhúng sẵn trong file). Dán mô tả DN vào 
 **Tra cứu**, đọc bảng kết quả (dòng đỏ = bắt buộc xin Giấy phép).
 
 Trang này cũng có mục **"Các trường hợp được miễn trừ"** cố định ở cuối
-(NĐ 26 Điều 6.7, Điều 10.3, Điều 21).
+(NĐ 26 Điều 6.7, Điều 10.3, Điều 21), và ngay trên nó là khối cảnh báo
+**"Vùng mù: mục Phụ lục III không có mã CAS"** — xem Giới hạn đã biết.
 
 Trang có **hai chế độ tra**, tự chọn bằng nút trên ô nhập:
 
@@ -109,11 +110,36 @@ trả lời "cần giấy gì". Đó là việc của cơ quan cấp phép, khô
 
 ## Giới hạn đã biết
 
+- **Vùng mù: 13 mục Phụ lục III ghi theo HỌ CHẤT, không có mã CAS** (ô CAS trong
+  nd24.md để `---`) nên tra theo mã không bao giờ ra: 6 họ Bảng 2 dạng
+  `N,N-Dialkyl…` (mục 26, 27, 28, 32, 33, 34); 5 họ nguyên tố — **37. Asen và các
+  hợp chất của asen; 38. Các hợp chất của Cr⁶⁺; 39. Thủy ngân và các hợp chất;
+  40. Các hợp chất xyanua; 41. Chì và các hợp chất**; và 2 mục tên bị cụt trong
+  nd24.md (45 "Biphenyl (PCB)", 81 "Polychlorinated").
+
+  Hậu quả đo được, **không phải giả định**: Asen trioxit (1327-53-3) chỉ được nghị
+  định ghi mã ở Phụ lục IV nên công cụ kết luận **"Không cần Giấy phép XNK"**,
+  trong khi mục 37 phủ nó. 7 chất trong dữ liệu dính kiểu này (3 hợp chất asen, 2
+  hợp chất chì, 2 cromat); chất không có trong dữ liệu (natri xyanua, thủy ngân
+  clorua…) thì ra "Không rõ".
+
+  Công cụ **không tự suy** chất nào thuộc họ nào — phải hiểu hóa học (hợp chất nào
+  là hợp chất của asen, Cr nào là Cr⁶⁺), đoán sai còn tệ hơn. Thay vào đó
+  `extract.py` tách các mục này sang `data/nd24_pl3_no_cas.json` và in nguyên văn
+  thành khối cảnh báo riêng ở cuối trang (và cuối `scan.py`) để cán bộ tự đối
+  chiếu. `test_pl3_khong_ma_cas_khong_bi_bo_im_lang` chốt việc này.
 - Không có danh mục "Hóa chất Bảng 1" (Công ước vũ khí hóa học) hay "hóa
-  chất cấm" (Mục 4 NĐ 26) — hai văn bản nguồn không liệt kê CAS cụ thể cho
-  nhóm này trong Phụ lục III (chỉ có Bảng 2, Bảng 3). CAS không tra ra chỉ
-  báo **"Không rõ"** — tool không nhắc gì thêm; "không có trong dữ liệu"
-  không đồng nghĩa "không cần giấy".
+  chất cấm" (Mục 4 NĐ 26). NĐ 24 Phụ lục III mục B chỉ có **Bảng 2 và Bảng 3** —
+  không một chất Bảng 1 nào, và có dòng ghi rõ *"except for those listed in
+  Schedule 1"*. Lưu ý: NĐ 26 lại dẫn chiếu "Hóa chất Bảng 1 **thuộc Phụ lục III**
+  của NĐ 24" (Điều 8.5) — thứ không tồn tại trong NĐ 24. Danh mục Bảng 1 nằm ở
+  **NĐ 33/2024/NĐ-CP** (Công ước CWC; NĐ 26 Điều 31 chỉ bãi bỏ Điều 10–20 của nó,
+  Phụ lục vẫn còn hiệu lực), nhưng ở đó Bảng 1 cũng ghi theo họ chất — mã CAS chỉ
+  có ở các dòng "Ví dụ" (Sarin 107-44-8, Soman 96-64-0, Tabun 77-81-6, VX
+  50782-69-9). Hiện tra 4 mã đó ra **"Không rõ"**. Chưa đưa vào: mâu thuẫn giữa
+  hai nghị định cần người có thẩm quyền xác định trước.
+- CAS không tra ra chỉ báo **"Không rõ"** — tool không nhắc gì thêm; "không có
+  trong dữ liệu" không đồng nghĩa "không cần giấy".
 - Yêu cầu nhập khẩu trong `lookup.py` là bản tóm tắt điều luật, không thay
   thế văn bản gốc — luôn đối chiếu Điều được dẫn chiếu trước khi làm hồ sơ.
 - **Tra theo tên (chỉ HTML) là gợi ý, không thay mã CAS.** Ba giới hạn, trang

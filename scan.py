@@ -21,6 +21,7 @@ from core import (
     cas_status,
     extract_cas,
     format_exemptions,
+    format_pl3_no_cas,
     format_report,
     rows_for,
 )
@@ -76,6 +77,9 @@ def main():
         print("-" * 70)
 
     print()
+    # In TRƯỚC mục miễn trừ, cùng thứ tự với trang HTML: đây là cảnh báo tool có
+    # thể bỏ sót, đọc trước rồi mới tới chuyện được miễn cái gì.
+    print(format_pl3_no_cas())
     print(format_exemptions())
 
 

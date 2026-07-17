@@ -15,6 +15,10 @@ from pathlib import Path
 
 SRC = Path(sys.argv[1] if len(sys.argv) > 1 else Path(__file__).parent / "nd24.md")
 OUT = Path(__file__).parent / "data" / "nd24_chemicals.json"
+# Mục Phụ lục III chỉ có TÊN, ô mã CAS ghi '---' (họ chất: "Asen và các hợp chất
+# của asen", các họ Bảng 2 dạng N,N-Dialkyl...). Không tra theo CAS được, nhưng
+# BỎ HẲN thì trang im lặng về chúng -> tách ra file riêng để cảnh báo.
+OUT_NO_CAS = Path(__file__).parent / "data" / "nd24_pl3_no_cas.json"
 
 CAS_RE = re.compile(r"\b\d{2,7}-\d{2}-\d\b")
 STT_RE = re.compile(r"^\d+\.$")
@@ -42,6 +46,10 @@ CAT_III_N1_B = "Phụ lục III › Nhóm 1 › B – Hóa chất Bảng 2 (Côn
 CAT_III_N2_A = "Phụ lục III › Nhóm 2 (IVC) › A – Tiền chất công nghiệp"
 CAT_III_N2_B = "Phụ lục III › Nhóm 2 › B – Hóa chất Bảng 3 (Công ước Vũ khí hóa học)"
 CAT_III_N2_C = "Phụ lục III › Nhóm 2 › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"
+# Nhóm 1 còn tiêu đề "Hóa chất khác" sau mục B. Thiếu nhánh này thì 113 chất
+# (Benzen, Benzal clorua, Axit methoxy axetic...) mang category của khối trước nó
+# -> trang nói Benzen là "Hóa chất Bảng 2 (Công ước Vũ khí hóa học)": sai căn cứ.
+CAT_III_N1_KHAC = "Phụ lục III › Nhóm 1 › Hóa chất khác"
 
 ANNEX_HDR = re.compile(r"^#\s+PHỤ LỤC (IV|III|II|I)\s*$")
 
@@ -61,6 +69,7 @@ def is_separator(cells):
 def parse():
     lines = SRC.read_text(encoding="utf-8").splitlines()
     records = []
+    no_cas = []
     annex = None
     category = None
     collecting = True  # False sau khi vào Bảng B của PL IV (không còn CAS riêng lẻ)
@@ -107,6 +116,9 @@ def parse():
             if c0.startswith("Hóa chất Bảng 3"):
                 category = CAT_III_N2_B
                 continue
+            if c0.startswith("Hóa chất khác"):
+                category = CAT_III_N1_KHAC
+                continue
             if "Rotterdam" in joined or "Stockholm" in joined:
                 category = CAT_III_N2_C
                 continue
@@ -122,7 +134,15 @@ def parse():
             continue
         cas_list = CAS_RE.findall(cells[3])
         if not cas_list:
-            continue  # dòng '---' / ô CAS trống (chất không có 1 CAS đơn) -> bỏ
+            # Ô CAS ghi '---': mục là HỌ chất/nhóm chất, nghị định không cho một
+            # mã CAS đơn. Chỉ giữ dòng có STT (mục thật, không phải dòng tiếp diễn
+            # "và các muối proton hóa tương ứng" hay tiêu đề con).
+            # Hai cột tên trong nd24.md có chỗ đảo thứ tự Anh/Việt (mục 27 ghi tên
+            # Việt trước) -> giữ NGUYÊN VĂN cả hai ô, không đoán ô nào là tiếng gì.
+            if annex == "III" and STT_RE.match(c0) and (cells[1] or cells[2]):
+                ten = " / ".join(c for c in (cells[1], cells[2]) if c and c != "---")
+                no_cas.append({"stt": c0, "ten": ten, "category": category})
+            continue  # dòng '---' / ô CAS trống -> không vào bảng tra theo CAS
         name_en, name_vn = cells[1], cells[2]
         # Dòng tiếp diễn (|  |  |  | <CAS> |  |): CAS thứ 2+ của chất ở dòng trên,
         # kế thừa tên — không thì 6 mã CAS ra tên rỗng, lookup in "CAS ...:  ()".
@@ -144,11 +164,13 @@ def parse():
             if threshold:
                 row["threshold_kg"] = threshold
             records.append(row)
-    return records
+    return records, no_cas
 
 
 if __name__ == "__main__":
-    records = parse()
+    records, no_cas = parse()
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(json.dumps(records, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"{len(records)} (CAS, category) rows -> {OUT}")
+    OUT_NO_CAS.write_text(json.dumps(no_cas, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"{len(no_cas)} mục Phụ lục III không có mã CAS -> {OUT_NO_CAS}")

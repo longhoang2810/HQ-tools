@@ -30,6 +30,26 @@ def esc(s):
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+def pl3_no_cas_html():
+    """Khối cảnh báo các mục Phụ lục III ghi theo họ chất, không có mã CAS.
+    Lấy từ core (data/nd24_pl3_no_cas.json do extract.py sinh từ nd24.md) —
+    không gõ tay danh sách trong HTML, y như mục miễn trừ."""
+    parts = [
+        f'<h2>⚠ {esc(core.PL3_NO_CAS_TITLE)}</h2>',
+        f'<p class="cite">{esc(core.PL3_NO_CAS_CITE)}</p>',
+        f'<p class="lead">{esc(core.PL3_NO_CAS_LEAD)}</p>',
+    ]
+    for group in sorted({e["category"] for e in core.PL3_NO_CAS}):
+        parts.append(f"<h3>{esc(group)}</h3>")
+        items = "".join(
+            f'<li><b>{esc(e["stt"])}</b> {esc(e["ten"])}</li>'
+            for e in core.PL3_NO_CAS
+            if e["category"] == group
+        )
+        parts.append(f"<ul>{items}</ul>")
+    return "\n  ".join(parts)
+
+
 def exemptions_html():
     parts = ['<h2>Các trường hợp được miễn trừ</h2>', '<p class="cite">Nghị định 26/2026/NĐ-CP</p>']
     for group in core.EXEMPTIONS:
@@ -131,6 +151,13 @@ HTML = """<!doctype html>
   .exempt .cite { color: var(--muted); font-size: 0.85rem; }
   .exempt .lead { font-weight: 600; margin: 6px 0 4px; }
 
+  /* Cảnh báo vùng mù: viền đỏ để không bị đọc lướt như chú thích thường —
+     đây là chỗ trang có thể im lặng bỏ sót chất cần Giấy phép. */
+  .blind-spot { border-color: var(--red-line); border-left: 4px solid var(--red-ink); }
+  .blind-spot h2 { color: var(--red-ink); }
+  .blind-spot .lead { font-weight: 400; background: var(--red-bg); border-radius: 8px; padding: 10px 14px; margin: 8px 0 4px; }
+  .blind-spot li { font-size: 0.9rem; }
+
   .note { color: var(--muted); font-size: 0.88rem; text-align: justify; }
   footer { text-align: center; color: var(--muted); font-size: 0.82rem; margin-top: 30px; }
 
@@ -185,6 +212,10 @@ HTML = """<!doctype html>
 </div>
 
 <div id="results"></div>
+
+<div class="card exempt blind-spot">
+  __PL3_NO_CAS_HTML__
+</div>
 
 <div class="card exempt">
   __EXEMPTIONS_HTML__
@@ -559,7 +590,8 @@ inputEl.addEventListener("paste", () => setTimeout(run, 0));
 """
 
 out = (
-    HTML.replace("__EXEMPTIONS_HTML__", exemptions_html())
+    HTML.replace("__PL3_NO_CAS_HTML__", pl3_no_cas_html())
+    .replace("__EXEMPTIONS_HTML__", exemptions_html())
     .replace("__DATA_JSON__", DATA_JSON)
     .replace("__IMPORT_RULES_JSON__", IMPORT_RULES_JSON)
     .replace("__IMPORT_ANNEXES_JSON__", IMPORT_ANNEXES_JSON)
