@@ -40,7 +40,7 @@ IMPORT_RULES = {
         "Đã được cấp Giấy phép nhập khẩu thì MIỄN khai báo hóa chất (Điều 6.7.a).",
         "Các trường hợp được miễn Giấy phép XNK quy định tại Điều 21 NĐ 26/2026/NĐ-CP.",
         "Nhập khẩu để sản xuất sản phẩm khác: lập tài khoản và công bố mục đích sử dụng trên Cơ sở dữ liệu chuyên ngành KHI nhập khẩu (Điều 14.3) không phải điều kiện thông quan.",
-        "Đưa vào SỬ DỤNG lần đầu, hoặc đổi mục đích đã công bố: phải công bố TRƯỚC 30 NGÀY — mốc này gắn với khâu SỬ DỤNG, không phải khâu nhập khẩu (Điều 15.1).",
+        "Đưa vào SỬ DỤNG lần đầu, hoặc đổi mục đích đã công bố: phải công bố LOẠI HÓA CHẤT VÀ MỤC ĐÍCH SỬ DỤNG (rộng hơn công bố mục đích lúc nhập khẩu ở trên) TRƯỚC 30 NGÀY — mốc này gắn với khâu SỬ DỤNG, không phải khâu nhập khẩu (Điều 15.1).",
         "Xuất khẩu tiền chất công nghiệp: cần thêm văn bản chấp thuận của Bộ Công an (Điều 14.6.d).",
     ],
 }

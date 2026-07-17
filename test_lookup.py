@@ -258,6 +258,10 @@ def test_pl3_splits_import_congbo_from_use_deadline():
     # Điều 15.1: mốc 30 NGÀY là mốc cứng, gắn khâu SỬ DỤNG.
     assert "TRƯỚC 30 NGÀY" in b15 and "SỬ DỤNG" in b15
     assert "không phải khâu nhập khẩu" in b15
+    # Nội dung công bố cũng khác nhau, không chỉ mốc thời gian: Điều 14.3 chỉ
+    # công bố mục đích, Điều 15.1 công bố CẢ loại hóa chất lẫn mục đích (rộng hơn).
+    assert "LOẠI HÓA CHẤT VÀ MỤC ĐÍCH SỬ DỤNG" in b15
+    assert "LOẠI HÓA CHẤT" not in b14
 
 
 def test_data_regenerated_from_official_nd24():
