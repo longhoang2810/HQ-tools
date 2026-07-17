@@ -14,15 +14,18 @@ có mạng — dữ liệu đã nhúng sẵn trong file). Dán mô tả DN vào 
 Trang này cũng có mục **"Các trường hợp được miễn trừ"** cố định ở cuối
 (NĐ 26 Điều 6.7, Điều 10.3, Điều 21).
 
-Nếu mô tả không có mã CAS, trang tự chuyển sang **tìm theo tên hóa chất**
-(tiếng Việt hoặc tiếng Anh, gõ không dấu cũng khớp; ưu tiên khớp nguyên
-tên rồi mới tới chứa trong tên, tối đa 30 kết quả).
+Nếu mô tả không có mã CAS nào, trang tự chuyển sang **tìm theo tên hóa chất**
+(tiếng Việt hoặc tiếng Anh, gõ không dấu cũng khớp, tối đa 30 kết quả): dò tên
+nằm trong đoạn văn ("Hỗn hợp dung môi gồm Metanol, Toluene" → ra cả hai chất),
+và gõ một phần tên ("amino") thì liệt kê các chất có tên đó. Mô tả **đã có** mã
+CAS thì chỉ tra theo mã — không dò tên trong luồng chính.
 
 Tiện ích trên trang: nút **Ví dụ ngẫu nhiên** tạo một hỗn hợp mẫu **phủ đủ mọi
 trường hợp** trang có thể ra (chất PL III cần Giấy phép, chất vừa PL I vừa PL III
 — khối khai báo PL I bị ẩn theo Điều 6.7.a, chất PL II còn nghĩa vụ khác, chất PL
 I chỉ khai báo, chất PL IV không phát sinh, và một mã CAS ngoài dữ liệu ra "Không
-rõ"); nút **Ví dụ tra theo tên** cho nhánh tìm theo tên; nút **Xóa**, phím tắt
+rõ"); nút **Ví dụ không có mã CAS** tạo mô tả chỉ ghi tên chất (nhánh dò tên; nhánh này
+không có case "Không rõ" — xem Giới hạn); nút **Xóa**, phím tắt
 **Ctrl+Enter**, tự tra ngay khi dán, và chip thống kê số chất cần Giấy phép. Ghi kèm `% hàm lượng`
 trên cùng dòng với mã CAS để tự so ngưỡng miễn trừ Điều 21.
 
@@ -105,6 +108,25 @@ trả lời "cần giấy gì". Đó là việc của cơ quan cấp phép, khô
   không đồng nghĩa "không cần giấy".
 - Yêu cầu nhập khẩu trong `lookup.py` là bản tóm tắt điều luật, không thay
   thế văn bản gốc — luôn đối chiếu Điều được dẫn chiếu trước khi làm hồ sơ.
+- **Tra theo tên (chỉ HTML) là gợi ý, không thay mã CAS.** Ba giới hạn, trang
+  cũng tự cảnh báo ngay trong kết quả:
+  1. **Không có case "Không rõ".** Tên không khớp dữ liệu thì không hiện dòng nào
+     — mô tả "gồm Metanol, Toluene và Axeton" chỉ ra 2 chất vì Axeton không thuộc
+     Phụ lục I–IV. Khác nhánh CAS: mã lạ vẫn hiện "Không rõ". Bảng tra theo tên
+     **không** chứng minh lô hàng chỉ có bấy nhiêu chất.
+  2. **Tên ghép khớp thừa.** Mô tả "natri clorua" (muối ăn, không thuộc NĐ 24) ra
+     chất "Natri" — vì "natri clorua" không có trong dữ liệu để nuốt cụm ngắn hơn.
+     Báo thừa và hiện rõ để cán bộ tự loại, đúng hướng fail-safe.
+  3. **Chỉ chạy khi đoạn không có mã CAS nào** — mô tả đã có mã CAS thì chất chỉ
+     ghi tên trong đoạn đó bị bỏ qua. Dò tên trong luồng chính sẽ kéo cả cái báo
+     thừa ở mục 2 vào mọi lô hàng, nên đây là lựa chọn có chủ đích.
+
+  Tên trong NĐ 24 hay kèm đuôi qualifier ("... **và các muối proton hóa chất
+  tương ứng**") mà DN không bao giờ khai, nên chỉ số tên có thêm phần đầu tên (cắt
+  ở `và`/`and`/`(`). Không có nó thì "N,N-dimetyl amino etanol" (108-01-0, PL III,
+  **cần** Giấy phép) tụt xuống khớp chữ "etanol" → báo ra Etanol (64-17-5, PL I,
+  *không cần*): sai chất, sai về phía nguy hiểm. `test_do_ten_hoa_chat_trong_mo_ta_khong_co_ma_cas`
+  chốt ca này.
 - Không tự nhận diện `% hàm lượng` để kết luận miễn trừ: hóa chất Phụ lục III
   **luôn** báo "Cần Giấy phép XNK hóa chất KSĐB"; cán bộ tự đối chiếu ngưỡng Điều
   21 bằng tài liệu khai báo gốc. (Fail-safe: thà báo cần hơn miễn nhầm.)

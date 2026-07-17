@@ -1,6 +1,9 @@
 """Smallest possible regression check: known CAS -> known annex(es), and
 that scanning a pasted DN description pulls every CAS out of free text."""
+import json
 import re
+import shutil
+import subprocess
 from pathlib import Path
 
 import core
@@ -181,6 +184,67 @@ def test_vi_du_ngau_nhien_van_con_case_khong_ro():
         "mọi CAS trong OUTSIDE_DATA đều đã có trong dữ liệu — ví dụ ngẫu nhiên "
         "không còn chất nào ra 'Không rõ'"
     )
+
+
+def _run_js(snippet):
+    """Chạy JS của trang bằng node để test THẬT hàm dò tên, không chỉ soi chuỗi
+    nguồn. Trang là file HTML tĩnh nên không có harness JS nào — node lấy nguyên
+    khối <script> đã build, chỉ chặn mấy dòng DOM ở cuối bằng stub document."""
+    node = shutil.which("node")
+    if not node:
+        return None  # máy không có node -> bỏ qua, phần còn lại vẫn chạy python thuần
+    html = Path(__file__).with_name("Tra-cuu-hoa-chat-ND24.html")
+    if not html.exists():
+        return None
+    script = re.search(r"<script>(.*)</script>", html.read_text(encoding="utf-8"), re.S).group(1)
+    stub = "const document = { getElementById: () => ({ addEventListener() {}, focus() {} }) };\n"
+    proc = subprocess.run(
+        [node, "-e", stub + script + "\n" + snippet],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert proc.returncode == 0, f"node lỗi: {proc.stderr[:600]}"
+    return json.loads(proc.stdout)
+
+
+def test_do_ten_hoa_chat_trong_mo_ta_khong_co_ma_cas():
+    # Mô tả DN không kèm mã CAS: phải dò được TÊN nằm trong đoạn văn. Trước đây
+    # chỉ khớp khi gõ trống đúng một tên chất -> nguyên đoạn mô tả ra "không tìm
+    # thấy gì", đúng loại mô tả mà DN hay khai nhất.
+    got = _run_js("""
+      console.log(JSON.stringify({
+        mota: scanNames("Hỗn hợp dung môi công nghiệp gồm Metanol, Toluene và nước cất."),
+        // "etanol" KHÔNG được ăn vào "metanol" (khớp theo TỪ, không theo ký tự)
+        chi_metanol: scanNames("Metanol"),
+        // cụm DÀI NHẤT thắng: "natri hydroxit" (có trong dữ liệu) không được
+        // báo kèm cả "Natri" (7440-23-5) nằm trong tên nó
+        natri_hydroxit: scanNames("Dung dịch natri hydroxit 5%"),
+        // đoạn không có hóa chất nào -> không bịa ra chất
+        rong: scanNames("Hàng hóa đóng trong thùng carton, không nguy hiểm"),
+        // dấu câu khác nhau vẫn cùng một tên; và DN khai tên KHÔNG kèm đuôi
+        // qualifier của nghị định ("... và các muối proton hóa chất tương ứng")
+        // vẫn phải ra ĐÚNG chất 108-01-0 (PL III, cần Giấy phép), tuyệt đối
+        // không tụt xuống khớp chữ "etanol" -> Etanol 64-17-5 (PL I, không cần).
+        dau_cau: scanNames("chứa N,N dimetyl amino etanol"),
+      }));
+    """)
+    if got is None:
+        return
+    assert "67-56-1" in got["mota"] and "108-88-3" in got["mota"], f"sót tên trong mô tả: {got['mota']}"
+    assert got["chi_metanol"] == ["67-56-1"], f"'etanol' ăn vào 'metanol': {got['chi_metanol']}"
+    assert got["natri_hydroxit"] == ["1310-73-2"], f"không ưu tiên cụm dài nhất: {got['natri_hydroxit']}"
+    assert got["rong"] == [], f"bịa ra chất từ đoạn không có hóa chất: {got['rong']}"
+    assert got["dau_cau"] == ["108-01-0"], (
+        f"tên khai thiếu đuôi qualifier ra sai chất: {got['dau_cau']} "
+        "(64-17-5 = Etanol, PL I 'không cần Giấy phép' — sai về phía nguy hiểm)"
+    )
+
+
+def test_do_ten_chi_chay_khi_khong_co_ma_cas():
+    # Cổng vào của nhánh dò tên: mô tả ĐÃ có mã CAS thì chỉ tra theo mã. Dò tên
+    # trong luồng chính có thể báo thừa chất -> đổi cổng này là đổi kết luận cho
+    # MỌI lô hàng, phải cân nhắc riêng chứ không sửa kèm.
+    src = Path(__file__).with_name("build_html.py").read_text(encoding="utf-8")
+    assert "if (entries.length === 0) {" in src and "const byName = searchByName(text);" in src
 
 
 def test_html_can_deu_chu_thich_va_luu_y():
