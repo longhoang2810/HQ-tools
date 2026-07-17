@@ -81,6 +81,11 @@ python3 extract.py            # đọc nd24.md -> data/nd24_chemicals.json
 > ổn định hơn, và sửa được vài lỗi phân loại của bản cũ (POP về đúng PL III thay
 > vì PL IV; PL I không còn bị rớt chất).
 
+**Đã đối chiếu `nd24.md` với bản gốc `24_2026_ND-CP_682556.docx`** (17/7/2026):
+mã CAS duy nhất **1257 = 1257**, không sót cũng không thừa mã nào; cấu trúc khối
+`Ngoại trừ` của Phụ lục III cũng khớp. Hai mục ghi cụt (45 "Biphenyl (PCB)", 81
+"Polychlorinated") là **văn bản gốc ghi vậy**, không phải lỗi chuyển đổi.
+
 Phần **yêu cầu nhập khẩu / miễn trừ** (`IMPORT_RULES`, `EXEMPTIONS` trong
 `core.py`) là bản tóm tắt từ **NĐ 26/2026/NĐ-CP** (ngưỡng miễn trừ cập nhật theo
 **NQ 19/2026/NQ-CP**) — toàn văn để đối chiếu nằm ở `nd26.txt` trong repo. Sửa
@@ -114,8 +119,9 @@ trả lời "cần giấy gì". Đó là việc của cơ quan cấp phép, khô
   nd24.md để `---`) nên tra theo mã không bao giờ ra: 6 họ Bảng 2 dạng
   `N,N-Dialkyl…` (mục 26, 27, 28, 32, 33, 34); 5 họ nguyên tố — **37. Asen và các
   hợp chất của asen; 38. Các hợp chất của Cr⁶⁺; 39. Thủy ngân và các hợp chất;
-  40. Các hợp chất xyanua; 41. Chì và các hợp chất**; và 2 mục tên bị cụt trong
-  nd24.md (45 "Biphenyl (PCB)", 81 "Polychlorinated").
+  40. Các hợp chất xyanua; 41. Chì và các hợp chất**; và 2 mục **chính nghị định
+  ghi cụt** (45 "Biphenyl (PCB)", 81 "Polychlorinated" — đã đối chiếu bản gốc
+  `24_2026_ND-CP_682556.docx`, không phải lỗi chuyển đổi của nd24.md).
 
   Hậu quả đo được, **không phải giả định**: Asen trioxit (1327-53-3) chỉ được nghị
   định ghi mã ở Phụ lục IV nên công cụ kết luận **"Không cần Giấy phép XNK"**,
