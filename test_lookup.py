@@ -160,9 +160,27 @@ def test_html_khong_lech_khoi_core():
 def test_html_co_nut_vi_du_ngau_nhien():
     src = Path(__file__).with_name("build_html.py").read_text(encoding="utf-8")
     assert 'onclick="randomExample()"' in src
+    assert 'onclick="randomNameExample()"' in src
     assert 'onclick="clearAll()"' in src
     assert 'const byCas = new Map()' in src
-    assert 'sample.map(row => `${row.name_vn} (CAS ${row.cas})`)' in src
+    assert 'shuffle(items).map(([name, cas]) => `${name} (CAS ${cas})`)' in src
+
+
+def test_vi_du_ngau_nhien_van_con_case_khong_ro():
+    # Ví dụ ngẫu nhiên chèn sẵn một CAS NGOÀI Phụ lục I-IV để luôn hiện đủ cả
+    # verdict "Không rõ". Danh sách này viết tay trong JS -> nếu bản NĐ sau đưa
+    # hết mấy chất đó vào Phụ lục, bộ lọc lúc chạy bỏ sạch và ví dụ MẤT case
+    # "Không rõ" mà không ai hay. Đỏ = thêm một chất khác còn ngoài dữ liệu.
+    src = Path(__file__).with_name("build_html.py").read_text(encoding="utf-8")
+    m = re.search(r"const OUTSIDE_DATA = \[(.*?)\];", src)
+    assert m, "không tìm thấy OUTSIDE_DATA trong build_html.py"
+    cas_list = core.CAS_RE.findall(m.group(1))
+    assert cas_list, "OUTSIDE_DATA không có mã CAS nào"
+    in_data = {r["cas"] for r in DATA}
+    assert any(c not in in_data for c in cas_list), (
+        "mọi CAS trong OUTSIDE_DATA đều đã có trong dữ liệu — ví dụ ngẫu nhiên "
+        "không còn chất nào ra 'Không rõ'"
+    )
 
 
 def test_html_can_deu_chu_thich_va_luu_y():

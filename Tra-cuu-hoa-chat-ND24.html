@@ -120,6 +120,7 @@
   </div>
   <div class="toolbar">
     <button class="mini" onclick="randomExample()">🎲 Ví dụ ngẫu nhiên</button>
+    <button class="mini" onclick="randomNameExample()">🔤 Ví dụ tra theo tên</button>
     <button class="mini" onclick="clearAll()">✕ Xóa</button>
     <span class="hint">Mẹo: nhấn <b>Ctrl+Enter</b> (⌘+Enter trên Mac) để tra cứu nhanh</span>
   </div>
@@ -325,17 +326,62 @@ function clearAll() {
   document.getElementById("input").focus();
 }
 
+// Moi lan bam phai ra DU cac ket luan trang co the hien, khong pho mac may rui:
+// boc 4 chat bat ky nhu truoc thi phan lon lan bam khong co chat Phu luc III nao
+// (~250/1214 ma CAS) -> khong thay dong do, tuong trang chi biet bao "khong can".
+// Moi bucket = mot nhanh hien thi khac nhau, khong phai chi khac verdict.
+const EXAMPLE_BUCKETS = [
+  a => a.has("III") && a.has("I"),                   // can Giay phep; khoi khai bao PL I bi an (Dieu 6.7.a)
+  a => a.has("III") && !a.has("I"),                  // can Giay phep, chi khoi PL III
+  a => a.has("II") && !a.has("I") && !a.has("III"),  // khong can Giay phep XNK — con nghia vu khac
+  a => a.has("I") && !a.has("II") && !a.has("III"),  // khong can Giay phep XNK — chi khai bao
+  a => a.size === 1 && a.has("IV"),                  // khong phat sinh yeu cau nhap khau rieng
+];
+
+// CAS that nhung ngoai Phu luc I-IV -> vi du luon co mot dong "Khong ro". Loc lai
+// luc chay phong khi ban ND sau dua chat nao do vao Phu luc.
+const OUTSIDE_DATA = [["Nước cất", "7732-18-5"], ["Natri clorua (muối ăn)", "7647-14-5"], ["Glycerin", "56-81-5"]];
+
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 function randomExample() {
   const byCas = new Map();
-  DATA.forEach(row => { if (!byCas.has(row.cas)) byCas.set(row.cas, row); });
-  const pool = [...byCas.values()];
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
+  DATA.forEach(row => {
+    if (!byCas.has(row.cas)) byCas.set(row.cas, { row, annexes: new Set() });
+    byCas.get(row.cas).annexes.add(row.annex);
+  });
+  const entries = [...byCas.values()];
+  const items = [];
+  for (const match of EXAMPLE_BUCKETS) {
+    const pool = entries.filter(e => match(e.annexes));
+    if (pool.length) {
+      const { row } = pick(pool);
+      items.push([row.name_vn, row.cas]);
+    }
   }
-  const sample = pool.slice(0, 4);
+  const outside = OUTSIDE_DATA.filter(([, cas]) => !byCas.has(cas));
+  if (outside.length) items.push(pick(outside));
+  // Xao tron de mo ta doc nhu khai bao that, khong phai danh sach xep theo phu luc.
   document.getElementById("input").value = "Hỗn hợp mẫu gồm: " +
-    sample.map(row => `${row.name_vn} (CAS ${row.cas})`).join(", ") + ".";
+    shuffle(items).map(([name, cas]) => `${name} (CAS ${cas})`).join(", ") + ".";
+  run();
+}
+
+// Nhanh tra theo ten can o nhap KHONG co ma CAS nao -> phai la vi du rieng.
+// extractCas de loai ten tu no da chua chuoi dang CAS (se roi vao nhanh CAS).
+function randomNameExample() {
+  const row = pick(DATA.filter(r => extractCas(r.name_vn).length === 0));
+  document.getElementById("input").value = row.name_vn;
   run();
 }
 

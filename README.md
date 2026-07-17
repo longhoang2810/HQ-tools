@@ -18,8 +18,12 @@ Nếu mô tả không có mã CAS, trang tự chuyển sang **tìm theo tên hó
 (tiếng Việt hoặc tiếng Anh, gõ không dấu cũng khớp; ưu tiên khớp nguyên
 tên rồi mới tới chứa trong tên, tối đa 30 kết quả).
 
-Tiện ích trên trang: nút **Ví dụ ngẫu nhiên** để tạo nhanh một hỗn hợp mẫu, nút **Xóa**, phím tắt **Ctrl+Enter**, tự tra ngay khi
-dán, và chip thống kê số chất cần Giấy phép. Ghi kèm `% hàm lượng`
+Tiện ích trên trang: nút **Ví dụ ngẫu nhiên** tạo một hỗn hợp mẫu **phủ đủ mọi
+trường hợp** trang có thể ra (chất PL III cần Giấy phép, chất vừa PL I vừa PL III
+— khối khai báo PL I bị ẩn theo Điều 6.7.a, chất PL II còn nghĩa vụ khác, chất PL
+I chỉ khai báo, chất PL IV không phát sinh, và một mã CAS ngoài dữ liệu ra "Không
+rõ"); nút **Ví dụ tra theo tên** cho nhánh tìm theo tên; nút **Xóa**, phím tắt
+**Ctrl+Enter**, tự tra ngay khi dán, và chip thống kê số chất cần Giấy phép. Ghi kèm `% hàm lượng`
 trên cùng dòng với mã CAS để tự so ngưỡng miễn trừ Điều 21.
 
 Nếu sửa `data/nd24_chemicals.json` hoặc `core.py` (quy tắc/miễn trừ), chạy
