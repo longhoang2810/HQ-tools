@@ -86,7 +86,7 @@ OTHER_OBLIGATIONS_TITLE = "Nghĩa vụ khác — chỉ áp dụng cho hóa chấ
 OTHER_OBLIGATIONS = [
     "Nhập khẩu để KINH DOANH: phải có Giấy chứng nhận đủ điều kiện sản xuất, kinh doanh hóa chất có điều kiện (Điều 8, 9, 10.2).",
     "Nhập khẩu để TỰ DÙNG: không cần Giấy chứng nhận, chỉ công bố mục đích sử dụng (Điều 10.3). Công bố KHÔNG phải điều kiện thông quan và không có thời hạn cứng — doanh nghiệp chủ động chọn thời điểm công bố.",
-    "Điều kiện thông quan không phải Giấy chứng nhận, mà là khai báo hóa chất nhập khẩu qua Cổng một cửa quốc gia (Điều 6) — nghĩa vụ chung cho hóa chất thuộc chương 28, 29, không riêng Phụ lục II; phải có phản hồi khai báo mới được thông quan (Điều 6.3.c).",
+    "Khai báo hóa chất nhập khẩu qua Cổng một cửa quốc gia (Điều 6) — nghĩa vụ chung cho hóa chất thuộc chương 28, 29, không riêng Phụ lục II; phải có phản hồi khai báo mới được thông quan (Điều 6.3.c).",
 ]
 
 # Nguồn duy nhất cho mục "Các trường hợp được miễn trừ" — dùng chung cho
