@@ -152,7 +152,7 @@ HTML = """<!doctype html>
     <h2>Hướng dẫn sử dụng</h2>
     <ol>
       <li>Copy nguyên mô tả hàng hóa của doanh nghiệp — không cần tách tay từng mã CAS.</li>
-      <li>Dán vào ô bên dưới rồi bấm <b>Tra cứu</b>. Công cụ tự tìm mọi mã CAS xuất hiện trong đoạn văn.</li>
+      <li>Dán vào ô bên dưới rồi bấm <b>Tra cứu</b>. Công cụ tự tìm mọi mã CAS xuất hiện trong đoạn văn. Nếu khai báo không có mã CAS, gõ tên hóa chất (tiếng Việt hoặc tiếng Anh, không cần gõ dấu) để tìm theo tên.</li>
       <li>Công cụ không tự tính % hàm lượng — hóa chất Phụ lục III luôn báo "__VERDICT_PL3__"; đối chiếu ngưỡng miễn trừ nồng độ ở mục "Các trường hợp được miễn trừ" bên dưới bằng tài liệu khai báo gốc.</li>
     </ol>
   </div>
@@ -160,7 +160,7 @@ HTML = """<!doctype html>
 
 <div class="card" id="input-card">
   <div class="input-row">
-    <textarea id="input" placeholder="Ví dụ: Hỗn hợp dung môi công nghiệp gồm Metanol CAS 67-56-1, Acetaldehyde (75-07-0), mã CAS 103-79-7 (P2P)..."></textarea>
+    <textarea id="input" placeholder="Ví dụ: Hỗn hợp dung môi công nghiệp gồm Metanol CAS 67-56-1, Acetaldehyde (75-07-0), mã CAS 103-79-7 (P2P)... — hoặc gõ tên chất: metanol"></textarea>
     <button id="run-btn" onclick="run()">🔍 Tra cứu</button>
   </div>
   <div class="toolbar">
@@ -215,6 +215,31 @@ function extractCas(text) {
   return out;
 }
 
+function normName(s) {
+  return s.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/đ/g, "d").toLowerCase();
+}
+
+// Tra theo ten khi doan nhap khong co ma CAS nao: moi tu cua truy van phai
+// xuat hien trong name_vn hoac name_en (bo dau, khong phan biet hoa/thuong).
+// Uu tien khop nguyen ten > dau ten > chua trong ten.
+const NAME_LIMIT = 30;
+function searchByName(text) {
+  const q = normName(text.trim());
+  if (q.length < 2) return [];
+  const tokens = q.split(/\\s+/);
+  const scored = [];
+  for (const r of DATA) {
+    const vn = normName(r.name_vn), en = normName(r.name_en);
+    if (!tokens.every(t => vn.includes(t) || en.includes(t))) continue;
+    const score = (vn === q || en === q) ? 0 : (vn.startsWith(q) || en.startsWith(q)) ? 1 : 2;
+    scored.push([score, r.cas]);
+  }
+  scored.sort((a, b) => a[0] - b[0]);
+  const seen = new Set(), out = [];
+  for (const [, cas] of scored) if (!seen.has(cas)) { seen.add(cas); out.push(cas); }
+  return out;
+}
+
 // Doi xung voi cas_status() trong core.py — khong tu nhan dien % ham
 // luong (khai bao tu do de ghi lon xon, doan nham % de ket luan mien tru
 // sai): hoa chat Phu luc III luon bao "Can Giay phep".
@@ -263,12 +288,20 @@ function detailFor(cas) {
 
 function run() {
   const text = document.getElementById("input").value;
-  const entries = extractCas(text);
   const resultsEl = document.getElementById("results");
+  let entries = extractCas(text);
+  let heading = `Tìm thấy ${entries.length} mã CAS`;
 
   if (entries.length === 0) {
-    resultsEl.innerHTML = `<div class="card"><p class="note">Không tìm thấy mã CAS nào (định dạng NNN-NN-N) trong đoạn đã dán. Kiểm tra lại mô tả, hoặc dán trực tiếp mã CAS (ví dụ: 107-13-1).</p></div>`;
-    return;
+    // Khong co ma CAS -> thu tra theo ten hoa chat.
+    const byName = searchByName(text);
+    if (byName.length === 0) {
+      resultsEl.innerHTML = `<div class="card"><p class="note">Không tìm thấy mã CAS nào (định dạng NNN-NN-N) và cũng không có tên hóa chất nào khớp với đoạn đã nhập. Kiểm tra lại mô tả, dán trực tiếp mã CAS (ví dụ: 107-13-1), hoặc gõ tên chất (ví dụ: metanol).</p></div>`;
+      return;
+    }
+    entries = byName.slice(0, NAME_LIMIT);
+    heading = `Không có mã CAS trong đoạn đã nhập — tìm theo tên được ${byName.length} chất khớp`
+      + (byName.length > NAME_LIMIT ? `, hiển thị ${NAME_LIMIT} chất khớp nhất` : "");
   }
 
   const counts = { warn: 0, ok: 0, unknown: 0 };
@@ -285,7 +318,7 @@ function run() {
   stats += "</div>";
 
   let table = `<div class="card">
-    <p id="count">Tìm thấy ${entries.length} mã CAS</p>
+    <p id="count">${heading}</p>
     ${stats}
     <div class="table-wrap"><table><tr><th>CAS</th><th>Tên chất</th><th>Phụ lục</th><th>Trạng thái</th></tr>`;
   entries.forEach((cas, i) => {
