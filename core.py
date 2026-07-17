@@ -202,6 +202,41 @@ PL3_NO_CAS_LEAD = (
 )
 PL3_NO_CAS_CITE = "Nguyên văn từ nd24.md — Phụ lục III, mục I. Chất cần kiểm soát đặc biệt"
 
+# ponytail: nhận diện họ chất bằng TỪ KHÓA TRONG TÊN — heuristic, không phải hóa
+# học thật. Trần của nó: chỉ bắt được chất mang tên nguyên tố; SÓT tên không mang
+# (Calomel = Hg2Cl2 không có chữ "thủy ngân"), và không phân biệt được Cr3+ với
+# Cr6+ nếu tên không nói. Nâng cấp khi cần chắc hơn: đối chiếu cột "Công thức hóa
+# học" của nd24.md (extract.py chưa lấy cột này).
+# Chỉ để GỢI Ý đối chiếu, KHÔNG đổi verdict: đoán sai theo hướng nào cũng hại —
+# báo thừa thì cán bộ mất công, báo thiếu thì lọt hàng cần giấy phép.
+# Giữ dấu tiếng Việt khi so: bỏ dấu thì "chì" thành "chi", khớp lung tung.
+PL3_HINT_PREFIX = (
+    "⚠ TÊN CHẤT NÀY GỢI Ý CÓ THỂ THUỘC MỘT MỤC PHỤ LỤC III GHI THEO HỌ CHẤT — "
+    "kết luận trên dựa vào mã CAS nên KHÔNG tính mục đó. Tự đối chiếu:"
+)
+PL3_FAMILY_HINTS = {
+    "37.": ["asen", "arsenic"],
+    "38.": ["cromat", "chromate", "cr6", "crom (vi)", "chromium (vi)"],
+    "39.": ["thủy ngân", "mercury"],
+    "40.": ["xyanua", "cyanide"],
+    "41.": ["chì", "lead"],
+}
+
+
+def pl3_family_hints(cas):
+    """Mục Phụ lục III (họ chất, không có mã CAS) mà TÊN của CAS này gợi ý là có
+    thể thuộc về. Trả [] nếu chất đã là Phụ lục III — verdict đã báo cần Giấy
+    phép rồi, nhắc thêm chỉ làm nhiễu."""
+    rows = rows_for(cas)
+    if not rows or "III" in annexes_for(cas):
+        return []
+    name = f"{rows[0]['name_vn']} {rows[0]['name_en']}".lower()
+    return [
+        e
+        for e in PL3_NO_CAS
+        if any(k in name for k in PL3_FAMILY_HINTS.get(e["stt"], []))
+    ]
+
 
 def format_pl3_no_cas(width=78):
     lines = [PL3_NO_CAS_TITLE.upper(), f"({PL3_NO_CAS_CITE})", ""]
@@ -307,6 +342,15 @@ def format_report(cas):
         return f"CAS {cas}: không có trong dữ liệu NĐ 24 (Phụ lục I-IV)."
     lines.append(f"CAS {cas}: {rows[0]['name_vn']} ({rows[0]['name_en']})")
     lines.append("")
+    for hint in pl3_family_hints(cas):
+        lines.append(
+            textwrap.fill(
+                f"{PL3_HINT_PREFIX} {hint['stt']} {hint['ten']} ({hint['category']})",
+                width=78,
+                subsequent_indent="  ",
+            )
+        )
+        lines.append("")
     seen_annex = set()
     import_rows = [r for r in rows if r["annex"] in IMPORT_ANNEXES]
     for r in import_rows:

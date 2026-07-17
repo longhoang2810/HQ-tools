@@ -296,6 +296,50 @@ def test_pl3_khong_ma_cas_khong_bi_bo_im_lang():
         )
 
 
+def test_co_ho_chat_bat_dung_ca_xanh_nguy_hiem():
+    # Khối cảnh báo cuối trang không cứu được ca này: cán bộ đọc dòng xanh "Không
+    # cần Giấy phép XNK" là xong, không cuộn xuống. Nên chất có TÊN gợi ý thuộc họ
+    # chất PL III phải được gắn cờ NGAY TRONG dòng kết quả.
+    hints = core.pl3_family_hints("1327-53-3")          # Asen trioxit
+    assert [h["stt"] for h in hints] == ["37."], hints
+    assert core.pl3_family_hints("143-33-9") == []      # không có trong dữ liệu -> không có tên để đoán
+    # Chất ĐÃ là PL III thì thôi, verdict đã đỏ — nhắc thêm chỉ làm nhiễu.
+    assert core.pl3_family_hints("67-56-1") == []
+    # Không được báo thừa: chạy trên toàn bộ dữ liệu, chỉ 7 chất đã đo được dính.
+    flagged = {c for c in {r["cas"] for r in DATA} if core.pl3_family_hints(c)}
+    assert flagged == {
+        "1303-28-2", "1327-53-3", "7784-42-1",     # hợp chất asen -> mục 37
+        "24613-89-6", "49663-84-5",                # cromat -> mục 38
+        "13424-46-9", "63918-97-8",                # hợp chất chì -> mục 41
+    }, sorted(flagged)
+    # ...và tất cả đều đang XANH — đó chính là lý do phải gắn cờ.
+    assert all(cas_status(c)[0] == "ok" for c in flagged)
+    # format_report bẻ dòng bằng textwrap -> so trên bản đã chuẩn hóa khoảng
+    # trắng, không thì đỏ oan vì cụm từ bị ngắt (xem norm_rules).
+    rep = re.sub(r"\s+", " ", format_report("1327-53-3"))
+    assert re.sub(r"\s+", " ", core.PL3_HINT_PREFIX) in rep
+    assert "Asen và các hợp chất của asen" in rep
+
+
+def test_co_ho_chat_html_khop_core():
+    # JS dựng lại pl3_family_hints -> phải khớp core trên TOÀN BỘ dữ liệu, không
+    # chỉ vài ca mẫu: lệch ở đây nghĩa là trang HTML và CLI kết luận khác nhau về
+    # cùng một lô hàng. Chạy thẳng JS của trang bằng node rồi so.
+    got = _run_js("""
+      const out = [...new Set(DATA.map(r => r.cas))].filter(c => pl3FamilyHints(c).length)
+        .map(c => [c, pl3FamilyHints(c).map(e => e.stt)]);
+      console.log(JSON.stringify(Object.fromEntries(out)));
+    """)
+    if got is None:
+        return
+    mine = {
+        c: [h["stt"] for h in core.pl3_family_hints(c)]
+        for c in {r["cas"] for r in DATA}
+        if core.pl3_family_hints(c)
+    }
+    assert got == mine, f"JS và core lệch nhau: chỉ JS {set(got) - set(mine)}, chỉ core {set(mine) - set(got)}"
+
+
 def test_pl3_hoa_chat_khac_khong_bi_gan_nham_bang_2():
     # nd24.md: Nhóm 1 có tiêu đề "Hóa chất khác" (mục 37-41 + 113 chất có mã CAS)
     # nằm SAU khối B – Hóa chất Bảng 2. Parser không biết tiêu đề này thì cả 113

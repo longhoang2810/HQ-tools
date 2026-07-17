@@ -24,6 +24,9 @@ OTHER_OBLIGATION_ANNEXES_JSON = json.dumps(core.OTHER_OBLIGATION_ANNEXES, ensure
 VERDICT_JSON = json.dumps(core.VERDICT, ensure_ascii=False)
 SUPPRESS_ANNEX_JSON = json.dumps(core.SUPPRESS_ANNEX, ensure_ascii=False)
 ANNEX_DISPLAY_ORDER_JSON = json.dumps(core.ANNEX_DISPLAY_ORDER, ensure_ascii=False)
+PL3_NO_CAS_JSON = json.dumps(core.PL3_NO_CAS, ensure_ascii=False)
+PL3_FAMILY_HINTS_JSON = json.dumps(core.PL3_FAMILY_HINTS, ensure_ascii=False)
+PL3_HINT_PREFIX_JSON = json.dumps(core.PL3_HINT_PREFIX, ensure_ascii=False)
 
 
 def esc(s):
@@ -151,6 +154,12 @@ HTML = """<!doctype html>
   .exempt .cite { color: var(--muted); font-size: 0.85rem; }
   .exempt .lead { font-weight: 600; margin: 6px 0 4px; }
 
+  /* Cờ họ chất: nằm trong ô trạng thái, phải "cãi lại" được pill xanh ngay
+     cạnh nó nên dùng nền/viền đỏ, không phải chữ xám mờ. */
+  .fam-hint { margin-top: 8px; background: var(--red-bg); border: 1px solid var(--red-line); border-left: 3px solid var(--red-ink); border-radius: 6px; padding: 7px 10px; color: var(--red-ink); font-size: 0.8rem; font-weight: 600; text-align: left; }
+  .fam-hint ul { margin: 4px 0 0; padding-left: 18px; font-weight: 400; }
+  .fam-hint .cite { color: var(--red-ink); opacity: .8; font-size: 0.76rem; }
+
   /* Cảnh báo vùng mù: viền đỏ để không bị đọc lướt như chú thích thường —
      đây là chỗ trang có thể im lặng bỏ sót chất cần Giấy phép. */
   .blind-spot { border-color: var(--red-line); border-left: 4px solid var(--red-ink); }
@@ -233,6 +242,9 @@ const SUPPRESS_ANNEX = __SUPPRESS_ANNEX_JSON__;
 const ANNEX_DISPLAY_ORDER = __ANNEX_DISPLAY_ORDER_JSON__;
 
 const ANNEX_ORDER = __ANNEX_ORDER_JSON__;
+const PL3_NO_CAS = __PL3_NO_CAS_JSON__;
+const PL3_FAMILY_HINTS = __PL3_FAMILY_HINTS_JSON__;
+const PL3_HINT_PREFIX = __PL3_HINT_PREFIX_JSON__;
 
 const CAS_RE = /\\b\\d{2,7}-\\d{2}-\\d\\b/g;
 
@@ -366,6 +378,23 @@ function esc(s) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+// Doi xung voi pl3_family_hints() trong core.py — du lieu (PL3_NO_CAS,
+// PL3_FAMILY_HINTS) nhung tu core, khong go tay. test_co_ho_chat_html_khop_core
+// chay ca hai ban tren TOAN BO du lieu roi so, de hai noi khong the lech nhau.
+function pl3FamilyHints(cas) {
+  const rows = rowsFor(cas);
+  if (!rows.length || new Set(rows.map(r => r.annex)).has("III")) return [];
+  const name = `${rows[0].name_vn} ${rows[0].name_en}`.toLowerCase();
+  return PL3_NO_CAS.filter(e => (PL3_FAMILY_HINTS[e.stt] || []).some(k => name.includes(k)));
+}
+
+function hintHtml(cas) {
+  const hints = pl3FamilyHints(cas);
+  if (!hints.length) return "";
+  const items = hints.map(e => `<li><b>${esc(e.stt)}</b> ${esc(e.ten)} <span class="cite">(${esc(e.category)})</span></li>`).join("");
+  return `<div class="fam-hint"><b>${esc(PL3_HINT_PREFIX)}</b><ul>${items}</ul></div>`;
+}
+
 // Chi goi cho CAS CO trong du lieu — CAS khong co thi khong dung the chi tiet.
 function detailFor(cas) {
   const rows = rowsFor(cas);
@@ -466,6 +495,10 @@ function run() {
   if (counts.warn) stats += `<span class="chip warn">⚠ ${counts.warn} chất cần Giấy phép</span>`;
   if (counts.ok) stats += `<span class="chip ok">✓ ${counts.ok} chất không cần Giấy phép XNK</span>`;
   if (counts.unknown) stats += `<span class="chip unknown">? ${counts.unknown} chất không có trong dữ liệu</span>`;
+  // Chip rieng cho chat bi gan co: khong co no thi dong tom tat van dem chung vao
+  // "chat khong can Giay phep" — canh bao nam trong bang ma tom tat lai noi nguoc.
+  const flagged = entries.filter(cas => pl3FamilyHints(cas).length).length;
+  if (flagged) stats += `<span class="chip warn">⚠ ${flagged} chất cần đối chiếu họ chất Phụ lục III</span>`;
   stats += "</div>";
 
   let table = `<div class="card">
@@ -478,7 +511,9 @@ function run() {
     const rows = rowsFor(cas);
     const name = rows.length ? rows[0].name_vn : "(không có trong dữ liệu)";
     const { badge, text: statusText } = statuses[i];
-    table += `<tr class="${badge}"><td class="cas">${esc(cas)}</td><td>${esc(name)}</td><td>${esc(annexLabels(cas))}</td><td><span class="pill ${badge}">${esc(statusText)}</span></td></tr>`;
+    // Co ho chat nam NGAY TRONG o trang thai, duoi pill: de o khoi canh bao cuoi
+    // trang thi can bo doc xong dong xanh la di, khong cuon xuong.
+    table += `<tr class="${badge}"><td class="cas">${esc(cas)}</td><td>${esc(name)}</td><td>${esc(annexLabels(cas))}</td><td><span class="pill ${badge}">${esc(statusText)}</span>${hintHtml(cas)}</td></tr>`;
   });
   table += "</table></div>";
 
@@ -600,6 +635,9 @@ out = (
     .replace("__VERDICT_JSON__", VERDICT_JSON)
     .replace("__SUPPRESS_ANNEX_JSON__", SUPPRESS_ANNEX_JSON)
     .replace("__ANNEX_DISPLAY_ORDER_JSON__", ANNEX_DISPLAY_ORDER_JSON)
+    .replace("__PL3_NO_CAS_JSON__", PL3_NO_CAS_JSON)
+    .replace("__PL3_FAMILY_HINTS_JSON__", PL3_FAMILY_HINTS_JSON)
+    .replace("__PL3_HINT_PREFIX_JSON__", PL3_HINT_PREFIX_JSON)
     .replace("__VERDICT_PL3__", core.VERDICT["pl3"])
 )
 Path(__file__).parent.joinpath("Tra-cuu-hoa-chat-ND24.html").write_text(out, encoding="utf-8")

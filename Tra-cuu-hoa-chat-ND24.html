@@ -86,6 +86,12 @@
   .exempt .cite { color: var(--muted); font-size: 0.85rem; }
   .exempt .lead { font-weight: 600; margin: 6px 0 4px; }
 
+  /* Cờ họ chất: nằm trong ô trạng thái, phải "cãi lại" được pill xanh ngay
+     cạnh nó nên dùng nền/viền đỏ, không phải chữ xám mờ. */
+  .fam-hint { margin-top: 8px; background: var(--red-bg); border: 1px solid var(--red-line); border-left: 3px solid var(--red-ink); border-radius: 6px; padding: 7px 10px; color: var(--red-ink); font-size: 0.8rem; font-weight: 600; text-align: left; }
+  .fam-hint ul { margin: 4px 0 0; padding-left: 18px; font-weight: 400; }
+  .fam-hint .cite { color: var(--red-ink); opacity: .8; font-size: 0.76rem; }
+
   /* Cảnh báo vùng mù: viền đỏ để không bị đọc lướt như chú thích thường —
      đây là chỗ trang có thể im lặng bỏ sót chất cần Giấy phép. */
   .blind-spot { border-color: var(--red-line); border-left: 4px solid var(--red-ink); }
@@ -193,6 +199,9 @@ const SUPPRESS_ANNEX = {"III": ["I"]};
 const ANNEX_DISPLAY_ORDER = ["I", "II", "III", "IV"];
 
 const ANNEX_ORDER = ["III", "II", "I", "IV"];
+const PL3_NO_CAS = [{"stt": "26.", "ten": "Chemicals, except for those listed in Schedule 1, containing a phosphorus atom to which is bonded one methyl, ethyl or propyl (normal or iso) group but not further carbon atoms / Các hóa chất, trừ các chất đã được liệt kê tại Bảng 1, chứa 1 nguyên tử phospho liên kết với một nhóm methyl, ethyl hoặc propyl (mạch thẳng hoặc nhánh) nhưng không liên kết thêm với các nguyên tử các bon khác", "category": "Phụ lục III › Nhóm 1 › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"}, {"stt": "27.", "ten": "Các hợp chất N,N-Dialkyl (Me, Et, n-Pr hoặc i-Pr) phosphoramidic dihalide / N,N-Dialkyl (Me, Et, n-Pr or i-Pr) phosphoramidic dihalides", "category": "Phụ lục III › Nhóm 1 › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"}, {"stt": "28.", "ten": "Dialkyl (Me, Et, n-Pr or i-Pr) N,N-dialkyl (Me, Et, n-Pr or i-Pr)-phosphoramidates / Các hợp chất Dialkyl (Me, Et, n-Pr hoặc i-Pr) N,N-dialkyl (Me, Et, n-Pr hoặc i-Pr)-phosphoramidate", "category": "Phụ lục III › Nhóm 1 › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"}, {"stt": "32.", "ten": "N,N-Dialkyl (Me, Et, n-Pr or i-Pr) aminoethyl-2-chlorides / Các hợp chất N,N-Dialkyl (Me, Et, n-Pr hoặc i-Pr) aminoethyl-2-chloride", "category": "Phụ lục III › Nhóm 1 › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"}, {"stt": "33.", "ten": "N,N-Dialkyl (Me, Et, n-Pr or i-Pr) aminoethane-2-ols / Các hợp chất N,N-Dialkyl (Me, Et, n-Pr hoặc i-Pr) aminoethane-2-ol", "category": "Phụ lục III › Nhóm 1 › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"}, {"stt": "34.", "ten": "N, N-Dialkyl (Me, Et, n-Pr or i-Pr) aminoethane-2-thiols and corresponding protonated salts / Các hợp chất N,N-Dialkyl (Me, Et, n-Pr or i-Pr) aminoethane-2-thiol và các muối proton hóa tương ứng", "category": "Phụ lục III › Nhóm 1 › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)"}, {"stt": "37.", "ten": "Arsenic and arsenic compounds / Asen và các hợp chất của asen", "category": "Phụ lục III › Nhóm 1 › Hóa chất khác"}, {"stt": "38.", "ten": "The compounds of chromium (VI) / Các hợp chất của Cr6+", "category": "Phụ lục III › Nhóm 1 › Hóa chất khác"}, {"stt": "39.", "ten": "Mercury and mercury compounds / Thủy ngân và các hợp chất của thủy ngân", "category": "Phụ lục III › Nhóm 1 › Hóa chất khác"}, {"stt": "40.", "ten": "The cyanide compound / Các hợp chất xyanua", "category": "Phụ lục III › Nhóm 1 › Hóa chất khác"}, {"stt": "41.", "ten": "Lead and lead compounds / Chì và các hợp chất của chì", "category": "Phụ lục III › Nhóm 1 › Hóa chất khác"}, {"stt": "45.", "ten": "Biphenyl (PCB) / Biphenyl (PCB)", "category": "Phụ lục III › Nhóm 2 › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"}, {"stt": "81.", "ten": "Polychlorinated / Polychlorinated", "category": "Phụ lục III › Nhóm 2 › C – Hóa chất thuộc Công ước Rotterdam/Stockholm"}];
+const PL3_FAMILY_HINTS = {"37.": ["asen", "arsenic"], "38.": ["cromat", "chromate", "cr6", "crom (vi)", "chromium (vi)"], "39.": ["thủy ngân", "mercury"], "40.": ["xyanua", "cyanide"], "41.": ["chì", "lead"]};
+const PL3_HINT_PREFIX = "⚠ TÊN CHẤT NÀY GỢI Ý CÓ THỂ THUỘC MỘT MỤC PHỤ LỤC III GHI THEO HỌ CHẤT — kết luận trên dựa vào mã CAS nên KHÔNG tính mục đó. Tự đối chiếu:";
 
 const CAS_RE = /\b\d{2,7}-\d{2}-\d\b/g;
 
@@ -326,6 +335,23 @@ function esc(s) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+// Doi xung voi pl3_family_hints() trong core.py — du lieu (PL3_NO_CAS,
+// PL3_FAMILY_HINTS) nhung tu core, khong go tay. test_co_ho_chat_html_khop_core
+// chay ca hai ban tren TOAN BO du lieu roi so, de hai noi khong the lech nhau.
+function pl3FamilyHints(cas) {
+  const rows = rowsFor(cas);
+  if (!rows.length || new Set(rows.map(r => r.annex)).has("III")) return [];
+  const name = `${rows[0].name_vn} ${rows[0].name_en}`.toLowerCase();
+  return PL3_NO_CAS.filter(e => (PL3_FAMILY_HINTS[e.stt] || []).some(k => name.includes(k)));
+}
+
+function hintHtml(cas) {
+  const hints = pl3FamilyHints(cas);
+  if (!hints.length) return "";
+  const items = hints.map(e => `<li><b>${esc(e.stt)}</b> ${esc(e.ten)} <span class="cite">(${esc(e.category)})</span></li>`).join("");
+  return `<div class="fam-hint"><b>${esc(PL3_HINT_PREFIX)}</b><ul>${items}</ul></div>`;
+}
+
 // Chi goi cho CAS CO trong du lieu — CAS khong co thi khong dung the chi tiet.
 function detailFor(cas) {
   const rows = rowsFor(cas);
@@ -426,6 +452,10 @@ function run() {
   if (counts.warn) stats += `<span class="chip warn">⚠ ${counts.warn} chất cần Giấy phép</span>`;
   if (counts.ok) stats += `<span class="chip ok">✓ ${counts.ok} chất không cần Giấy phép XNK</span>`;
   if (counts.unknown) stats += `<span class="chip unknown">? ${counts.unknown} chất không có trong dữ liệu</span>`;
+  // Chip rieng cho chat bi gan co: khong co no thi dong tom tat van dem chung vao
+  // "chat khong can Giay phep" — canh bao nam trong bang ma tom tat lai noi nguoc.
+  const flagged = entries.filter(cas => pl3FamilyHints(cas).length).length;
+  if (flagged) stats += `<span class="chip warn">⚠ ${flagged} chất cần đối chiếu họ chất Phụ lục III</span>`;
   stats += "</div>";
 
   let table = `<div class="card">
@@ -438,7 +468,9 @@ function run() {
     const rows = rowsFor(cas);
     const name = rows.length ? rows[0].name_vn : "(không có trong dữ liệu)";
     const { badge, text: statusText } = statuses[i];
-    table += `<tr class="${badge}"><td class="cas">${esc(cas)}</td><td>${esc(name)}</td><td>${esc(annexLabels(cas))}</td><td><span class="pill ${badge}">${esc(statusText)}</span></td></tr>`;
+    // Co ho chat nam NGAY TRONG o trang thai, duoi pill: de o khoi canh bao cuoi
+    // trang thi can bo doc xong dong xanh la di, khong cuon xuong.
+    table += `<tr class="${badge}"><td class="cas">${esc(cas)}</td><td>${esc(name)}</td><td>${esc(annexLabels(cas))}</td><td><span class="pill ${badge}">${esc(statusText)}</span>${hintHtml(cas)}</td></tr>`;
   });
   table += "</table></div>";
 

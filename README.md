@@ -123,11 +123,24 @@ trả lời "cần giấy gì". Đó là việc của cơ quan cấp phép, khô
   hợp chất chì, 2 cromat); chất không có trong dữ liệu (natri xyanua, thủy ngân
   clorua…) thì ra "Không rõ".
 
-  Công cụ **không tự suy** chất nào thuộc họ nào — phải hiểu hóa học (hợp chất nào
-  là hợp chất của asen, Cr nào là Cr⁶⁺), đoán sai còn tệ hơn. Thay vào đó
-  `extract.py` tách các mục này sang `data/nd24_pl3_no_cas.json` và in nguyên văn
-  thành khối cảnh báo riêng ở cuối trang (và cuối `scan.py`) để cán bộ tự đối
-  chiếu. `test_pl3_khong_ma_cas_khong_bi_bo_im_lang` chốt việc này.
+  Xử lý hai tầng, **không tầng nào đổi verdict** (verdict vẫn thuần theo mã CAS):
+  1. `extract.py` tách các mục này sang `data/nd24_pl3_no_cas.json`, in nguyên văn
+     thành **khối cảnh báo riêng** dưới kết quả (và cuối `scan.py`).
+  2. **Cờ ngay trong dòng kết quả** (`PL3_FAMILY_HINTS`): tên chất chứa `asen`,
+     `cromat`, `thủy ngân`, `xyanua`, `chì`… thì dòng đó hiện cờ đỏ "tên chất này
+     gợi ý có thể thuộc mục … — tự đối chiếu", kèm một chip riêng trong thống kê.
+     Cần tầng này vì khối cảnh báo cuối trang không cứu được ca xanh: cán bộ đọc
+     dòng xanh là xong, không cuộn xuống. Hiện bắt đúng 7 chất, không báo thừa chất
+     nào trên cả 1360 dòng.
+
+  Cờ là **heuristic theo tên, không phải hóa học** — trần của nó: sót chất mang tên
+  không có tên nguyên tố (Calomel = Hg₂Cl₂), và không phân biệt Cr³⁺ với Cr⁶⁺ nếu
+  tên không nói. Nâng cấp khi cần chắc hơn: đối chiếu cột "Công thức hóa học" của
+  nd24.md (`extract.py` chưa lấy cột này). Công cụ **không tự kết luận** chất nào
+  thuộc họ nào — đoán sai theo hướng nào cũng hại.
+  `test_pl3_khong_ma_cas_khong_bi_bo_im_lang` và `test_co_ho_chat_bat_dung_ca_xanh_nguy_hiem`
+  chốt việc này; `test_co_ho_chat_html_khop_core` chạy cả bản JS lẫn bản Python trên
+  toàn bộ dữ liệu rồi so, để trang HTML và CLI không thể lệch nhau.
 - Không có danh mục "Hóa chất Bảng 1" (Công ước vũ khí hóa học) hay "hóa
   chất cấm" (Mục 4 NĐ 26). NĐ 24 Phụ lục III mục B chỉ có **Bảng 2 và Bảng 3** —
   không một chất Bảng 1 nào, và có dòng ghi rõ *"except for those listed in
