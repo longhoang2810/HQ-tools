@@ -198,11 +198,8 @@ PENALTY_WARNING = (
 # tự đối chiếu, thay vì đoán rồi báo sai.
 PL3_NO_CAS_TITLE = "Vùng mù: mục Phụ lục III không có mã CAS — tra theo mã sẽ KHÔNG ra"
 PL3_NO_CAS_LEAD = (
-    f"Nghị định 24/2026/NĐ-CP xếp các mục dưới đây vào Phụ lục III (hóa chất cần kiểm soát đặc "
-    f'biệt) nhưng ghi theo HỌ CHẤT, ô mã CAS để trống "---". Công cụ tra theo mã CAS nên không '
-    f'bắt được chúng: chất thuộc các họ này có thể ra "{VERDICT["unknown"]}", hoặc ra "'
-    f'{VERDICT["none"]}" nếu nghị định có ghi mã của nó ở phụ lục khác. Đối chiếu thủ công danh '
-    f"sách này trước khi kết luận một lô hàng không cần Giấy phép."
+    "Nghị định 24/2026/NĐ-CP xếp các mục dưới đây vào Phụ lục III (hóa chất cần kiểm soát "
+    "đặc biệt) nhưng ghi theo HỌ CHẤT, không có mã CAS."
 )
 # Chất bị ghi "Ngoại trừ" (Fonofos, DMAE, DEAE): mã CAS của chúng CÓ in trong
 # bảng Phụ lục III nên ai tra bản gốc cũng thấy — phải nói rõ vì sao kết luận lại
