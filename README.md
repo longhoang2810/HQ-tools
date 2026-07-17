@@ -14,19 +14,27 @@ có mạng — dữ liệu đã nhúng sẵn trong file). Dán mô tả DN vào 
 Trang này cũng có mục **"Các trường hợp được miễn trừ"** cố định ở cuối
 (NĐ 26 Điều 6.7, Điều 10.3, Điều 21).
 
-Nếu mô tả không có mã CAS nào, trang tự chuyển sang **tìm theo tên hóa chất**
-(tiếng Việt hoặc tiếng Anh, gõ không dấu cũng khớp, tối đa 30 kết quả): dò tên
-nằm trong đoạn văn ("Hỗn hợp dung môi gồm Metanol, Toluene" → ra cả hai chất),
-và gõ một phần tên ("amino") thì liệt kê các chất có tên đó. Mô tả **đã có** mã
-CAS thì chỉ tra theo mã — không dò tên trong luồng chính.
+Trang có **hai chế độ tra**, tự chọn bằng nút trên ô nhập:
 
-Tiện ích trên trang: nút **Ví dụ ngẫu nhiên** tạo một hỗn hợp mẫu **phủ đủ mọi
-trường hợp** trang có thể ra (chất PL III cần Giấy phép, chất vừa PL I vừa PL III
-— khối khai báo PL I bị ẩn theo Điều 6.7.a, chất PL II còn nghĩa vụ khác, chất PL
-I chỉ khai báo, chất PL IV không phát sinh, và một mã CAS ngoài dữ liệu ra "Không
-rõ"); nút **Ví dụ không có mã CAS** tạo mô tả chỉ ghi tên chất (nhánh dò tên; nhánh này
-không có case "Không rõ" — xem Giới hạn); nút **Xóa**, phím tắt
-**Ctrl+Enter**, tự tra ngay khi dán, và chip thống kê số chất cần Giấy phép. Ghi kèm `% hàm lượng`
+| Chế độ | Làm gì | Dùng khi |
+|---|---|---|
+| **Tìm theo mã CAS** (mặc định) | Tự tìm mọi mã CAS trong đoạn văn | DN có khai mã CAS — chính xác nhất |
+| **Tìm theo tên chất** | Dò tên hóa chất nằm trong đoạn ("Hỗn hợp dung môi gồm Metanol, Toluene" → ra cả hai); gõ một phần tên ("amino") thì liệt kê các chất mang tên đó. Tiếng Việt hoặc Anh, không cần gõ dấu, tối đa 30 kết quả | DN không khai mã CAS — chỉ là **gợi ý**, xem Giới hạn |
+
+Mỗi chế độ chỉ làm đúng việc của nó, nhưng **luôn nhắc chế độ kia** khi đoạn có
+dữ liệu cho nó: tra theo mã CAS mà đoạn còn tên hóa chất không kèm mã thì trang
+báo "còn nhắc tới N tên hóa chất... chuyển sang Tìm theo tên chất"; ngược lại
+tra theo tên mà đoạn có mã CAS thì trang báo đang bỏ qua chúng. Nhờ vậy mô tả
+trộn (vài chất khai mã, vài chất chỉ ghi tên) không bị bỏ sót im lặng, mà cũng
+không kéo cái khớp thừa của dò tên vào kết luận của mọi lô hàng.
+
+Tiện ích trên trang: nút **Ví dụ ngẫu nhiên** tạo mẫu **theo đúng chế độ đang
+chọn** và **phủ đủ mọi trường hợp** chế độ đó có thể ra — bản mã CAS gồm chất PL
+III cần Giấy phép, chất vừa PL I vừa PL III (khối khai báo PL I bị ẩn theo Điều
+6.7.a), chất PL II còn nghĩa vụ khác, chất PL I chỉ khai báo, chất PL IV không
+phát sinh, và một mã CAS ngoài dữ liệu ra "Không rõ"; bản theo tên là mô tả chỉ
+ghi tên chất, không có case "Không rõ" (xem Giới hạn). Ngoài ra: nút **Xóa**, phím
+tắt **Ctrl+Enter**, tự tra ngay khi dán, và chip thống kê số chất cần Giấy phép. Ghi kèm `% hàm lượng`
 trên cùng dòng với mã CAS để tự so ngưỡng miễn trừ Điều 21.
 
 Nếu sửa `data/nd24_chemicals.json` hoặc `core.py` (quy tắc/miễn trừ), chạy
@@ -117,9 +125,11 @@ trả lời "cần giấy gì". Đó là việc của cơ quan cấp phép, khô
   2. **Tên ghép khớp thừa.** Mô tả "natri clorua" (muối ăn, không thuộc NĐ 24) ra
      chất "Natri" — vì "natri clorua" không có trong dữ liệu để nuốt cụm ngắn hơn.
      Báo thừa và hiện rõ để cán bộ tự loại, đúng hướng fail-safe.
-  3. **Chỉ chạy khi đoạn không có mã CAS nào** — mô tả đã có mã CAS thì chất chỉ
-     ghi tên trong đoạn đó bị bỏ qua. Dò tên trong luồng chính sẽ kéo cả cái báo
-     thừa ở mục 2 vào mọi lô hàng, nên đây là lựa chọn có chủ đích.
+  3. **Hai chế độ không trộn kết quả.** Chế độ Tìm theo mã CAS không bao giờ đưa
+     chất khớp theo tên vào bảng — nếu trộn, cái khớp thừa ở mục 2 sẽ lây sang
+     mọi lô hàng có khai mã CAS. Đổi lại, mỗi chế độ phải **nhắc** chế độ kia khi
+     đoạn có dữ liệu cho nó, để mô tả trộn không bị bỏ sót im lặng.
+     `test_che_do_cas_khong_de_ten_lot_vao_bang` chốt cả hai vế này.
 
   Tên trong NĐ 24 hay kèm đuôi qualifier ("... **và các muối proton hóa chất
   tương ứng**") mà DN không bao giờ khai, nên chỉ số tên có thêm phần đầu tên (cắt

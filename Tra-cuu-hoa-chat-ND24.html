@@ -29,6 +29,11 @@
   .instructions li { margin-bottom: 4px; text-align: justify; }
   .instructions h2 { margin: 0; font-size: 1.05rem; }
 
+  .modes { display: flex; gap: 8px; margin-bottom: 12px; }
+  .mode-btn { cursor: pointer; font-size: 0.92rem; font-weight: 600; padding: 7px 16px; border-radius: 8px; border: 1px solid var(--line); background: #fff; color: var(--muted); }
+  .mode-btn:hover { border-color: var(--blue); }
+  .mode-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+
   .input-row { display: flex; gap: 12px; align-items: stretch; }
   textarea { flex: 1; min-height: 110px; font-size: 1rem; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; resize: vertical; font-family: inherit; }
   textarea:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
@@ -107,21 +112,28 @@
     <h2>Hướng dẫn sử dụng</h2>
     <ol>
       <li>Copy nguyên mô tả hàng hóa của doanh nghiệp — không cần tách tay từng mã CAS.</li>
-      <li>Dán vào ô bên dưới rồi bấm <b>Tra cứu</b>. Công cụ tự tìm mọi mã CAS xuất hiện trong đoạn văn.</li>
-      <li>Nếu doanh nghiệp không khai mã CAS nào, công cụ tự dò <b>tên hóa chất</b> có trong đoạn (tiếng Việt hoặc tiếng Anh, không cần gõ dấu); gõ một phần tên cũng ra danh sách chất có tên đó. Chỉ dò tên khi đoạn không có mã CAS — mô tả đã có mã CAS thì chỉ tra theo mã.</li>
+      <li>Dán vào ô bên dưới rồi bấm <b>Tra cứu</b>. Hai chế độ tra:
+        <ul>
+          <li><b>Tìm theo mã CAS</b> (mặc định): tự tìm mọi mã CAS xuất hiện trong đoạn văn. Chính xác nhất — dùng khi doanh nghiệp có khai mã CAS.</li>
+          <li><b>Tìm theo tên chất</b>: dò tên hóa chất có trong đoạn (tiếng Việt hoặc tiếng Anh, không cần gõ dấu), hoặc gõ một phần tên để liệt kê các chất mang tên đó. Dùng khi doanh nghiệp không khai mã CAS — kết quả chỉ là gợi ý, xem cảnh báo trong bảng.</li>
+        </ul>
+      </li>
       <li>Công cụ không tự tính % hàm lượng — hóa chất Phụ lục III luôn báo "Cần Giấy phép XNK hóa chất KSĐB"; đối chiếu ngưỡng miễn trừ nồng độ ở mục "Các trường hợp được miễn trừ" bên dưới bằng tài liệu khai báo gốc.</li>
     </ol>
   </div>
 </div>
 
 <div class="card" id="input-card">
+  <div class="modes">
+    <button class="mode-btn active" id="mode-cas" aria-pressed="true" onclick="setMode('cas')">🔢 Tìm theo mã CAS</button>
+    <button class="mode-btn" id="mode-name" aria-pressed="false" onclick="setMode('name')">🔤 Tìm theo tên chất</button>
+  </div>
   <div class="input-row">
-    <textarea id="input" placeholder="Ví dụ: Hỗn hợp dung môi công nghiệp gồm Metanol CAS 67-56-1, Acetaldehyde (75-07-0), mã CAS 103-79-7 (P2P)... — hoặc gõ tên chất: metanol"></textarea>
+    <textarea id="input" placeholder="Ví dụ: Hỗn hợp dung môi công nghiệp gồm Metanol CAS 67-56-1, Acetaldehyde (75-07-0), mã CAS 103-79-7 (P2P)..."></textarea>
     <button id="run-btn" onclick="run()">🔍 Tra cứu</button>
   </div>
   <div class="toolbar">
-    <button class="mini" onclick="randomExample()">🎲 Ví dụ ngẫu nhiên</button>
-    <button class="mini" onclick="randomNameExample()">🔤 Ví dụ không có mã CAS</button>
+    <button class="mini" onclick="randomExampleForMode()">🎲 Ví dụ ngẫu nhiên</button>
     <button class="mini" onclick="clearAll()">✕ Xóa</button>
     <span class="hint">Mẹo: nhấn <b>Ctrl+Enter</b> (⌘+Enter trên Mac) để tra cứu nhanh</span>
   </div>
@@ -321,27 +333,67 @@ function detailFor(cas) {
   return html;
 }
 
+// Hai che do TUONG MINH thay vi tu doan: can bo chon tra theo gi. Truoc day dò
+// ten chi chay khi doan KHONG co ma CAS nao -> mo ta tron (vai chat khai ma, vai
+// chat chi ghi ten) thi cac chat ghi ten bi bo qua IM LANG. Nay chon che do nao
+// ra dung thu do, va che do con lai duoc nhac den khi doan co du lieu cho no.
+let MODE = "cas";
+const MODE_PLACEHOLDER = {
+  cas: "Ví dụ: Hỗn hợp dung môi công nghiệp gồm Metanol CAS 67-56-1, Acetaldehyde (75-07-0), mã CAS 103-79-7 (P2P)...",
+  name: "Ví dụ: Hỗn hợp dung môi công nghiệp gồm Metanol, Toluene và Axeton — hoặc gõ một phần tên: amino",
+};
+
+function setMode(mode) {
+  MODE = mode;
+  for (const m of ["cas", "name"]) {
+    const btn = document.getElementById("mode-" + m);
+    btn.classList.toggle("active", m === mode);
+    btn.setAttribute("aria-pressed", String(m === mode));
+  }
+  const input = document.getElementById("input");
+  input.placeholder = MODE_PLACEHOLDER[mode];
+  // Doi che do ma van con ket qua cu tren man hinh = doc nham ket qua che do kia.
+  if (input.value.trim()) run(); else document.getElementById("results").innerHTML = "";
+  input.focus();
+}
+
 function run() {
   const text = document.getElementById("input").value;
   const resultsEl = document.getElementById("results");
-  let entries = extractCas(text);
-  let heading = `Tìm thấy ${entries.length} mã CAS`;
-  let nameNote = "";
+  const casInText = extractCas(text);
+  let entries, heading, hint = "", nameNote = "";
 
-  if (entries.length === 0) {
-    // Khong co ma CAS -> thu tra theo ten hoa chat.
+  if (MODE === "cas") {
+    if (casInText.length === 0) {
+      resultsEl.innerHTML = `<div class="card"><p class="note">Không tìm thấy mã CAS nào (định dạng NNN-NN-N) trong đoạn đã nhập. Kiểm tra lại mô tả, dán trực tiếp mã CAS (ví dụ: 107-13-1), hoặc chuyển sang <b>Tìm theo tên chất</b> nếu doanh nghiệp không khai mã CAS.</p></div>`;
+      return;
+    }
+    entries = casInText;
+    heading = `Tìm thấy ${entries.length} mã CAS`;
+    // Che do nay KHONG tu dò ten (bao thua ten se lam ban ket luan cua MOI lo
+    // hang), nhung im lang bo qua chat chi ghi ten thi can bo tuong bang da liet
+    // ke het -> khong dua vao bang, chi nhac co cai o day de tu quyet.
+    const namedOnly = scanNames(text).filter(cas => !entries.includes(cas));
+    if (namedOnly.length) {
+      const names = [...new Set(namedOnly.map(cas => rowsFor(cas)[0].name_vn))];
+      hint = `<p class="note">⚠ Đoạn này còn nhắc tới ${names.length} tên hóa chất có trong dữ liệu nhưng <b>không kèm mã CAS</b>: ${esc(names.slice(0, 5).join(", "))}${names.length > 5 ? "…" : ""}. Chế độ này không tra chúng — chuyển sang <b>Tìm theo tên chất</b> để xem.</p>`;
+    }
+  } else {
     const byName = searchByName(text);
     if (byName.length === 0) {
-      resultsEl.innerHTML = `<div class="card"><p class="note">Không tìm thấy mã CAS nào (định dạng NNN-NN-N) và cũng không có tên hóa chất nào khớp với đoạn đã nhập. Kiểm tra lại mô tả, dán trực tiếp mã CAS (ví dụ: 107-13-1), hoặc gõ tên chất (ví dụ: metanol).</p></div>`;
+      resultsEl.innerHTML = `<div class="card"><p class="note">Không có tên hóa chất nào trong dữ liệu NĐ 24 khớp với đoạn đã nhập. Kiểm tra lại chính tả, gõ một phần tên (ví dụ: metanol), hoặc chuyển sang <b>Tìm theo mã CAS</b> nếu doanh nghiệp có khai mã CAS.</p></div>`;
       return;
     }
     entries = byName.slice(0, NAME_LIMIT);
-    heading = `Không có mã CAS trong đoạn đã nhập — tìm theo tên được ${byName.length} chất khớp`
+    heading = `Tìm theo tên được ${byName.length} chất khớp`
       + (byName.length > NAME_LIMIT ? `, hiển thị ${NAME_LIMIT} chất khớp nhất` : "");
-    // Tra theo ten KHONG co case "Khong ro" nhu nhanh CAS: ten khong khop thi
+    // Tra theo ten KHONG co case "Khong ro" nhu che do CAS: ten khong khop thi
     // khong hien dong nao. Bang doc thanh "ca lo chi co bay nhieu chat" duoc ->
     // phai noi thang gioi han nay ngay trong ket qua.
     nameNote = `<p class="note"><b>Chỉ là gợi ý theo tên — không thay cho mã CAS.</b> Bảng dưới chỉ liệt kê tên khớp với dữ liệu NĐ 24; chất mang tên khác hoặc không có trong Phụ lục I–IV sẽ KHÔNG hiện dòng nào (khác tra theo mã CAS — mã lạ vẫn báo "${esc(VERDICT.unknown)}"), nên bảng này không chứng minh lô hàng chỉ có bấy nhiêu chất. Tên ghép cũng có thể khớp thừa (mô tả "natri clorua" khớp ra chất "Natri"). Luôn đối chiếu mã CAS trên tài liệu khai báo gốc.</p>`;
+    if (casInText.length) {
+      hint = `<p class="note">⚠ Đoạn này có ${casInText.length} mã CAS — chế độ <b>Tìm theo tên chất</b> bỏ qua chúng. Chuyển sang <b>Tìm theo mã CAS</b> để tra theo mã.</p>`;
+    }
   }
 
   const counts = { warn: 0, ok: 0, unknown: 0 };
@@ -359,6 +411,7 @@ function run() {
 
   let table = `<div class="card">
     <p id="count">${heading}</p>
+    ${hint}
     ${nameNote}
     ${stats}
     <div class="table-wrap"><table><tr><th>CAS</th><th>Tên chất</th><th>Phụ lục</th><th>Trạng thái</th></tr>`;
@@ -439,6 +492,10 @@ function exampleRows() {
     if (pool.length) rows.push(pick(short.length ? short : pool).row);
   }
   return { rows, known: byCas };
+}
+
+function randomExampleForMode() {
+  if (MODE === "cas") randomExample(); else randomNameExample();
 }
 
 function randomExample() {

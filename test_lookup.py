@@ -162,8 +162,8 @@ def test_html_khong_lech_khoi_core():
 
 def test_html_co_nut_vi_du_ngau_nhien():
     src = Path(__file__).with_name("build_html.py").read_text(encoding="utf-8")
-    assert 'onclick="randomExample()"' in src
-    assert 'onclick="randomNameExample()"' in src
+    assert 'onclick="randomExampleForMode()"' in src  # ví dụ theo đúng chế độ đang chọn
+    assert 'onclick="setMode(\'cas\')"' in src and 'onclick="setMode(\'name\')"' in src
     assert 'onclick="clearAll()"' in src
     assert 'const byCas = new Map()' in src
     assert 'shuffle(items).map(([name, cas]) => `${name} (CAS ${cas})`)' in src
@@ -239,12 +239,36 @@ def test_do_ten_hoa_chat_trong_mo_ta_khong_co_ma_cas():
     )
 
 
-def test_do_ten_chi_chay_khi_khong_co_ma_cas():
-    # Cổng vào của nhánh dò tên: mô tả ĐÃ có mã CAS thì chỉ tra theo mã. Dò tên
-    # trong luồng chính có thể báo thừa chất -> đổi cổng này là đổi kết luận cho
-    # MỌI lô hàng, phải cân nhắc riêng chứ không sửa kèm.
-    src = Path(__file__).with_name("build_html.py").read_text(encoding="utf-8")
-    assert "if (entries.length === 0) {" in src and "const byName = searchByName(text);" in src
+def test_che_do_cas_khong_de_ten_lot_vao_bang():
+    # Ranh giới giữa hai chế độ. Dò tên có thể khớp thừa ("natri clorua" -> chất
+    # "Natri"), nên chế độ CAS phải KHÔNG BAO GIỜ đưa chất khớp theo tên vào bảng
+    # kết luận — nếu không, cái báo thừa đó lây sang mọi lô hàng có khai mã CAS.
+    # Ngược lại, chất chỉ ghi tên cũng không được bỏ qua im lặng -> phải nhắc.
+    got = _run_js("""
+      const els = {};
+      globalThis.__el = id => els[id] || (els[id] = { value: "", innerHTML: "", placeholder: "",
+        classList: { toggle() {} }, setAttribute() {}, addEventListener() {}, focus() {}, scrollIntoView() {} });
+      document.getElementById = globalThis.__el;
+      __el("input").value = "Hỗn hợp gồm Metanol CAS 67-56-1 và Toluene";
+      MODE = "cas"; run();
+      const casMode = __el("results").innerHTML;
+      MODE = "name"; run();
+      const nameMode = __el("results").innerHTML;
+      console.log(JSON.stringify({
+        cas_co_metanol: casMode.includes("67-56-1"),
+        cas_co_toluene: casMode.includes("108-88-3"),   // phải KHÔNG — tên không được vào bảng
+        cas_nhac_ten: casMode.includes("Toluene"),      // nhưng phải được nhắc tới
+        ten_co_toluene: nameMode.includes("108-88-3"),
+        ten_nhac_ma_cas: nameMode.includes("mã CAS —"),
+      }));
+    """)
+    if got is None:
+        return
+    assert got["cas_co_metanol"], "chế độ CAS sót mã CAS có trong đoạn"
+    assert not got["cas_co_toluene"], "chế độ CAS để chất khớp theo TÊN lọt vào bảng kết luận"
+    assert got["cas_nhac_ten"], "chế độ CAS bỏ qua im lặng chất chỉ ghi tên — phải nhắc"
+    assert got["ten_co_toluene"], "chế độ tên không dò ra chất chỉ ghi tên"
+    assert got["ten_nhac_ma_cas"], "chế độ tên bỏ qua mã CAS trong đoạn mà không nhắc"
 
 
 def test_html_can_deu_chu_thich_va_luu_y():
