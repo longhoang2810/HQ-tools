@@ -235,7 +235,8 @@ def test_congbo_is_not_a_customs_gate_pl2():
     # (Điều 6). Nghĩa vụ Phụ lục II hiện ở khối "Nghĩa vụ khác" bên dưới mục miễn trừ.
     rule = re.sub(r"\s+", " ", " ".join(OTHER_OBLIGATIONS)).lower()
     # cửa thông quan = khai báo (Điều 6), KHÔNG phải công bố
-    assert "điều kiện thông quan là khai báo hóa chất nhập khẩu" in rule
+    assert "khai báo hóa chất nhập khẩu qua cổng một cửa" in rule
+    assert "không riêng phụ lục ii" in rule
     assert "điều 6" in rule
     assert "phản hồi khai báo mới được thông quan" in rule
     assert "chương 28, 29" in rule
