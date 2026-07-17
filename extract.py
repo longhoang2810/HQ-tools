@@ -19,9 +19,19 @@ OUT = Path(__file__).parent / "data" / "nd24_chemicals.json"
 # của asen", các họ Bảng 2 dạng N,N-Dialkyl...). Không tra theo CAS được, nhưng
 # BỎ HẲN thì trang im lặng về chúng -> tách ra file riêng để cảnh báo.
 OUT_NO_CAS = Path(__file__).parent / "data" / "nd24_pl3_no_cas.json"
+# Chất nằm dưới dòng "Ngoại trừ:" của Phụ lục III — nghị định loại trừ khỏi mục
+# đó. Không vào bảng tra (không phải hóa chất Bảng 2), nhưng giữ lại để trang nói
+# được VÌ SAO một mã có mặt trong bảng Phụ lục III mà kết luận lại không phải PL III.
+OUT_EXCLUDED = Path(__file__).parent / "data" / "nd24_pl3_ngoai_tru.json"
 
 CAS_RE = re.compile(r"\b\d{2,7}-\d{2}-\d\b")
 STT_RE = re.compile(r"^\d+\.$")
+# Dòng "Ngoại trừ:" trong Phụ lục III: các dòng CAS NGAY DƯỚI nó là chất được
+# LOẠI TRỪ khỏi mục ngay trên, không phải chất thuộc mục. Nguyên văn Công ước CWC
+# (Bảng 2 B.4 miễn trừ Fonofos; B.10 miễn trừ DMAE/DEAE). Đọc nhầm chiều là bắt
+# doanh nghiệp xin Giấy phép cho chất nghị định đã nói rõ là không phải xin.
+# Khối ngoại trừ kết thúc ở mục có STT kế tiếp.
+EXEMPT_RE = re.compile(r"Ngoại trừ|Exemptions?:", re.I)
 
 # Errata: 2 mã CAS trong Phụ lục NĐ 24/2026 sai so với số CAS quốc tế (sai cả
 # check-digit). Sửa tại đây để giữ nd24.md đúng nguyên văn nghị định; chạy lại
@@ -70,10 +80,13 @@ def parse():
     lines = SRC.read_text(encoding="utf-8").splitlines()
     records = []
     no_cas = []
+    excluded = []
     annex = None
     category = None
     collecting = True  # False sau khi vào Bảng B của PL IV (không còn CAS riêng lẻ)
     prev_names = ("", "")  # tên dòng dữ liệu gần nhất — cho dòng tiếp diễn chỉ có CAS
+    last_stt = None
+    exempt_of = None  # STT của mục đang liệt kê "Ngoại trừ", None nếu không ở trong khối đó
 
     for line in lines:
         st = line.strip()
@@ -129,6 +142,27 @@ def parse():
         if not collecting:
             continue
 
+        # Khối "Ngoại trừ" (chỉ PL III): mở khi gặp dòng Ngoại trừ, đóng khi sang
+        # mục có STT kế tiếp. Chất trong khối bị LOẠI khỏi mục -> không phải PL III.
+        if annex == "III":
+            if STT_RE.match(c0):
+                exempt_of = None  # mục mới -> hết khối ngoại trừ của mục trước
+                last_stt = c0
+            if EXEMPT_RE.search(" ".join(cells[1:3])):
+                exempt_of = last_stt
+                continue
+            if exempt_of and CAS_RE.search(cells[3] if len(cells) > 3 else ""):
+                for cas in CAS_RE.findall(cells[3]):
+                    excluded.append(
+                        {
+                            "cas": ERRATA.get(cas, cas),
+                            "ten": cells[2] or cells[1],
+                            "ngoai_tru_khoi": exempt_of,
+                            "category": category,
+                        }
+                    )
+                continue
+
         # Dòng dữ liệu: STT(0) EN(1) VN(2) CAS(3) Công thức(4) [Ngưỡng(5)]
         if len(cells) < 4:
             continue
@@ -164,13 +198,15 @@ def parse():
             if threshold:
                 row["threshold_kg"] = threshold
             records.append(row)
-    return records, no_cas
+    return records, no_cas, excluded
 
 
 if __name__ == "__main__":
-    records, no_cas = parse()
+    records, no_cas, excluded = parse()
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(json.dumps(records, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"{len(records)} (CAS, category) rows -> {OUT}")
     OUT_NO_CAS.write_text(json.dumps(no_cas, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"{len(no_cas)} mục Phụ lục III không có mã CAS -> {OUT_NO_CAS}")
+    OUT_EXCLUDED.write_text(json.dumps(excluded, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"{len(excluded)} chất bị Phụ lục III ghi NGOẠI TRỪ -> {OUT_EXCLUDED}")

@@ -223,8 +223,9 @@ def test_do_ten_hoa_chat_trong_mo_ta_khong_co_ma_cas():
         rong: scanNames("Hàng hóa đóng trong thùng carton, không nguy hiểm"),
         // dấu câu khác nhau vẫn cùng một tên; và DN khai tên KHÔNG kèm đuôi
         // qualifier của nghị định ("... và các muối proton hóa chất tương ứng")
-        // vẫn phải ra ĐÚNG chất 108-01-0 (PL III, cần Giấy phép), tuyệt đối
-        // không tụt xuống khớp chữ "etanol" -> Etanol 64-17-5 (PL I, không cần).
+        // vẫn phải ra ĐÚNG chất 108-01-0 (PL II — nghĩa vụ Giấy chứng nhận SX-KD),
+        // tuyệt đối không tụt xuống khớp chữ "etanol" -> ra Etanol 64-17-5 (PL I):
+        // sai chất, và giấu mất nghĩa vụ PL II của chất thật.
         dau_cau: scanNames("chứa N,N dimetyl amino etanol"),
       }));
     """)
@@ -235,8 +236,7 @@ def test_do_ten_hoa_chat_trong_mo_ta_khong_co_ma_cas():
     assert got["natri_hydroxit"] == ["1310-73-2"], f"không ưu tiên cụm dài nhất: {got['natri_hydroxit']}"
     assert got["rong"] == [], f"bịa ra chất từ đoạn không có hóa chất: {got['rong']}"
     assert got["dau_cau"] == ["108-01-0"], (
-        f"tên khai thiếu đuôi qualifier ra sai chất: {got['dau_cau']} "
-        "(64-17-5 = Etanol, PL I 'không cần Giấy phép' — sai về phía nguy hiểm)"
+        f"tên khai thiếu đuôi qualifier ra sai chất: {got['dau_cau']} (64-17-5 = Etanol)"
     )
 
 
@@ -294,6 +294,33 @@ def test_pl3_khong_ma_cas_khong_bi_bo_im_lang():
         assert "Asen và các hợp chất của asen" in html.read_text(encoding="utf-8"), (
             "HTML đã commit cũ hơn dữ liệu — chạy python3 build_html.py"
         )
+
+
+def test_dong_ngoai_tru_pl3_khong_bi_doc_nguoc():
+    # Phụ lục III có 2 dòng "Ngoại trừ:" — chất NGAY DƯỚI nó là chất bị LOẠI TRỪ
+    # khỏi mục ngay trên, không phải chất thuộc mục (nguyên văn Công ước CWC:
+    # Bảng 2 B.4 miễn trừ Fonofos, B.10 miễn trừ DMAE/DEAE). Parser từng đọc ngược
+    # -> bắt doanh nghiệp xin Giấy phép XNK cho chất nghị định đã nói rõ là không phải.
+    for cas in ("944-22-9", "108-01-0", "100-37-8"):
+        assert "III" not in annexes_for(cas), f"{cas} bị xếp PL III — đọc ngược dòng Ngoại trừ"
+        assert core.pl3_excluded(cas), f"{cas} phải nằm trong danh sách ngoại trừ để giải thích được"
+    # Hai chất kia vẫn là PL II (mục 278/265) -> verdict phải nói còn nghĩa vụ khác.
+    assert cas_status("108-01-0") == ("ok", VERDICT["other_obligation"])
+    assert cas_status("100-37-8") == ("ok", VERDICT["other_obligation"])
+    # Fonofos chỉ xuất hiện ở dòng ngoại trừ -> không thuộc phụ lục nào.
+    assert annexes_for("944-22-9") == set()
+    # ...nhưng mã CÓ in trong bảng PL III của nghị định, nên "không có trong dữ
+    # liệu" phải kèm lý do, không thì trông như tool sót.
+    rep = re.sub(r"\s+", " ", format_report("944-22-9"))
+    assert "Ngoại trừ" in rep and "mục 26" in rep
+
+    # KHÔNG được nuốt oan chất thuộc mục: 676-97-1 và 756-79-6 nằm dưới dòng
+    # "Ví dụ:" của mục 26 (là VÍ DỤ CỦA mục, không phải ngoại trừ) -> vẫn PL III.
+    for cas in ("676-97-1", "756-79-6"):
+        assert annexes_for(cas) == {"III"}, f"{cas} là ví dụ của mục 26, không được bỏ"
+    # ...và chất ngay sau khối ngoại trừ (mục 34, 35, 36) không bị dính theo.
+    assert annexes_for("111-48-8") == {"III"} and annexes_for("464-07-3") == {"III"}
+    assert len(core.PL3_EXCLUDED) == 3, core.PL3_EXCLUDED
 
 
 def test_co_ho_chat_bat_dung_ca_xanh_nguy_hiem():

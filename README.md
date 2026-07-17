@@ -151,6 +151,16 @@ trả lời "cần giấy gì". Đó là việc của cơ quan cấp phép, khô
   có ở các dòng "Ví dụ" (Sarin 107-44-8, Soman 96-64-0, Tabun 77-81-6, VX
   50782-69-9). Hiện tra 4 mã đó ra **"Không rõ"**. Chưa đưa vào: mâu thuẫn giữa
   hai nghị định cần người có thẩm quyền xác định trước.
+- **Dòng "Ngoại trừ" của Phụ lục III loại trừ chất, không thêm chất.** PL III có 2
+  dòng `Ngoại trừ:` (mục 26 và 33) — chất ngay dưới là chất bị **loại khỏi** mục
+  đó, đúng nguyên văn Công ước CWC (Bảng 2 B.4 miễn trừ Fonofos; B.10 miễn trừ
+  DMAE/DEAE). Đọc ngược chiều là bắt DN xin Giấy phép cho chất nghị định đã nói rõ
+  là không phải xin. 3 mã dính: **944-22-9** (Fonofos — chỉ có ở dòng này nên
+  không thuộc phụ lục nào), **108-01-0** và **100-37-8** (vẫn là PL II theo mục
+  278/265). Vì mã của chúng CÓ in trong bảng PL III, `data/nd24_pl3_ngoai_tru.json`
+  giữ lại để trang/CLI nói rõ lý do thay vì im lặng.
+  `test_dong_ngoai_tru_pl3_khong_bi_doc_nguoc` chốt cả hai chiều — không nuốt oan
+  676-97-1/756-79-6 vốn nằm dưới dòng "Ví dụ:" của mục 26.
 - CAS không tra ra chỉ báo **"Không rõ"** — tool không nhắc gì thêm; "không có
   trong dữ liệu" không đồng nghĩa "không cần giấy".
 - Yêu cầu nhập khẩu trong `lookup.py` là bản tóm tắt điều luật, không thay
@@ -172,10 +182,10 @@ trả lời "cần giấy gì". Đó là việc của cơ quan cấp phép, khô
 
   Tên trong NĐ 24 hay kèm đuôi qualifier ("... **và các muối proton hóa chất
   tương ứng**") mà DN không bao giờ khai, nên chỉ số tên có thêm phần đầu tên (cắt
-  ở `và`/`and`/`(`). Không có nó thì "N,N-dimetyl amino etanol" (108-01-0, PL III,
-  **cần** Giấy phép) tụt xuống khớp chữ "etanol" → báo ra Etanol (64-17-5, PL I,
-  *không cần*): sai chất, sai về phía nguy hiểm. `test_do_ten_hoa_chat_trong_mo_ta_khong_co_ma_cas`
-  chốt ca này.
+  ở `và`/`and`/`(`). Không có nó thì "N,N-dimetyl amino etanol" (108-01-0, PL II)
+  tụt xuống khớp chữ "etanol" → báo ra Etanol (64-17-5, PL I): sai chất, và giấu
+  mất nghĩa vụ Giấy chứng nhận SX-KD của chất thật.
+  `test_do_ten_hoa_chat_trong_mo_ta_khong_co_ma_cas` chốt ca này.
 - Không tự nhận diện `% hàm lượng` để kết luận miễn trừ: hóa chất Phụ lục III
   **luôn** báo "Cần Giấy phép XNK hóa chất KSĐB"; cán bộ tự đối chiếu ngưỡng Điều
   21 bằng tài liệu khai báo gốc. (Fail-safe: thà báo cần hơn miễn nhầm.)

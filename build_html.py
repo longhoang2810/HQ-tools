@@ -27,6 +27,8 @@ ANNEX_DISPLAY_ORDER_JSON = json.dumps(core.ANNEX_DISPLAY_ORDER, ensure_ascii=Fal
 PL3_NO_CAS_JSON = json.dumps(core.PL3_NO_CAS, ensure_ascii=False)
 PL3_FAMILY_HINTS_JSON = json.dumps(core.PL3_FAMILY_HINTS, ensure_ascii=False)
 PL3_HINT_PREFIX_JSON = json.dumps(core.PL3_HINT_PREFIX, ensure_ascii=False)
+PL3_EXCLUDED_JSON = json.dumps(core.PL3_EXCLUDED, ensure_ascii=False)
+PL3_EXCLUDED_NOTE_JSON = json.dumps(core.PL3_EXCLUDED_NOTE, ensure_ascii=False)
 
 
 def esc(s):
@@ -39,7 +41,6 @@ def pl3_no_cas_html():
     không gõ tay danh sách trong HTML, y như mục miễn trừ."""
     parts = [
         f'<h2>⚠ {esc(core.PL3_NO_CAS_TITLE)}</h2>',
-        f'<p class="cite">{esc(core.PL3_NO_CAS_CITE)}</p>',
         f'<p class="lead">{esc(core.PL3_NO_CAS_LEAD)}</p>',
     ]
     for group in sorted({e["category"] for e in core.PL3_NO_CAS}):
@@ -154,6 +155,10 @@ HTML = """<!doctype html>
   .exempt .cite { color: var(--muted); font-size: 0.85rem; }
   .exempt .lead { font-weight: 600; margin: 6px 0 4px; }
 
+  /* Ghi chú "Ngoại trừ": thông tin, không phải cảnh báo -> xám trung tính, để
+     không tranh chỗ với cờ đỏ họ chất vốn mới là thứ cần chú ý. */
+  .excl-note { margin-top: 8px; background: #f2f6fc; border: 1px solid var(--line); border-left: 3px solid var(--blue); border-radius: 6px; padding: 7px 10px; color: var(--muted); font-size: 0.78rem; text-align: left; font-weight: 400; }
+
   /* Cờ họ chất: nằm trong ô trạng thái, phải "cãi lại" được pill xanh ngay
      cạnh nó nên dùng nền/viền đỏ, không phải chữ xám mờ. */
   .fam-hint { margin-top: 8px; background: var(--red-bg); border: 1px solid var(--red-line); border-left: 3px solid var(--red-ink); border-radius: 6px; padding: 7px 10px; color: var(--red-ink); font-size: 0.8rem; font-weight: 600; text-align: left; }
@@ -245,6 +250,8 @@ const ANNEX_ORDER = __ANNEX_ORDER_JSON__;
 const PL3_NO_CAS = __PL3_NO_CAS_JSON__;
 const PL3_FAMILY_HINTS = __PL3_FAMILY_HINTS_JSON__;
 const PL3_HINT_PREFIX = __PL3_HINT_PREFIX_JSON__;
+const PL3_EXCLUDED = __PL3_EXCLUDED_JSON__;
+const PL3_EXCLUDED_NOTE = __PL3_EXCLUDED_NOTE_JSON__;
 
 const CAS_RE = /\\b\\d{2,7}-\\d{2}-\\d\\b/g;
 
@@ -295,10 +302,10 @@ const NAME_INDEX = (() => {
       // Index them PHAN DAU ten, bo duoi qualifier ("... và các muối proton hóa
       // chat tuong ung", "... and its salts") va phan trong ngoac ("Selen (dạng
       // bột)"): DN khai ten thuong mai, khong ai khai kem duoi cua nghi dinh.
-      // BAT BUOC cho an toan, khong phai tien nghi: thieu no thi "N,N-dimetyl
-      // amino etanol" (108-01-0, PL III, CAN giay phep) khong khop ten day du
-      // roi tut xuong khop chu "etanol" nam trong doan -> bao ra Etanol
-      // (64-17-5, PL I) = "khong can giay phep". Sai chat, va sai ve phia nguy hiem.
+      // BAT BUOC, khong phai tien nghi: thieu no thi "N,N-dimetyl amino etanol"
+      // (108-01-0, PL II) khong khop ten day du roi tut xuong khop chu "etanol"
+      // nam trong doan -> bao ra Etanol (64-17-5, PL I). Sai chat, va giau mat
+      // nghia vu Giay chung nhan SX-KD cua chat that.
       for (const alias of [name, name.split(/ và | and | \\(/i)[0]]) {
         const n = normWords(alias).trim();
         // >=3 ky tu: ten ngan nhat trong du lieu la "clo"/"flo"/"oxy"; nguong nay
@@ -389,10 +396,17 @@ function pl3FamilyHints(cas) {
 }
 
 function hintHtml(cas) {
+  let out = "";
+  // Doi xung voi pl3_excluded() trong core.py.
+  for (const e of PL3_EXCLUDED.filter(x => x.cas === cas)) {
+    out += `<div class="excl-note">${esc(PL3_EXCLUDED_NOTE.replace("{stt}", e.ngoai_tru_khoi.replace(/\\.$/, "")))}</div>`;
+  }
   const hints = pl3FamilyHints(cas);
-  if (!hints.length) return "";
-  const items = hints.map(e => `<li><b>${esc(e.stt)}</b> ${esc(e.ten)} <span class="cite">(${esc(e.category)})</span></li>`).join("");
-  return `<div class="fam-hint"><b>${esc(PL3_HINT_PREFIX)}</b><ul>${items}</ul></div>`;
+  if (hints.length) {
+    const items = hints.map(e => `<li><b>${esc(e.stt)}</b> ${esc(e.ten)} <span class="cite">(${esc(e.category)})</span></li>`).join("");
+    out += `<div class="fam-hint"><b>${esc(PL3_HINT_PREFIX)}</b><ul>${items}</ul></div>`;
+  }
+  return out;
 }
 
 // Chi goi cho CAS CO trong du lieu — CAS khong co thi khong dung the chi tiet.
@@ -638,6 +652,8 @@ out = (
     .replace("__PL3_NO_CAS_JSON__", PL3_NO_CAS_JSON)
     .replace("__PL3_FAMILY_HINTS_JSON__", PL3_FAMILY_HINTS_JSON)
     .replace("__PL3_HINT_PREFIX_JSON__", PL3_HINT_PREFIX_JSON)
+    .replace("__PL3_EXCLUDED_JSON__", PL3_EXCLUDED_JSON)
+    .replace("__PL3_EXCLUDED_NOTE_JSON__", PL3_EXCLUDED_NOTE_JSON)
     .replace("__VERDICT_PL3__", core.VERDICT["pl3"])
 )
 Path(__file__).parent.joinpath("Tra-cuu-hoa-chat-ND24.html").write_text(out, encoding="utf-8")

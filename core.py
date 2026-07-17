@@ -19,6 +19,10 @@ from pathlib import Path
 DATA = json.loads((Path(__file__).parent / "data" / "nd24_chemicals.json").read_text(encoding="utf-8"))
 # Mục Phụ lục III chỉ có tên, ô mã CAS ghi '---' (extract.py tách sang file riêng).
 PL3_NO_CAS = json.loads((Path(__file__).parent / "data" / "nd24_pl3_no_cas.json").read_text(encoding="utf-8"))
+# Chất nằm dưới dòng "Ngoại trừ:" của Phụ lục III — nghị định loại trừ khỏi mục đó
+# (nguyên văn Công ước CWC). extract.py KHÔNG đưa vào DATA; giữ ở đây để trả lời
+# được câu "sao mã này in trong bảng Phụ lục III mà tool bảo không phải PL III".
+PL3_EXCLUDED = json.loads((Path(__file__).parent / "data" / "nd24_pl3_ngoai_tru.json").read_text(encoding="utf-8"))
 # re.ASCII: \b của Python mặc định là unicode nên "ấ67-56-1" KHÔNG match (coi "ấ"
 # là word char), trong khi \b của JS (build_html.py) là ASCII nên match — CLI từng
 # sót CAS dính chữ có dấu mà trang HTML lại thấy. ASCII làm hai bên hành xử y hệt.
@@ -200,7 +204,20 @@ PL3_NO_CAS_LEAD = (
     f'{VERDICT["none"]}" nếu nghị định có ghi mã của nó ở phụ lục khác. Đối chiếu thủ công danh '
     f"sách này trước khi kết luận một lô hàng không cần Giấy phép."
 )
-PL3_NO_CAS_CITE = "Nguyên văn từ nd24.md — Phụ lục III, mục I. Chất cần kiểm soát đặc biệt"
+# Chất bị ghi "Ngoại trừ" (Fonofos, DMAE, DEAE): mã CAS của chúng CÓ in trong
+# bảng Phụ lục III nên ai tra bản gốc cũng thấy — phải nói rõ vì sao kết luận lại
+# không phải PL III, không thì trông như tool sót.
+PL3_EXCLUDED_NOTE = (
+    'ⓘ Nghị định 24 có in mã này trong bảng Phụ lục III, nhưng ở dòng "Ngoại trừ" của mục '
+    "{stt} — tức nghị định LOẠI TRỪ nó khỏi mục đó, không phải xếp nó vào Bảng 2. "
+    "Kết luận trên đã tính đúng."
+)
+
+
+def pl3_excluded(cas):
+    """Bản ghi 'Ngoại trừ' của Phụ lục III cho CAS này (thường 0 hoặc 1)."""
+    return [e for e in PL3_EXCLUDED if e["cas"] == cas]
+
 
 # ponytail: nhận diện họ chất bằng TỪ KHÓA TRONG TÊN — heuristic, không phải hóa
 # học thật. Trần của nó: chỉ bắt được chất mang tên nguyên tố; SÓT tên không mang
@@ -239,7 +256,7 @@ def pl3_family_hints(cas):
 
 
 def format_pl3_no_cas(width=78):
-    lines = [PL3_NO_CAS_TITLE.upper(), f"({PL3_NO_CAS_CITE})", ""]
+    lines = [PL3_NO_CAS_TITLE.upper(), ""]
     lines.append(textwrap.fill(PL3_NO_CAS_LEAD, width=width))
     lines.append("")
     for group in sorted({e["category"] for e in PL3_NO_CAS}):
@@ -339,9 +356,17 @@ def format_report(cas):
     if not rows:
         # CLI in báo cáo đứng một mình (lookup.py) nên phải tự nói tra ra gì; trang
         # HTML thì bảng đã ghi "Không rõ" nên bỏ hẳn thẻ chi tiết, không in dòng này.
-        return f"CAS {cas}: không có trong dữ liệu NĐ 24 (Phụ lục I-IV)."
+        out = f"CAS {cas}: không có trong dữ liệu NĐ 24 (Phụ lục I-IV)."
+        # ...trừ chất bị ghi "Ngoại trừ" (Fonofos): mã CÓ in trong bảng Phụ lục III
+        # nên "không có trong dữ liệu" nghe như tool sót. Nói rõ lý do.
+        for e in pl3_excluded(cas):
+            out += "\n\n" + textwrap.fill(PL3_EXCLUDED_NOTE.format(stt=e["ngoai_tru_khoi"].rstrip(".")), width=78)
+        return out
     lines.append(f"CAS {cas}: {rows[0]['name_vn']} ({rows[0]['name_en']})")
     lines.append("")
+    for e in pl3_excluded(cas):
+        lines.append(textwrap.fill(PL3_EXCLUDED_NOTE.format(stt=e["ngoai_tru_khoi"].rstrip(".")), width=78))
+        lines.append("")
     for hint in pl3_family_hints(cas):
         lines.append(
             textwrap.fill(
