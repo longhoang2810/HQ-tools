@@ -149,7 +149,7 @@ def test_html_khong_lech_khoi_core():
     assert "__ANNEX_ORDER_JSON__" in src
     assert '["III", "II", "I", "IV"]' not in src, "ANNEX_ORDER viết tay trong JS — dùng __ANNEX_ORDER_JSON__"
     # ...và artifact đã commit phải khớp core.py (chạy lại build_html.py nếu đỏ).
-    html = Path(__file__).with_name("Tra cứu hóa chất NĐ24.html")
+    html = Path(__file__).with_name("Tra-cuu-hoa-chat-ND24.html")
     if html.exists():
         page = html.read_text(encoding="utf-8")
         assert VERDICT["pl3"] in page, "HTML đã commit cũ hơn core.py — chạy python3 build_html.py"

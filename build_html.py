@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sinh Tra cứu hóa chất NĐ24.html — trang tra cứu offline, không cần terminal/Python để dùng.
+"""Sinh Tra-cuu-hoa-chat-ND24.html — trang tra cứu offline, không cần terminal/Python để dùng.
 Nhúng luôn data/nd24_chemicals.json + toàn bộ quy tắc từ core.py vào file
 HTML nên chỉ cần double-click mở bằng trình duyệt là chạy được, kể cả
 không có mạng.
@@ -357,5 +357,5 @@ out = (
     .replace("__ANNEX_DISPLAY_ORDER_JSON__", ANNEX_DISPLAY_ORDER_JSON)
     .replace("__VERDICT_PL3__", core.VERDICT["pl3"])
 )
-Path(__file__).parent.joinpath("Tra cứu hóa chất NĐ24.html").write_text(out, encoding="utf-8")
-print("Tra cứu hóa chất NĐ24.html written —", len(out), "bytes")
+Path(__file__).parent.joinpath("Tra-cuu-hoa-chat-ND24.html").write_text(out, encoding="utf-8")
+print("Tra-cuu-hoa-chat-ND24.html written —", len(out), "bytes")
