@@ -12,9 +12,12 @@ Chạy lại file này mỗi khi data/nd24_chemicals.json hoặc core.py thay đ
     python3 build_html.py
 """
 import json
+import re
 from pathlib import Path
 
 import core
+
+HERE = Path(__file__).parent
 
 DATA_JSON = json.dumps(core.DATA, ensure_ascii=False)
 IMPORT_RULES_JSON = json.dumps(core.IMPORT_RULES, ensure_ascii=False)
@@ -54,10 +57,123 @@ def pl3_no_cas_html():
     return "\n  ".join(parts)
 
 
+DIEU_RE = re.compile(r"^Điều\s+(\d+)\.")
+
+
+def cite_link(cite, doc="nd26"):
+    """'Điều 21, khoản 4 & 5' -> link tới Điều 21 trong khối toàn văn.
+    Chỉ dùng cho EXEMPTIONS (toàn bộ dẫn chiếu NĐ 26); PENALTY_WARNING dẫn NĐ 169
+    không có toàn văn trong repo nên KHÔNG đi qua hàm này."""
+    m = re.match(r"Điều\s+(\d+)", cite)
+    if not m:
+        return esc(cite)
+    return f'<a href="#{doc}-dieu-{m.group(1)}">{esc(m.group(0))}</a>{esc(cite[m.end():])}'
+
+
+def _heading(text, doc, toc, level="h3"):
+    """Heading của văn bản luật; dòng 'Điều N.'/'PHỤ LỤC' được gắn id để link tới."""
+    key = None
+    m = DIEU_RE.match(text)
+    if m:
+        key = f"{doc}-dieu-{m.group(1)}"
+    elif text.upper().startswith("PHỤ LỤC"):
+        # id thuần ASCII: location.hash bị percent-encode, querySelector("#nd24-ph%E1...")
+        # sẽ không khớp id có dấu -> link Phụ lục im lặng không nhảy.
+        key = f"{doc}-pl-{text.split()[-1].lower()}"
+    if not key:
+        return f"<{level}>{esc(text)}</{level}>"
+    toc.append((key, text))
+    return f'<{level} id="{key}">{esc(text)}</{level}>'
+
+
+def _cell(text):
+    # nd24.md dùng <br> trong ô bảng -> giữ lại sau khi escape.
+    return esc(text).replace("&lt;br&gt;", "<br>")
+
+
+def _table_html(rows, header_idx):
+    out = ['<div class="table-wrap"><table>']
+    for i, row in enumerate(rows):
+        tag = "th" if i == header_idx else "td"
+        cells = "".join(f"<{tag}>{_cell(c)}</{tag}>" for c in row)
+        out.append(f"<tr>{cells}</tr>")
+    out.append("</table></div>")
+    return "".join(out)
+
+
+def nd24_doc_html(toc):
+    """nd24.md (markdown: heading '#' + bảng '|') -> HTML."""
+    out, rows, header_idx = [], [], -1
+
+    def flush():
+        nonlocal rows, header_idx
+        if rows:
+            out.append(_table_html(rows, header_idx))
+        rows, header_idx = [], -1
+
+    for raw in HERE.joinpath("nd24.md").read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if line.startswith("|"):
+            cells = [c.strip() for c in line.strip("|").split("|")]
+            if all(c and set(c) <= set("-: ") for c in cells):
+                header_idx = len(rows) - 1  # dòng phân cách -> dòng ngay trên là header
+            else:
+                rows.append(cells)
+            continue
+        flush()
+        if not line:
+            continue
+        if line.startswith("#"):
+            out.append(_heading(line.lstrip("# ").strip(), "nd24", toc))
+        else:
+            out.append(f"<p>{esc(line)}</p>")
+    flush()
+    return "\n".join(out)
+
+
+def nd26_doc_html(toc):
+    """nd26.txt (mỗi đoạn một dòng) -> HTML."""
+    out = []
+    for raw in HERE.joinpath("nd26.txt").read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        if re.match(r"^(Chương|Mục|Điều)\s", line):
+            out.append(_heading(line, "nd26", toc))
+        elif line == line.upper() and len(line) > 3:
+            out.append(f"<h4>{esc(line)}</h4>")
+        else:
+            out.append(f"<p>{esc(line)}</p>")
+    return "\n".join(out)
+
+
+def full_text_html():
+    """Hai khối toàn văn NĐ 24 & NĐ 26, dựng từ nd24.md/nd26.txt trong repo —
+    không gõ tay, không cần file .docx đi kèm (trang vẫn là 1 file chạy offline)."""
+    parts = []
+    for doc, title, body_fn in (
+        ("nd24", "Nghị định 24/2026/NĐ-CP — các danh mục hóa chất (Phụ lục I–IV)", nd24_doc_html),
+        ("nd26", "Nghị định 26/2026/NĐ-CP — quản lý hoạt động hóa chất", nd26_doc_html),
+    ):
+        toc = []
+        body = body_fn(toc)
+        links = " · ".join(
+            f'<a href="#{key}">{esc(text.split(".")[0] if text.startswith("Điều") else text)}</a>'
+            for key, text in toc
+        )
+        parts.append(
+            f'<details class="doc" id="doc-{doc}">'
+            f"<summary>📖 Toàn văn {esc(title)}</summary>"
+            f'<div class="doc-body"><nav class="doc-toc">{links}</nav>{body}</div>'
+            "</details>"
+        )
+    return "\n".join(parts)
+
+
 def exemptions_html():
     parts = ['<h2>Các trường hợp được miễn trừ</h2>', '<p class="cite">Nghị định 26/2026/NĐ-CP</p>']
     for group in core.EXEMPTIONS:
-        parts.append(f'<h3>{esc(group["title"])} ({esc(group["cite"])})</h3>')
+        parts.append(f'<h3>{esc(group["title"])} ({cite_link(group["cite"])})</h3>')
         if "lead" in group:
             parts.append(f'<p class="lead">{esc(group["lead"])}</p>')
         parts.append("<ul>" + "".join(f"<li>{esc(item)}</li>" for item in group["items"]) + "</ul>")
@@ -172,6 +288,22 @@ HTML = """<!doctype html>
   .blind-spot .lead { font-weight: 400; background: var(--red-bg); border-radius: 8px; padding: 10px 14px; margin: 8px 0 4px; }
   .blind-spot li { font-size: 0.9rem; }
 
+  /* Toàn văn hai nghị định — nhúng thẳng vào trang để không phải mở file .docx
+     rời (trang vẫn là 1 file chạy offline). Đóng sẵn, mở khi cần đọc. */
+  header .docs { margin-top: 10px; font-size: 0.85rem; }
+  header .docs a { color: var(--blue-dark); text-decoration: none; border-bottom: 1px dashed var(--blue); }
+  details.doc { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(20,30,50,0.05); }
+  details.doc > summary { cursor: pointer; padding: 16px 22px; font-weight: 600; }
+  details.doc .doc-body { padding: 0 22px 20px; border-top: 1px solid var(--line); }
+  details.doc .doc-toc { font-size: 0.8rem; color: var(--muted); margin: 14px 0 18px; line-height: 2; }
+  details.doc .doc-toc a { color: var(--blue-dark); text-decoration: none; }
+  details.doc .doc-toc a:hover { text-decoration: underline; }
+  details.doc h3 { font-size: 1rem; color: var(--blue-dark); margin: 20px 0 6px; scroll-margin-top: 12px; }
+  details.doc h4 { font-size: 0.9rem; margin: 14px 0 6px; }
+  details.doc p { font-size: 0.9rem; text-align: justify; margin: 6px 0; }
+  details.doc td, details.doc th { font-size: 0.82rem; padding: 5px 8px; text-transform: none; }
+  details.doc :target { background: #fff6d6; }
+
   .note { color: var(--muted); font-size: 0.88rem; text-align: justify; }
   footer { text-align: center; color: var(--muted); font-size: 0.82rem; margin-top: 30px; }
 
@@ -190,6 +322,7 @@ HTML = """<!doctype html>
   <h1>Tra cứu hóa chất</h1>
   <p>Theo Phụ lục I–IV, Nghị định 24/2026/NĐ-CP &amp; yêu cầu nhập khẩu, Nghị định 26/2026/NĐ-CP</p>
   <p class="author">Tác giả: Nguyễn Hoàng Long - HQ KCX&amp;KCN</p>
+  <p class="docs">📖 Đọc toàn văn: <a href="#doc-nd24">NĐ 24/2026/NĐ-CP</a> · <a href="#doc-nd26">NĐ 26/2026/NĐ-CP</a></p>
 </header>
 
 <div class="card instructions">
@@ -234,6 +367,8 @@ HTML = """<!doctype html>
 <div class="card exempt">
   __EXEMPTIONS_HTML__
 </div>
+
+__FULL_TEXT_HTML__
 
 <footer>Bản tóm tắt để tra cứu nhanh — luôn đối chiếu điều luật gốc trước khi ra quyết định thông quan.</footer>
 
@@ -633,6 +768,19 @@ inputEl.addEventListener("keydown", e => {
 });
 // Tu tra cuu ngay khi dan mo ta vao o (setTimeout de gia tri kip cap nhat).
 inputEl.addEventListener("paste", () => setTimeout(run, 0));
+
+// Link toi mot Dieu nam trong khoi toan van (dang <details> dong san) thi phai
+// mo khoi ra roi moi cuon toi, khong trinh duyet nao cuon vao noi dung an duoc.
+function openHash() {
+  if (!location.hash) return;
+  const el = document.querySelector(location.hash);
+  if (!el) return;
+  const d = el.tagName === "DETAILS" ? el : el.closest("details");
+  if (d) d.open = true;
+  el.scrollIntoView({ block: "start" });
+}
+addEventListener("hashchange", openHash);
+openHash();
 </script>
 </body>
 </html>
@@ -641,6 +789,7 @@ inputEl.addEventListener("paste", () => setTimeout(run, 0));
 out = (
     HTML.replace("__PL3_NO_CAS_HTML__", pl3_no_cas_html())
     .replace("__EXEMPTIONS_HTML__", exemptions_html())
+    .replace("__FULL_TEXT_HTML__", full_text_html())
     .replace("__DATA_JSON__", DATA_JSON)
     .replace("__IMPORT_RULES_JSON__", IMPORT_RULES_JSON)
     .replace("__IMPORT_ANNEXES_JSON__", IMPORT_ANNEXES_JSON)

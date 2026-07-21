@@ -198,7 +198,12 @@ def _run_js(snippet):
     if not html.exists():
         return None
     script = re.search(r"<script>(.*)</script>", html.read_text(encoding="utf-8"), re.S).group(1)
-    stub = "const document = { getElementById: () => ({ addEventListener() {}, focus() {} }) };\n"
+    stub = (
+        "const document = { getElementById: () => ({ addEventListener() {}, focus() {} }),"
+        " querySelector: () => null };\n"
+        "const location = { hash: '' };\n"
+        "function addEventListener() {}\n"
+    )
     proc = subprocess.run(
         [node, "-e", stub + script + "\n" + snippet],
         capture_output=True, text=True, timeout=60,
@@ -556,6 +561,27 @@ def test_unknown_khong_con_ghi_chu():
     # CLI thì ngược lại: lookup.py in mỗi format_report, không có bảng đứng trước,
     # nên vẫn phải tự nói tra ra gì — bỏ nốt thì in ra chuỗi rỗng.
     assert format_report("000-00-0") == "CAS 000-00-0: không có trong dữ liệu NĐ 24 (Phụ lục I-IV)."
+
+
+def test_toan_van_hai_nghi_dinh_nhung_trong_trang():
+    # Trang phải tự chứa toàn văn NĐ 24 + NĐ 26 (không đi kèm file .docx rời, vì
+    # trang hay được gửi lẻ một file). Và mọi link "#..." phải có đích thật —
+    # link chết thì cán bộ bấm vào không thấy gì mà cũng không báo lỗi.
+    html = Path(__file__).with_name("Tra-cuu-hoa-chat-ND24.html").read_text(encoding="utf-8")
+    ids = set(re.findall(r'id="(nd2[46]-[^"]+)"', html))
+    hrefs = set(re.findall(r'href="#(nd2[46]-[^"]+)"', html))
+    assert not hrefs - ids, f"link tới mục không tồn tại: {hrefs - ids}"
+    assert all(i.isascii() for i in ids), "id có dấu -> location.hash percent-encode sẽ không khớp"
+    assert len([i for i in ids if i.startswith("nd26-dieu-")]) == 31, "NĐ 26 có 31 Điều"
+    assert len([i for i in ids if i.startswith("nd24-dieu-")]) == 5, "NĐ 24 có 5 Điều"
+    assert {f"nd24-pl-{n}" for n in ("i", "ii", "iii", "iv")} <= ids, "thiếu Phụ lục NĐ 24"
+    # Bảng Phụ lục là phần dài nhất, dễ rơi im lặng nếu parser bảng hỏng.
+    assert "1327-53-3" in html and "Điều 31. Hiệu lực thi hành" in html
+    # Dẫn chiếu trong mục miễn trừ phải là link tới Điều tương ứng của NĐ 26.
+    assert '<a href="#nd26-dieu-21">Điều 21</a>' in html
+    # ...nhưng KHÔNG được biến "Điều 19" của NĐ 169 (nghị định khác, không có
+    # toàn văn trong repo) thành link trỏ nhầm sang Điều 19 của NĐ 26.
+    assert core.PENALTY_WARNING.split("Điều 19")[0] + "Điều 19 Nghị định" in html
 
 
 if __name__ == "__main__":
