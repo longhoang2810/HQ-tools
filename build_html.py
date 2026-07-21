@@ -342,7 +342,7 @@ HTML = """<!doctype html>
           <li><b>Tìm theo tên chất</b>: dò tên hóa chất có trong đoạn (tiếng Việt hoặc tiếng Anh, không cần gõ dấu), hoặc gõ một phần tên để liệt kê các chất mang tên đó. Dùng khi doanh nghiệp không khai mã CAS — kết quả chỉ là gợi ý, xem cảnh báo trong bảng.</li>
         </ul>
       </li>
-      <li>Công cụ không tự tính % hàm lượng — hóa chất Phụ lục III luôn báo "__VERDICT_PL3__"; đối chiếu ngưỡng miễn trừ nồng độ ở mục "Các trường hợp được miễn trừ" bên dưới bằng tài liệu khai báo gốc.</li>
+      <li>Công cụ không tự tính % hàm lượng — hóa chất Phụ lục III luôn báo "__VERDICT_PL3__"; đối chiếu ngưỡng miễn trừ nồng độ ở mục "Các trường hợp được miễn trừ" bên dưới.</li>
     </ol>
   </div>
 </div>
