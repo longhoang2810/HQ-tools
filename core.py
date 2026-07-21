@@ -91,27 +91,30 @@ OTHER_OBLIGATION_ANNEXES = ("II",)
 # miễn trừ thay vì lặp lại trong chi tiết từng CAS. In THƯỜNG TRỰC như mục miễn
 # trừ (tham khảo chung, không phải kết luận cho lô hàng) — tiêu đề phải tự nói
 # rõ phạm vi để không bị đọc thành "lô này cũng phải có Giấy chứng nhận".
-OTHER_OBLIGATIONS_TITLE = "Nghĩa vụ và miễn Giấy chứng nhận — chỉ áp dụng cho hóa chất Phụ lục II"
+# Gộp dưới một mục "Quy định khác" ở cuối trang: đây là giấy của khâu KHÔNG
+# phải xuất nhập khẩu, cán bộ đứng ở khâu thông quan thường không cần tới.
+OTHER_SECTION_TITLE = "Quy định khác"
+OTHER_OBLIGATIONS_TITLE = "Giấy chứng nhận sản xuất, kinh doanh — chỉ áp dụng cho hóa chất Phụ lục II"
 OTHER_OBLIGATIONS = [
     "Nhập khẩu để KINH DOANH: phải có Giấy chứng nhận đủ điều kiện sản xuất, kinh doanh hóa chất có điều kiện (Điều 8, 9, 10.2).",
     "MIỄN Giấy chứng nhận khi nhập khẩu để TỰ DÙNG (không kinh doanh): chỉ công bố mục đích sử dụng trên Cơ sở dữ liệu chuyên ngành hóa chất (Điều 10.3). Công bố KHÔNG phải điều kiện thông quan và không có thời hạn cứng — doanh nghiệp chủ động chọn thời điểm công bố.",
+]
+
+# Điều 21.4 (san chiết nội bộ) và 21.5 (tồn trữ) miễn giấy của khâu SẢN XUẤT và
+# TỒN TRỮ — không đụng tới Giấy phép XNK, nên không nằm ở mục B (chỉ nói về giấy
+# phép xuất khẩu, nhập khẩu) mà xuống cuối cùng khối nghĩa vụ khác. KHÔNG gộp vào
+# OTHER_OBLIGATIONS: khối đó là nghĩa vụ riêng của Phụ lục II và được lookup.py
+# in kèm cho từng CAS, hai khoản này thì áp dụng chung.
+OTHER_EXEMPTIONS_TITLE = "Miễn trừ khâu sản xuất, tồn trữ (Điều 21, khoản 4 & 5)"
+OTHER_EXEMPTIONS = [
+    "(Điều 21.4) San chiết, pha chế hóa chất nhằm phục vụ TRỰC TIẾP cho hoạt động sản xuất nội bộ của chính tổ chức, cá nhân thực hiện việc san chiết, pha chế: miễn cấp Giấy chứng nhận / Giấy phép SẢN XUẤT. (Khoản 4 chỉ miễn giấy khâu sản xuất — không nói tới kinh doanh, khác khoản 1.)",
+    "(Điều 21.5) Tổ chức cho thuê đất KHÔNG kèm cơ sở vật chất để tồn trữ hóa chất; hoặc dịch vụ tồn trữ hóa chất có điều kiện / kiểm soát đặc biệt hàm lượng ≤ 1%: miễn Giấy chứng nhận đủ điều kiện hoạt động dịch vụ tồn trữ. (NQ 19 nới từ <0,1%.)",
 ]
 
 # Nghĩa vụ khai báo là nghĩa vụ CHUNG cho hóa chất chương 28/29, không riêng phụ
 # lục nào -> đứng thành mục "A. Khai báo hóa chất nhập khẩu", KHÔNG lặp lại
 # trong khối Phụ lục II ở cuối. lookup.py (tra 1 CAS, không có mục A đứng cạnh)
 # vẫn in kèm — xem format_lookup.
-# Điều 21.4 (san chiết nội bộ) và 21.5 (tồn trữ) miễn giấy của khâu SẢN XUẤT và
-# TỒN TRỮ — không đụng tới Giấy phép XNK, nên không nằm ở mục B (chỉ nói về giấy
-# phép xuất khẩu, nhập khẩu) mà xuống cuối cùng khối nghĩa vụ khác. KHÔNG gộp vào
-# OTHER_OBLIGATIONS: khối đó là nghĩa vụ riêng của Phụ lục II và được lookup.py
-# in kèm cho từng CAS, hai khoản này thì áp dụng chung.
-OTHER_EXEMPTIONS_TITLE = "Miễn trừ khác — khâu sản xuất, tồn trữ (Điều 21, khoản 4 & 5)"
-OTHER_EXEMPTIONS = [
-    "(Điều 21.4) San chiết, pha chế hóa chất nhằm phục vụ TRỰC TIẾP cho hoạt động sản xuất nội bộ của chính tổ chức, cá nhân thực hiện việc san chiết, pha chế: miễn cấp Giấy chứng nhận / Giấy phép SẢN XUẤT. (Khoản 4 chỉ miễn giấy khâu sản xuất — không nói tới kinh doanh, khác khoản 1.)",
-    "(Điều 21.5) Tổ chức cho thuê đất KHÔNG kèm cơ sở vật chất để tồn trữ hóa chất; hoặc dịch vụ tồn trữ hóa chất có điều kiện / kiểm soát đặc biệt hàm lượng ≤ 1%: miễn Giấy chứng nhận đủ điều kiện hoạt động dịch vụ tồn trữ. (NQ 19 nới từ <0,1%.)",
-]
-
 DECLARATION_RULE = (
     "Khai báo hóa chất nhập khẩu qua Cổng một cửa quốc gia (Điều 6) — nghĩa vụ "
     "chung cho hóa chất thuộc chương 28, 29, không riêng Phụ lục II; phải có "
@@ -382,10 +385,14 @@ def format_exemptions():
             lines.extend(f"    - {item}" for item in group["items"])
             lines.append("")
     lines.append(textwrap.fill(PENALTY_WARNING, width=78))
-    lines.extend(["", OTHER_OBLIGATIONS_TITLE.upper(), ""])
-    lines.extend(f"  - {item}" for item in OTHER_OBLIGATIONS)
-    lines.extend(["", OTHER_EXEMPTIONS_TITLE.upper(), ""])
-    lines.extend(f"  - {item}" for item in OTHER_EXEMPTIONS)
+    lines.extend(["", OTHER_SECTION_TITLE.upper(), ""])
+    for title, items in (
+        (OTHER_OBLIGATIONS_TITLE, OTHER_OBLIGATIONS),
+        (OTHER_EXEMPTIONS_TITLE, OTHER_EXEMPTIONS),
+    ):
+        lines.extend([f"  {title}", ""])
+        lines.extend(f"    - {item}" for item in items)
+        lines.append("")
     return "\n".join(lines)
 
 

@@ -191,10 +191,18 @@ def exemptions_html():
                 parts.append(f'<p class="sub-lead">{esc(group["lead"])}</p>')
             parts.append("<ul>" + "".join(f"<li>{esc(item)}</li>" for item in group["items"]) + "</ul>")
     parts.append(f'<div class="warn-note">{esc(core.PENALTY_WARNING)}</div>')
-    parts.append(f'<h2>{esc(core.OTHER_OBLIGATIONS_TITLE)}</h2>')
-    parts.append("<ul>" + "".join(f"<li>{esc(item)}</li>" for item in core.OTHER_OBLIGATIONS) + "</ul>")
-    parts.append(f'<h2>{esc(core.OTHER_EXEMPTIONS_TITLE)}</h2>')
-    parts.append("<ul>" + "".join(f"<li>{esc(item)}</li>" for item in core.OTHER_EXEMPTIONS) + "</ul>")
+    # Giấy của khâu KHÔNG phải xuất nhập khẩu — gộp một mục "Quy định khác", gấp
+    # sẵn: cán bộ đứng ở khâu thông quan không cần tới, nhưng vẫn phải tra được.
+    parts.append(
+        f'<details class="fold"><summary><h2>{esc(core.OTHER_SECTION_TITLE)}</h2></summary>'
+    )
+    for title, items in (
+        (core.OTHER_OBLIGATIONS_TITLE, core.OTHER_OBLIGATIONS),
+        (core.OTHER_EXEMPTIONS_TITLE, core.OTHER_EXEMPTIONS),
+    ):
+        parts.append(f'<h3 class="sect">{esc(title)}</h3>')
+        parts.append("<ul>" + "".join(f"<li>{esc(item)}</li>" for item in items) + "</ul>")
+    parts.append("</details>")
     return "\n  ".join(parts)
 
 
@@ -373,7 +381,7 @@ HTML = """<!doctype html>
           <li><b>Tìm theo tên chất</b>: dò tên hóa chất có trong đoạn (tiếng Việt hoặc tiếng Anh, không cần gõ dấu), hoặc gõ một phần tên để liệt kê các chất mang tên đó. Dùng khi doanh nghiệp không khai mã CAS — kết quả chỉ là gợi ý, xem cảnh báo trong bảng.</li>
         </ul>
       </li>
-      <li>Công cụ không tự tính % hàm lượng — hóa chất Phụ lục III luôn báo "__VERDICT_PL3__"; đối chiếu ngưỡng miễn trừ nồng độ ở mục "Các trường hợp được miễn trừ" bên dưới.</li>
+      <li>Công cụ không tự tính % hàm lượng — hóa chất Phụ lục III luôn báo "__VERDICT_PL3__"; đối chiếu ngưỡng miễn trừ nồng độ ở mục "Quy định &amp; các trường hợp miễn trừ" bên dưới.</li>
     </ol>
   </div>
 </div>

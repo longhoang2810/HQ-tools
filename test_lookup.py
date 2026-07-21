@@ -601,11 +601,14 @@ def test_hai_muc_quy_dinh_mien_tru_dung_dieu():
     for g in EXEMPTIONS:
         assert g["title"] in rep
     assert rep.index("A. KHAI BÁO") < rep.index("B. GIẤY PHÉP") < rep.index(
-        core.OTHER_EXEMPTIONS_TITLE.upper()
+        core.OTHER_SECTION_TITLE.upper()
     )
+    # "Quy định khác" gom giấy của khâu KHÔNG phải XNK -> phải có cả hai tiểu mục.
+    khac = rep[rep.index(core.OTHER_SECTION_TITLE.upper()):]
+    assert core.OTHER_OBLIGATIONS_TITLE in khac and core.OTHER_EXEMPTIONS_TITLE in khac
     # Mục B chỉ còn chuyện Giấy phép XUẤT KHẨU, NHẬP KHẨU: giấy khâu sản xuất /
     # tồn trữ (Đ21.4, 21.5) đã xuống khối cuối.
-    b = rep[rep.index("B. GIẤY PHÉP"):rep.index(core.OTHER_OBLIGATIONS_TITLE.upper())]
+    b = rep[rep.index("B. GIẤY PHÉP"):rep.index(core.OTHER_SECTION_TITLE.upper())]
     assert "Điều 21.4" not in b and "Điều 21.5" not in b
 
 

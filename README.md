@@ -23,11 +23,11 @@ Trang này cũng có mục **"Quy định & các trường hợp miễn trừ"**
 tách làm **hai mục lớn** vì đây là hai nghĩa vụ khác nhau hay bị lẫn:
 **A. Khai báo hóa chất nhập khẩu** (quy định Điều 6 → miễn trừ Điều 6.7) và
 **B. Giấy phép xuất khẩu, nhập khẩu** (quy định Điều 14.2 → miễn trừ Điều 21).
-Mục B **chỉ nói chuyện khâu XNK**; giấy của khâu khác nằm ở hai khối cuối trang:
-Giấy chứng nhận Phụ lục II (quy định Điều 8, 9, 10.2 + miễn khi tự dùng Điều
-10.3) và "Miễn trừ khác — khâu sản xuất, tồn trữ" (Điều 21.4, 21.5). Tách quy
-định với miễn trừ của cùng một loại giấy ra hai chỗ thì đọc mục miễn trừ mà
-không thấy nghĩa vụ gốc. Ngay trên nó là khối cảnh báo **"Vùng mù: mục Phụ lục
+Mục B **chỉ nói chuyện khâu XNK**; giấy của khâu khác gom vào mục **"Quy định
+khác"** (dropdown, gấp sẵn) ở cuối: Giấy chứng nhận Phụ lục II (Điều 8, 9, 10.2
++ miễn khi tự dùng Điều 10.3) và miễn trừ khâu sản xuất, tồn trữ (Điều 21.4,
+21.5). Tách quy định với miễn trừ của cùng một loại giấy ra hai chỗ thì đọc mục
+miễn trừ mà không thấy nghĩa vụ gốc. Ngay trên nó là khối cảnh báo **"Vùng mù: mục Phụ lục
 III không có mã CAS"** — xem Giới hạn đã biết.
 
 Góc phải dưới có hai nút nổi: **✕ Thu gọn toàn văn** (hiện khi đang mở toàn văn
