@@ -575,6 +575,18 @@ def test_unknown_khong_con_ghi_chu():
     assert format_report("000-00-0") == "CAS 000-00-0: không có trong dữ liệu NĐ 24 (Phụ lục I-IV)."
 
 
+def test_moi_onclick_goi_ham_tu_dinh_nghia():
+    # onclick="scrollTo({top:0})" IM LẶNG KHÔNG CHẠY: scope của inline handler có
+    # cả chính cái nút, nên `scrollTo` ăn vào Element.prototype.scrollTo — cuộn
+    # cái nút chứ không cuộn trang. Mọi handler phải là hàm TỰ ĐỊNH NGHĨA trong
+    # trang, không mượn tên trùng phương thức của Element/document.
+    src = Path(__file__).with_name("build_html.py").read_text(encoding="utf-8")
+    names = set(re.findall(r'onclick="(\w+)\(', src))
+    assert names, "không tìm thấy onclick nào"
+    for name in names:
+        assert f"function {name}(" in src, f'onclick="{name}(...)" không có hàm cùng tên'
+
+
 def test_hai_muc_quy_dinh_mien_tru_dung_dieu():
     # Phần "Quy định" của mỗi mục TRỎ VỀ IMPORT_RULES/OTHER_OBLIGATIONS theo chỉ
     # số -> ai xếp lại thứ tự hai danh sách kia là mục này im lặng dẫn nhầm điều

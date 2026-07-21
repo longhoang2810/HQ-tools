@@ -884,7 +884,7 @@
 
 <div class="fab">
   <button id="fab-collapse" onclick="collapseDocs()" hidden>✕ Thu gọn toàn văn</button>
-  <button id="fab-top" onclick="scrollTo({ top: 0 })" hidden>↑ Lên đầu trang</button>
+  <button id="fab-top" onclick="goTop()" hidden>↑ Lên đầu trang</button>
 </div>
 
 <footer>Bản tóm tắt để tra cứu nhanh — luôn đối chiếu điều luật gốc trước khi ra quyết định thông quan.</footer>
@@ -1312,6 +1312,12 @@ function syncFab() {
   const openDoc = docsEls.some(d => d.open);
   document.getElementById("fab-collapse").hidden = !openDoc;
   document.getElementById("fab-top").hidden = scrollY < 400;
+}
+// Phai la ham dat ten, KHONG goi thang scrollTo() trong inline handler: trong
+// handler, scope chain co ca chinh cai nut -> `scrollTo` an vao
+// Element.prototype.scrollTo, cuon cai nut (khong cuon duoc) thay vi cuon trang.
+function goTop() {
+  window.scrollTo({ top: 0 });
 }
 function collapseDocs() {
   docsEls.forEach(d => d.open = false);
