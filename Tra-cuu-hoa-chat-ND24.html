@@ -111,6 +111,11 @@
   .blind-spot h2 { color: var(--red-ink); }
   .blind-spot .lead { font-weight: 400; background: var(--red-bg); border-radius: 8px; padding: 10px 14px; margin: 8px 0 4px; }
   .blind-spot li { font-size: 0.9rem; }
+  details.fold > summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; gap: 8px; }
+  details.fold > summary::-webkit-details-marker { display: none; }
+  details.fold > summary::before { content: "▸"; color: var(--red-ink); transition: transform .12s; }
+  details.fold[open] > summary::before { transform: rotate(90deg); }
+  details.fold > summary h2 { display: inline; }
 
   /* Toàn văn hai nghị định — nhúng thẳng vào trang để không phải mở file .docx
      rời (trang vẫn là 1 file chạy offline). Đóng sẵn, mở khi cần đọc. */
@@ -192,7 +197,7 @@
 <div id="results"></div>
 
 <div class="card exempt blind-spot">
-  <h2>⚠ Vùng mù: mục Phụ lục III không có mã CAS — tra theo mã sẽ KHÔNG ra</h2>
+  <details class="fold"><summary><h2>⚠ Vùng mù: mục Phụ lục III không có mã CAS — tra theo mã sẽ KHÔNG ra</h2></summary>
   <p class="lead">Nghị định 24/2026/NĐ-CP xếp các mục dưới đây vào Phụ lục III (hóa chất cần kiểm soát đặc biệt) nhưng ghi theo HỌ CHẤT, không có mã CAS.</p>
   <p class="cite">📖 <a href="#nd24-pl-iii">Mở nguyên văn Phụ lục III của NĐ 24</a> để đối chiếu mô tả từng mục.</p>
   <h3>Phụ lục III › Nhóm 1 › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)</h3>
@@ -201,6 +206,7 @@
   <ul><li><b><a href="#nd24-pl-iii">37.</a></b> Asen và các hợp chất của asen</li><li><b><a href="#nd24-pl-iii">38.</a></b> Các hợp chất của Cr6+</li><li><b><a href="#nd24-pl-iii">39.</a></b> Thủy ngân và các hợp chất của thủy ngân</li><li><b><a href="#nd24-pl-iii">40.</a></b> Các hợp chất xyanua</li><li><b><a href="#nd24-pl-iii">41.</a></b> Chì và các hợp chất của chì</li></ul>
   <h3>Phụ lục III › Nhóm 2 › C – Hóa chất thuộc Công ước Rotterdam/Stockholm</h3>
   <ul><li><b><a href="#nd24-pl-iii">45.</a></b> Biphenyl (PCB)</li><li><b><a href="#nd24-pl-iii">81.</a></b> Polychlorinated</li></ul>
+  </details>
 </div>
 
 <div class="card exempt">

@@ -42,8 +42,11 @@ def pl3_no_cas_html():
     """Khối cảnh báo các mục Phụ lục III ghi theo họ chất, không có mã CAS.
     Lấy từ core (data/nd24_pl3_no_cas.json do extract.py sinh từ nd24.md) —
     không gõ tay danh sách trong HTML, y như mục miễn trừ."""
+    # Thu gọn được, nhưng TIÊU ĐỀ ĐỎ luôn hiện trong <summary>: khối này dài
+    # (13 mục) mà lại nằm giữa kết quả và mục miễn trừ; gấp phần danh sách lại
+    # thì vẫn không giấu mất lời cảnh báo.
     parts = [
-        f'<h2>⚠ {esc(core.PL3_NO_CAS_TITLE)}</h2>',
+        f'<details class="fold"><summary><h2>⚠ {esc(core.PL3_NO_CAS_TITLE)}</h2></summary>',
         f'<p class="lead">{esc(core.PL3_NO_CAS_LEAD)}</p>',
         '<p class="cite">📖 <a href="#nd24-pl-iii">Mở nguyên văn Phụ lục III của NĐ 24</a>'
         " để đối chiếu mô tả từng mục.</p>",
@@ -56,6 +59,7 @@ def pl3_no_cas_html():
             if e["category"] == group
         )
         parts.append(f"<ul>{items}</ul>")
+    parts.append("</details>")
     return "\n  ".join(parts)
 
 
@@ -305,6 +309,11 @@ HTML = """<!doctype html>
   .blind-spot h2 { color: var(--red-ink); }
   .blind-spot .lead { font-weight: 400; background: var(--red-bg); border-radius: 8px; padding: 10px 14px; margin: 8px 0 4px; }
   .blind-spot li { font-size: 0.9rem; }
+  details.fold > summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; gap: 8px; }
+  details.fold > summary::-webkit-details-marker { display: none; }
+  details.fold > summary::before { content: "▸"; color: var(--red-ink); transition: transform .12s; }
+  details.fold[open] > summary::before { transform: rotate(90deg); }
+  details.fold > summary h2 { display: inline; }
 
   /* Toàn văn hai nghị định — nhúng thẳng vào trang để không phải mở file .docx
      rời (trang vẫn là 1 file chạy offline). Đóng sẵn, mở khi cần đọc. */
