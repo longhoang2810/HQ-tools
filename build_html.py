@@ -193,6 +193,8 @@ def exemptions_html():
     parts.append(f'<div class="warn-note">{esc(core.PENALTY_WARNING)}</div>')
     parts.append(f'<h2>{esc(core.OTHER_OBLIGATIONS_TITLE)}</h2>')
     parts.append("<ul>" + "".join(f"<li>{esc(item)}</li>" for item in core.OTHER_OBLIGATIONS) + "</ul>")
+    parts.append(f'<h2>{esc(core.OTHER_EXEMPTIONS_TITLE)}</h2>')
+    parts.append("<ul>" + "".join(f"<li>{esc(item)}</li>" for item in core.OTHER_EXEMPTIONS) + "</ul>")
     return "\n  ".join(parts)
 
 

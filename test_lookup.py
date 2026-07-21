@@ -432,13 +432,15 @@ def test_decree_cas_errata_corrected():
 
 
 def test_exemptions_cover_dieu_21_4_and_product_declaration():
-    cites = " | ".join(g["cite"] for g in EXEMPTIONS)
-    assert "khoản 4" in cites  # san chiết, pha chế nội bộ (Điều 21.4)
+    # Khoản 4 & 5 miễn giấy khâu SẢN XUẤT/TỒN TRỮ -> nằm ở OTHER_EXEMPTIONS cuối
+    # trang, không ở mục B (mục B chỉ nói Giấy phép xuất khẩu, nhập khẩu).
+    assert "khoản 4 & 5" in core.OTHER_EXEMPTIONS_TITLE
+    assert "khoản 4" not in " | ".join(g["cite"] for g in EXEMPTIONS)
     all_items = " ".join(i for g in EXEMPTIONS for i in g["items"])
     assert "Điều 28, 29" in all_items  # nghĩa vụ công bố hàm lượng trong sản phẩm
     # Đ21.4 nguyên văn chỉ miễn "Giấy chứng nhận, Giấy phép SẢN XUẤT" — không có
     # "kinh doanh" (khác khoản 1). Từng viết rộng hơn luật.
-    k4 = next(i for g in EXEMPTIONS for i in g["items"] if "Điều 21.4" in i)
+    k4 = next(i for i in core.OTHER_EXEMPTIONS if "Điều 21.4" in i)
     assert "Giấy phép SẢN XUẤT" in k4 and "Giấy phép sản xuất, kinh doanh" not in k4
     # Đ21.6.b có cả "sản phẩm bảo quản, chế biến nông sản..." — từng bị rớt khỏi
     # danh sách miễn trừ (sót một diện miễn = đòi giấy phép oan).
@@ -598,7 +600,13 @@ def test_hai_muc_quy_dinh_mien_tru_dung_dieu():
     rep = core.format_exemptions()
     for g in EXEMPTIONS:
         assert g["title"] in rep
-    assert rep.index("A. KHAI BÁO") < rep.index("B. GIẤY PHÉP") < rep.index("Miễn trừ khác")
+    assert rep.index("A. KHAI BÁO") < rep.index("B. GIẤY PHÉP") < rep.index(
+        core.OTHER_EXEMPTIONS_TITLE.upper()
+    )
+    # Mục B chỉ còn chuyện Giấy phép XUẤT KHẨU, NHẬP KHẨU: giấy khâu sản xuất /
+    # tồn trữ (Đ21.4, 21.5) đã xuống khối cuối.
+    b = rep[rep.index("B. GIẤY PHÉP"):rep.index(core.OTHER_OBLIGATIONS_TITLE.upper())]
+    assert "Điều 21.4" not in b and "Điều 21.5" not in b
 
 
 def test_toan_van_hai_nghi_dinh_nhung_trong_trang():

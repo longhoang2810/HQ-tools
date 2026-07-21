@@ -101,6 +101,17 @@ OTHER_OBLIGATIONS = [
 # lục nào -> đứng thành mục "A. Khai báo hóa chất nhập khẩu", KHÔNG lặp lại
 # trong khối Phụ lục II ở cuối. lookup.py (tra 1 CAS, không có mục A đứng cạnh)
 # vẫn in kèm — xem format_lookup.
+# Điều 21.4 (san chiết nội bộ) và 21.5 (tồn trữ) miễn giấy của khâu SẢN XUẤT và
+# TỒN TRỮ — không đụng tới Giấy phép XNK, nên không nằm ở mục B (chỉ nói về giấy
+# phép xuất khẩu, nhập khẩu) mà xuống cuối cùng khối nghĩa vụ khác. KHÔNG gộp vào
+# OTHER_OBLIGATIONS: khối đó là nghĩa vụ riêng của Phụ lục II và được lookup.py
+# in kèm cho từng CAS, hai khoản này thì áp dụng chung.
+OTHER_EXEMPTIONS_TITLE = "Miễn trừ khác — khâu sản xuất, tồn trữ (Điều 21, khoản 4 & 5)"
+OTHER_EXEMPTIONS = [
+    "(Điều 21.4) San chiết, pha chế hóa chất nhằm phục vụ TRỰC TIẾP cho hoạt động sản xuất nội bộ của chính tổ chức, cá nhân thực hiện việc san chiết, pha chế: miễn cấp Giấy chứng nhận / Giấy phép SẢN XUẤT. (Khoản 4 chỉ miễn giấy khâu sản xuất — không nói tới kinh doanh, khác khoản 1.)",
+    "(Điều 21.5) Tổ chức cho thuê đất KHÔNG kèm cơ sở vật chất để tồn trữ hóa chất; hoặc dịch vụ tồn trữ hóa chất có điều kiện / kiểm soát đặc biệt hàm lượng ≤ 1%: miễn Giấy chứng nhận đủ điều kiện hoạt động dịch vụ tồn trữ. (NQ 19 nới từ <0,1%.)",
+]
+
 DECLARATION_RULE = (
     "Khai báo hóa chất nhập khẩu qua Cổng một cửa quốc gia (Điều 6) — nghĩa vụ "
     "chung cho hóa chất thuộc chương 28, 29, không riêng Phụ lục II; phải có "
@@ -153,16 +164,7 @@ EXEMPTIONS = [
     },
     {
         "section": "giayphep",
-        "title": "2. Miễn trừ khác",
-        "cite": "Điều 21, khoản 4 & 5",
-        "items": [
-            "(Điều 21.4) San chiết, pha chế hóa chất nhằm phục vụ TRỰC TIẾP cho hoạt động sản xuất nội bộ của chính tổ chức, cá nhân thực hiện việc san chiết, pha chế: miễn cấp Giấy chứng nhận / Giấy phép SẢN XUẤT. (Khoản 4 chỉ miễn giấy khâu sản xuất — không nói tới kinh doanh, khác khoản 1.)",
-            "(Điều 21.5) Tổ chức cho thuê đất KHÔNG kèm cơ sở vật chất để tồn trữ hóa chất; hoặc dịch vụ tồn trữ hóa chất có điều kiện / kiểm soát đặc biệt hàm lượng ≤ 1%: miễn Giấy chứng nhận đủ điều kiện hoạt động dịch vụ tồn trữ. (NQ 19 nới từ <0,1%.)",
-        ],
-    },
-    {
-        "section": "giayphep",
-        "title": "3. Miễn khi hóa chất nằm trong sản phẩm hoàn chỉnh",
+        "title": "2. Miễn khi hóa chất nằm trong sản phẩm hoàn chỉnh",
         "cite": "Điều 21, khoản 6",
         "lead": (
             "MIỄN CẤP Giấy chứng nhận sản xuất, kinh doanh (với hóa chất có "
@@ -182,7 +184,7 @@ EXEMPTIONS = [
     },
     {
         "section": "giayphep",
-        "title": "4. Miễn Giấy phép XNK bổ sung (NQ 19 thêm mới)",
+        "title": "3. Miễn Giấy phép XNK bổ sung (NQ 19 thêm mới)",
         "cite": "Điều 21, khoản 7-8 (NQ 19/2026/NQ-CP bổ sung, NĐ 26 gốc chỉ tới khoản 6)",
         "items": [
             "Khoản 7 — MIỄN CẤP Giấy phép XUẤT KHẨU, NHẬP KHẨU hóa chất cần kiểm soát đặc biệt dùng trong lĩnh vực thí nghiệm, khối lượng ≤ 1mg/lần nhập khẩu.",
@@ -206,7 +208,7 @@ EXEMPT_SECTIONS = [
     },
     {
         "key": "giayphep",
-        "title": "B. Giấy phép, Giấy chứng nhận",
+        "title": "B. Giấy phép xuất khẩu, nhập khẩu",
         "rule": [IMPORT_RULES["III"][0], IMPORT_RULES["III"][1]],
     },
 ]
@@ -382,6 +384,8 @@ def format_exemptions():
     lines.append(textwrap.fill(PENALTY_WARNING, width=78))
     lines.extend(["", OTHER_OBLIGATIONS_TITLE.upper(), ""])
     lines.extend(f"  - {item}" for item in OTHER_OBLIGATIONS)
+    lines.extend(["", OTHER_EXEMPTIONS_TITLE.upper(), ""])
+    lines.extend(f"  - {item}" for item in OTHER_EXEMPTIONS)
     return "\n".join(lines)
 
 
