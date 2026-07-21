@@ -221,11 +221,11 @@ EXEMPT_SECTIONS = [
 # Nguồn NĐ 169/2026 KHÔNG có trong repo (khác nd24.md/nd26.txt) -> không tự sửa
 # câu này; đối chiếu Điều 19 bản gốc trước khi đổi.
 PENALTY_WARNING = (
-    "Lưu ý: Trường hợp phải có giấy phép xuất khẩu, nhập khẩu, tại thời điểm "
-    "đăng ký tờ khai doanh nghiệp không xuất trình giấy phép sẽ bị xử phạt theo "
-    "Điều 19 Nghị định "
-    "169/2026/NĐ-CP ngày 15/5/2026 của Chính phủ quy định xử phạt vi phạm hành "
-    "chính trong lĩnh vực hải quan."
+    "Lưu ý: Hàng hóa thuộc diện phải có giấy phép xuất khẩu, nhập khẩu thì phải "
+    "có giấy phép TẠI THỜI ĐIỂM đăng ký tờ khai hải quan (Điều 18 khoản 1 điểm m "
+    "Thông tư 38/2015/TT-BTC, đã sửa đổi); không có giấy phép thì bị xử phạt theo "
+    "Điều 19 Nghị định 169/2026/NĐ-CP ngày 15/5/2026 của Chính phủ quy định xử "
+    "phạt vi phạm hành chính trong lĩnh vực hải quan."
 )
 
 # Cảnh báo vùng mù: các mục trên là HỌ chất, nghị định không cho mã CAS nào nên

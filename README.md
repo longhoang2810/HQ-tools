@@ -114,9 +114,18 @@ nay nằm luôn trong repo để đối chiếu lại về sau. Sửa
 tóm tắt trong `core.py` xong chạy lại `python3 build_html.py` để cập nhật trang
 HTML.
 
-`PENALTY_WARNING` (chế tài, Điều 19 **NĐ 169/2026/NĐ-CP**) có bản gốc
-`169_2026_ND-CP_679683.docx` trong repo — số hiệu, ngày 15/5/2026 và tên nghị
-định khớp; hiệu lực 01/7/2026, thay NĐ 128/2020. Lưu ý khi sửa câu này:
+`PENALTY_WARNING` (chế tài) dẫn hai văn bản:
+
+- Mốc *"phải có giấy phép TẠI THỜI ĐIỂM đăng ký tờ khai"* là **Điều 18 khoản 1
+  điểm m Thông tư 38/2015/TT-BTC** (đã sửa đổi). Nguồn đối chiếu là bản hợp nhất
+  38-39-121 trong Obsidian của tác giả, **không có trong repo**. Cả 3 thông tư
+  KHÔNG quy định mức phạt nào (0 lần cụm "phạt tiền") — chúng đặt nghĩa vụ và
+  điều kiện, chế tài nằm ở nghị định xử phạt. Điều 28 cho phép hải quan tra giấy
+  phép trên Cổng một cửa nên DN không bắt buộc nộp bản giấy: vì vậy câu này nói
+  *"không có giấy phép"*, KHÔNG phải "không xuất trình".
+- Mức phạt là **Điều 19 NĐ 169/2026/NĐ-CP**, bản gốc `169_2026_ND-CP_679683.docx`
+  có trong repo — số hiệu, ngày 15/5/2026 và tên nghị định khớp; hiệu lực
+  01/7/2026, thay NĐ 128/2020. Lưu ý khi sửa câu này:
 Điều 19 **khoản 4** phạt hành vi *"phải có ... giấy phép nhưng KHÔNG CÓ giấy
 phép"*, còn khoản 5 phạt gấp 2 nếu quá 30 ngày kể từ ngày hàng về đến cửa khẩu
 mới nộp hồ sơ hải quan; khoản 7 giới hạn "giấy phép nêu tại Điều này" là giấy
