@@ -325,7 +325,7 @@ HTML = """<!doctype html>
 
 <header>
   <h1>Tra cứu hóa chất</h1>
-  <p>Theo Phụ lục I–IV, Nghị định 24/2026/NĐ-CP &amp; yêu cầu nhập khẩu, Nghị định 26/2026/NĐ-CP</p>
+  <p>Nghị định 24/2026/NĐ-CP &amp; Nghị định 26/2026/NĐ-CP</p>
   <p class="author">Tác giả: Nguyễn Hoàng Long - HQ KCX&amp;KCN</p>
   <p class="docs">📖 Đọc toàn văn: <a href="#doc-nd24">NĐ 24/2026/NĐ-CP</a> · <a href="#doc-nd26">NĐ 26/2026/NĐ-CP</a></p>
 </header>
