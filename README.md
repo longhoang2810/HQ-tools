@@ -40,6 +40,7 @@ Trang có **hai chế độ tra**, tự chọn bằng nút trên ô nhập:
 |---|---|---|
 | **Tìm theo mã CAS** (mặc định) | Tự tìm mọi mã CAS trong đoạn văn | DN có khai mã CAS — chính xác nhất |
 | **Tìm theo tên chất** | Dò tên hóa chất nằm trong đoạn ("Hỗn hợp dung môi gồm Metanol, Toluene" → ra cả hai); gõ một phần tên ("amino") thì liệt kê các chất mang tên đó. Tiếng Việt hoặc Anh, không cần gõ dấu, tối đa 30 kết quả | DN không khai mã CAS — chỉ là **gợi ý**, xem Giới hạn |
+| **Theo dòng hàng** | Mỗi dòng dán vào = **một dòng hàng** của tờ khai (copy thẳng từ Excel được, bắt cả STT dạng `1<tab>`, `1.`, `1)`). Bảng ra 1 hàng = 1 dòng hàng: STT, mô tả, mã CAS thấy được, kết luận | Cả tờ khai nhiều dòng — cần biết **dòng nào** vướng Phụ lục III |
 
 Mỗi chế độ chỉ làm đúng việc của nó, nhưng **luôn nhắc chế độ kia** khi đoạn có
 dữ liệu cho nó: tra theo mã CAS mà đoạn còn tên hóa chất không kèm mã thì trang
@@ -47,6 +48,22 @@ báo "còn nhắc tới N tên hóa chất... chuyển sang Tìm theo tên chấ
 tra theo tên mà đoạn có mã CAS thì trang báo đang bỏ qua chúng. Nhờ vậy mô tả
 trộn (vài chất khai mã, vài chất chỉ ghi tên) không bị bỏ sót im lặng, mà cũng
 không kéo cái khớp thừa của dò tên vào kết luận của mọi lô hàng.
+
+Chế độ **Theo dòng hàng** đảo trục bảng (1 dòng = 1 dòng hàng thay vì 1 chất) nhưng
+**không thêm quy tắc pháp lý nào** — kết luận vẫn đi qua đúng `casStatus()` như hai
+chế độ kia. Ba điểm khóa bằng test (`test_che_do_dong_hang`):
+
+1. **Dòng không có mã CAS ra màu VÀNG** ("Không thấy mã CAS — tự kiểm tra"), không
+   bao giờ xanh — để xanh thì tờ khai 50 dòng xanh hết trong khi chưa tra được gì.
+2. **Một dòng nhiều mã CAS** lấy verdict NẶNG NHẤT (PL III > mã ngoài dữ liệu >
+   không cần giấy phép), không phải mã đầu tiên.
+3. **Cờ tên chỉ là gợi ý**: dòng không khai mã CAS mà mô tả có nhắc tên chất trong
+   dữ liệu thì hiện cờ vàng, nhưng cờ **không đổi kết luận** của dòng — đúng khuôn
+   cờ họ chất Phụ lục III.
+
+Dán từ Excel có thể vỡ dòng hàng (ô mô tả dài bị xuống dòng). Trang không sửa hộ
+được, nhưng nếu bắt được STT mà dãy đứt quãng — hoặc phần lớn dòng không có STT —
+thì báo để tự soi lại.
 
 Tiện ích trên trang: nút **Ví dụ ngẫu nhiên** tạo mẫu **theo đúng chế độ đang
 chọn** và **phủ đủ mọi trường hợp** chế độ đó có thể ra — bản mã CAS gồm chất PL

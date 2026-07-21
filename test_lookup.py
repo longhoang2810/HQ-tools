@@ -569,10 +569,45 @@ def test_unknown_khong_con_ghi_chu():
     src = Path(__file__).with_name("build_html.py").read_text(encoding="utf-8")
     assert "NOTE_GAP" not in src and not hasattr(core, "NOTE_GAP")
     assert "Không tìm thấy trong Phụ lục" not in src, "JS viết tay lại câu 'không tìm thấy'"
-    assert "if (!rows.length) return;" in src, "CAS không có dữ liệu phải bỏ qua thẻ chi tiết"
+    assert "if (!rows.length) continue;" in src, "CAS không có dữ liệu phải bỏ qua thẻ chi tiết"
     # CLI thì ngược lại: lookup.py in mỗi format_report, không có bảng đứng trước,
     # nên vẫn phải tự nói tra ra gì — bỏ nốt thì in ra chuỗi rỗng.
     assert format_report("000-00-0") == "CAS 000-00-0: không có trong dữ liệu NĐ 24 (Phụ lục I-IV)."
+
+
+def test_che_do_dong_hang():
+    # Chế độ "Theo dòng hàng": mỗi dòng vật lý = 1 dòng hàng của tờ khai.
+    # Ca (b) là ca nguy hiểm nhất: dòng KHÔNG có mã CAS mà ra xanh thì cả tờ khai
+    # 50 dòng xanh hết trong khi chưa tra được gì.
+    got = _run_js("""
+      const txt = "1\\tDung moi cong nghiep CAS 67-56-1"
+        + "\\n2\\tKeo dan cong nghiep, thung 20kg"
+        + "\\n3\\tHon hop 107-13-1 va 103-79-7"
+        + "\\n4\\tChat la CAS 000-00-0"
+        + "\\n5\\tKeo dan chua Toluene";
+      console.log(JSON.stringify(parseLines(txt).map(r => ({
+        stt: r.stt, cas: r.cas, badge: lineStatus(r).badge,
+        text: lineStatus(r).text, nameHint: lineNameHint(r).length > 0,
+      }))));
+    """)
+    if got is None:
+        return  # không có node -> bỏ qua, phần Python thuần vẫn chạy
+    assert [r["stt"] for r in got] == [1, 2, 3, 4, 5], "không tách đúng STT dán từ Excel"
+    # (a) dòng có chất Phụ lục III -> đỏ
+    assert got[0]["cas"] == ["67-56-1"] and got[0]["badge"] == "warn"
+    assert got[0]["text"] == VERDICT["pl3"]
+    # (b) dòng không có mã CAS -> VÀNG, tuyệt đối không phải xanh
+    assert got[1]["cas"] == [] and got[1]["badge"] == "unknown"
+    assert got[1]["badge"] != "ok", "dòng hàng chưa tra được mà báo xanh"
+    assert "Không thấy mã CAS" in got[1]["text"]
+    # (c) dòng nhiều mã CAS -> lấy verdict NẶNG NHẤT, không phải mã đầu tiên
+    # (107-13-1 là PL I/II/IV, 103-79-7 là PL III).
+    assert got[2]["cas"] == ["107-13-1", "103-79-7"] and got[2]["badge"] == "warn"
+    # (d) mã CAS ngoài dữ liệu vẫn là "Không rõ", khác hẳn dòng trống mã
+    assert got[3]["text"] == VERDICT["unknown"]
+    # (e) cờ tên chỉ là gợi ý: có cờ nhưng KHÔNG đổi kết luận của dòng
+    assert got[4]["nameHint"] and got[4]["badge"] == "unknown"
+    assert "Không thấy mã CAS" in got[4]["text"]
 
 
 def test_moi_onclick_goi_ham_tu_dinh_nghia():

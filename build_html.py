@@ -390,6 +390,7 @@ HTML = """<!doctype html>
   <div class="modes">
     <button class="mode-btn active" id="mode-cas" aria-pressed="true" onclick="setMode('cas')">🔢 Tìm theo mã CAS</button>
     <button class="mode-btn" id="mode-name" aria-pressed="false" onclick="setMode('name')">🔤 Tìm theo tên chất</button>
+    <button class="mode-btn" id="mode-line" aria-pressed="false" onclick="setMode('line')">📋 Theo dòng hàng</button>
   </div>
   <div class="input-row">
     <textarea id="input" placeholder="Ví dụ: Hỗn hợp dung môi công nghiệp gồm Metanol CAS 67-56-1, Acetaldehyde (75-07-0), mã CAS 103-79-7 (P2P)..."></textarea>
@@ -631,14 +632,16 @@ function detailFor(cas) {
 // chat chi ghi ten) thi cac chat ghi ten bi bo qua IM LANG. Nay chon che do nao
 // ra dung thu do, va che do con lai duoc nhac den khi doan co du lieu cho no.
 let MODE = "cas";
+const MODES = ["cas", "name", "line"];
 const MODE_PLACEHOLDER = {
   cas: "Ví dụ: Hỗn hợp dung môi công nghiệp gồm Metanol CAS 67-56-1, Acetaldehyde (75-07-0), mã CAS 103-79-7 (P2P)...",
   name: "Ví dụ: Hỗn hợp dung môi công nghiệp gồm Metanol, Toluene và Axeton — hoặc gõ một phần tên: amino",
+  line: "Dán cả tờ khai, MỖI DÒNG LÀ MỘT DÒNG HÀNG (copy thẳng từ Excel được). Ví dụ:\\n1\\tDung môi công nghiệp CAS 67-56-1\\n2\\tKeo dán, thùng 20kg\\n3\\tHỗn hợp 107-13-1 và 103-79-7",
 };
 
 function setMode(mode) {
   MODE = mode;
-  for (const m of ["cas", "name"]) {
+  for (const m of MODES) {
     const btn = document.getElementById("mode-" + m);
     btn.classList.toggle("active", m === mode);
     btn.setAttribute("aria-pressed", String(m === mode));
@@ -650,9 +653,124 @@ function setMode(mode) {
   input.focus();
 }
 
+// ===== Che do "Theo dong hang": moi DONG VAT LY = mot dong hang cua to khai.
+// Doi truc bang (dang 1 dong = 1 chat -> 1 dong = 1 dong hang), khong them quy
+// tac phap ly nao: verdict van di qua casStatus() nhu hai che do kia.
+function parseLines(text) {
+  const out = [];
+  for (const raw of text.split("\\n")) {
+    const line = raw.replace(/\\s+$/, "");
+    if (!line.trim()) continue;
+    // STT: "1<tab>", "1." hoac "1)" dau dong. Ma CAS khong lot vao day vi con
+    // co dau "-" ngay sau chu so.
+    const m = line.match(/^\\s*(\\d{1,4})[.)\\t]\\s*/);
+    out.push({
+      stt: m ? Number(m[1]) : null,
+      mota: (m ? line.slice(m[0].length) : line).replace(/\\t/g, " ").trim(),
+      cas: extractCas(line),
+    });
+  }
+  return out;
+}
+
+// Dong khong co ma CAS KHONG duoc ra xanh: ca to khai 50 dong se xanh het trong
+// khi chua tra duoc gi. Trang thai rieng, mau vang.
+const NO_CAS_STATUS = { badge: "unknown", text: "Không thấy mã CAS — tự kiểm tra" };
+// Nang nhat truoc: PL III > CAS la (chua ket luan duoc) > khong can giay phep.
+const LINE_BADGE_ORDER = ["warn", "unknown", "ok"];
+
+function lineStatus(entry) {
+  if (!entry.cas.length) return NO_CAS_STATUS;
+  const all = entry.cas.map(casStatus);
+  for (const b of LINE_BADGE_ORDER) {
+    const hit = all.find(s => s.badge === b);
+    if (hit) return hit;
+  }
+  return all[0];
+}
+
+// Ten chat doc duoc trong dong nhung KHONG kem ma CAS -> co vang, KHONG doi
+// verdict cua dong (dò ten khop thua duoc, xem gioi han o README).
+function lineNameHint(entry) {
+  const named = scanNames(entry.mota).filter(cas => !entry.cas.includes(cas));
+  if (!named.length) return "";
+  const names = [...new Set(named.map(cas => rowsFor(cas)[0].name_vn))].slice(0, 5);
+  return `<div class="fam-hint">⚠ Mô tả có nhắc tên hóa chất trong dữ liệu nhưng KHÔNG kèm mã CAS: ${esc(names.join(", "))}. Kết luận trên chỉ tính theo mã CAS — dùng chế độ <b>Tìm theo tên chất</b> để tra riêng.</div>`;
+}
+
+function detailsHtml(casList) {
+  let out = "";
+  for (const cas of [...new Set(casList)]) {
+    const rows = rowsFor(cas);
+    // CAS khong co trong du lieu: khong co gi de noi ngoai dieu bang da noi
+    // -> khong dung the chi tiet (bam ra rong thi con te hon la khong co).
+    if (!rows.length) continue;
+    const { badge } = casStatus(cas);
+    const title = `${cas} — ${rows[0].name_vn} (${rows[0].name_en})`;
+    // Chi mo san chi tiet chat can chu y (do/vang); chat on thi thu gon.
+    const open = badge === "ok" ? "" : " open";
+    out += `<details class="detail"${open}><summary><span class="pill ${badge}">PL ${highestAnnex(cas)}</span> ${esc(title)}</summary><div class="body">${detailFor(cas)}</div></details>`;
+  }
+  return out;
+}
+
+function runLines(text, resultsEl) {
+  const lines = parseLines(text);
+  if (!lines.length) {
+    resultsEl.innerHTML = `<div class="card"><p class="note">Chưa có dòng hàng nào. Dán danh sách dòng hàng vào ô trên, mỗi dòng một dòng hàng.</p></div>`;
+    return;
+  }
+  const statuses = lines.map(lineStatus);
+  const counts = { warn: 0, unknown: 0, ok: 0 };
+  statuses.forEach(s => counts[s.badge]++);
+  const noCas = lines.filter(l => !l.cas.length).length;
+
+  let stats = '<div class="stats">';
+  if (counts.warn) stats += `<span class="chip warn">⚠ ${counts.warn}/${lines.length} dòng hàng cần Giấy phép XNK</span>`;
+  if (noCas) stats += `<span class="chip unknown">? ${noCas} dòng không thấy mã CAS</span>`;
+  // Dong co ma CAS nhung ma khong co trong du lieu la ca KHAC han dong trong ma:
+  // gop chung vao mot chip thi tong cac chip khong bang so dong, va dong "Khong
+  // ro" bien mat khoi phan tom tat.
+  const unknownCas = counts.unknown - noCas;
+  if (unknownCas) stats += `<span class="chip unknown">? ${unknownCas} dòng có mã CAS ngoài dữ liệu</span>`;
+  if (counts.ok) stats += `<span class="chip ok">✓ ${counts.ok} dòng không cần Giấy phép XNK</span>`;
+  stats += "</div>";
+
+  // Dan tu Excel, o mo ta dai co the bi xuong dong -> vo dong hang. Khong sua ho
+  // duoc (khong biet dong nao la phan tiep), nhung STT dut quang thi bao de tu soi.
+  let sttNote = "";
+  const stts = lines.map(l => l.stt).filter(v => v !== null);
+  if (stts.length >= 2 && stts.length < lines.length) {
+    sttNote = `<p class="note">⚠ ${lines.length - stts.length}/${lines.length} dòng không bắt được STT — nếu dán từ Excel, ô mô tả dài có thể đã bị xuống dòng và tách thành nhiều dòng hàng. Kiểm tra lại trước khi dùng kết quả.</p>`;
+  } else if (stts.length && stts.some((v, i) => i && v !== stts[i - 1] + 1)) {
+    sttNote = `<p class="note">⚠ STT không liên tục — có thể mô tả bị xuống dòng hoặc thiếu dòng hàng. Kiểm tra lại trước khi dùng kết quả.</p>`;
+  }
+
+  let table = `<div class="card">
+    <p id="count">Đọc được ${lines.length} dòng hàng</p>
+    ${sttNote}
+    ${stats}
+    <div class="table-wrap"><table><tr><th>STT</th><th>Mô tả</th><th>Mã CAS</th><th>Kết luận</th></tr>`;
+  lines.forEach((l, i) => {
+    const { badge, text: statusText } = statuses[i];
+    const short = l.mota.length > 90 ? l.mota.slice(0, 90) + "…" : l.mota;
+    const casCell = l.cas.length ? l.cas.map(c => esc(c)).join("<br>") : "—";
+    const flags = l.cas.map(hintHtml).join("") + lineNameHint(l);
+    table += `<tr class="${badge}"><td>${l.stt === null ? i + 1 : l.stt}</td>`
+      + `<td title="${esc(l.mota)}">${esc(short)}</td>`
+      + `<td class="cas">${casCell}</td>`
+      + `<td><span class="pill ${badge}">${esc(statusText)}</span>${flags}</td></tr>`;
+  });
+  table += "</table></div>";
+
+  resultsEl.innerHTML = table + detailsHtml(lines.flatMap(l => l.cas));
+  resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function run() {
   const text = document.getElementById("input").value;
   const resultsEl = document.getElementById("results");
+  if (MODE === "line") return runLines(text, resultsEl);
   const casInText = extractCas(text);
   let entries, heading, hint = "", nameNote = "";
 
@@ -722,21 +840,7 @@ function run() {
   });
   table += "</table></div>";
 
-  let details = "";
-  entries.forEach((cas, i) => {
-    const rows = rowsFor(cas);
-    // CAS khong co trong du lieu: khong co gi de noi ngoai dieu bang da noi
-    // -> khong dung the chi tiet (bam ra rong thi con te hon la khong co).
-    if (!rows.length) return;
-    const annex = highestAnnex(cas);
-    const { badge } = statuses[i];
-    const title = `${cas} — ${rows[0].name_vn} (${rows[0].name_en})`;
-    // Chi mo san chi tiet chat can chu y (do/vang); chat on thi thu gon.
-    const open = badge === "ok" ? "" : " open";
-    details += `<details class="detail"${open}><summary><span class="pill ${badge}">PL ${annex}</span> ${esc(title)}</summary><div class="body">${detailFor(cas)}</div></details>`;
-  });
-
-  resultsEl.innerHTML = table + details;
+  resultsEl.innerHTML = table + detailsHtml(entries);
   resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -794,7 +898,30 @@ function exampleRows() {
 }
 
 function randomExampleForMode() {
-  if (MODE === "cas") randomExample(); else randomNameExample();
+  if (MODE === "cas") randomExample();
+  else if (MODE === "line") randomLineExample();
+  else randomNameExample();
+}
+
+// Vi du cho che do dong hang: moi chat mot dong hang, CONG THEM mot dong hang
+// khong co ma CAS -> lan bam nao cung thay ca ca "khong thay ma CAS" (mau vang),
+// vi do moi la ca de bi doc nham thanh "khong can giay phep".
+const LINE_EXAMPLE_GOODS = [
+  "Keo dán công nghiệp, thùng 20kg",
+  "Bao bì nhựa PE dạng cuộn",
+  "Băng keo dán thùng carton",
+  "Găng tay bảo hộ lao động",
+];
+
+function randomLineExample() {
+  const { rows, known } = exampleRows();
+  const items = rows.map(r => `${r.name_vn} (CAS ${r.cas})`);
+  const outside = OUTSIDE_DATA.filter(([, cas]) => !known.has(cas));
+  if (outside.length) { const [n, c] = pick(outside); items.push(`${n} (CAS ${c})`); }
+  items.push(pick(LINE_EXAMPLE_GOODS));
+  document.getElementById("input").value = shuffle(items)
+    .map((mota, i) => `${i + 1}\\t${mota}`).join("\\n");
+  run();
 }
 
 function randomExample() {
