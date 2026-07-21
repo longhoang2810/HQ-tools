@@ -22,8 +22,11 @@ miễn trừ" (Điều 6, 10, 21) → đúng Điều của NĐ 26.
 Trang này cũng có mục **"Quy định & các trường hợp miễn trừ"** cố định ở cuối,
 tách làm **hai mục lớn** vì đây là hai nghĩa vụ khác nhau hay bị lẫn:
 **A. Khai báo hóa chất nhập khẩu** (quy định Điều 6 → miễn trừ Điều 6.7) và
-**B. Giấy phép, Giấy chứng nhận** (quy định Điều 14.2 / Điều 8, 9, 10.2 → miễn
-trừ Điều 10.3, Điều 21). Ngay trên nó là khối cảnh báo **"Vùng mù: mục Phụ lục
+**B. Giấy phép, Giấy chứng nhận** (quy định Điều 14.2 → miễn trừ Điều 21). Riêng
+Giấy chứng nhận của Phụ lục II (quy định Điều 8, 9, 10.2 + miễn khi tự dùng Điều
+10.3) nằm **trọn** ở khối cuối "Nghĩa vụ và miễn Giấy chứng nhận — chỉ áp dụng
+cho hóa chất Phụ lục II": tách quy định với miễn trừ ra hai chỗ thì đọc mục miễn
+trừ mà không thấy nghĩa vụ gốc. Ngay trên nó là khối cảnh báo **"Vùng mù: mục Phụ lục
 III không có mã CAS"** — xem Giới hạn đã biết.
 
 Góc phải dưới có hai nút nổi: **✕ Thu gọn toàn văn** (hiện khi đang mở toàn văn

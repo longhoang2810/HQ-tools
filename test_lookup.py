@@ -158,7 +158,7 @@ def test_html_khong_lech_khoi_core():
         page = html.read_text(encoding="utf-8")
         assert VERDICT["pl3"] in page, "HTML đã commit cũ hơn core.py — chạy python3 build_html.py"
         assert PENALTY_WARNING in page, "HTML cũ hơn core.py — chạy python3 build_html.py"
-        assert "Nghĩa vụ khác" in page
+        assert core.OTHER_OBLIGATIONS_TITLE in page
 
 
 def test_html_co_nut_vi_du_ngau_nhien():
@@ -459,14 +459,19 @@ def test_lookup_pl2_tu_noi_nghia_vu():
 def test_congbo_is_not_a_customs_gate_pl2():
     # Điều 10.3: công bố mục đích sử dụng KHÔNG phải điều kiện thông quan và
     # doanh nghiệp CHỦ ĐỘNG thời điểm; điều kiện thông quan là khai báo NK
-    # (Điều 6). Nghĩa vụ Phụ lục II hiện ở khối "Nghĩa vụ khác" bên dưới mục miễn trừ.
+    # (Điều 6). Nghĩa vụ Phụ lục II hiện ở khối "Nghĩa vụ khác" bên dưới mục miễn
+    # trừ; câu khai báo tách sang DECLARATION_RULE (mục "A. Khai báo") vì là
+    # nghĩa vụ chung, không riêng Phụ lục II.
     rule = re.sub(r"\s+", " ", " ".join(OTHER_OBLIGATIONS)).lower()
+    decl = re.sub(r"\s+", " ", core.DECLARATION_RULE).lower()
     # cửa thông quan = khai báo (Điều 6), KHÔNG phải công bố
-    assert "khai báo hóa chất nhập khẩu qua cổng một cửa" in rule
-    assert "không riêng phụ lục ii" in rule
-    assert "điều 6" in rule
-    assert "phản hồi khai báo mới được thông quan" in rule
-    assert "chương 28, 29" in rule
+    assert "khai báo hóa chất nhập khẩu qua cổng một cửa" in decl
+    assert "không riêng phụ lục ii" in decl
+    assert "điều 6" in decl
+    assert "phản hồi khai báo mới được thông quan" in decl
+    assert "chương 28, 29" in decl
+    # lookup.py tra 1 CAS không có mục A đứng cạnh -> vẫn phải in kèm câu này.
+    assert "phản hồi khai báo mới được thông quan" in core.format_lookup("107-13-1")
     assert "chủ động chọn thời điểm công bố" in rule
     assert "điều 10.3" in rule
     # ...và phải gọi đúng tên giấy cho khâu kinh doanh (Điều 10.2).
@@ -577,8 +582,15 @@ def test_hai_muc_quy_dinh_mien_tru_dung_dieu():
     gp = " ".join(sect["giayphep"]["rule"])
     assert "Điều 6" in kb and "khai báo" in kb.lower()
     assert "Giấy phép" not in kb, "mục khai báo không được nói về giấy phép"
-    assert "Điều 14.2" in gp and "Điều 8, 9, 10.2" in gp
+    assert "Điều 14.2" in gp
     assert "chữ ký số" in gp and "2595/HC-QLHC" in gp, "thiếu CV 2595 (GP bản PDF ký số)"
+    # Giấy chứng nhận của Phụ lục II (quy định Điều 8, 9, 10.2 + miễn Điều 10.3)
+    # nằm TRỌN ở khối cuối, không xé đôi sang mục B.
+    other = " ".join(OTHER_OBLIGATIONS)
+    assert "Điều 8, 9, 10.2" in other and "Điều 10.3" in other
+    assert "Điều 10.3" not in gp and "Điều 10.3" not in " ".join(
+        i for g in EXEMPTIONS for i in g["items"]
+    ), "miễn Giấy chứng nhận PL II bị lặp lại ngoài khối cuối"
     # Mọi nhóm miễn trừ phải nằm trong đúng một mục — thiếu section là rơi khỏi
     # cả hai mục, biến mất im lặng khỏi trang lẫn CLI.
     keys = {s["key"] for s in core.EXEMPT_SECTIONS}

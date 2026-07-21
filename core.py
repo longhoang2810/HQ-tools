@@ -91,12 +91,21 @@ OTHER_OBLIGATION_ANNEXES = ("II",)
 # miễn trừ thay vì lặp lại trong chi tiết từng CAS. In THƯỜNG TRỰC như mục miễn
 # trừ (tham khảo chung, không phải kết luận cho lô hàng) — tiêu đề phải tự nói
 # rõ phạm vi để không bị đọc thành "lô này cũng phải có Giấy chứng nhận".
-OTHER_OBLIGATIONS_TITLE = "Nghĩa vụ khác — chỉ áp dụng cho hóa chất Phụ lục II"
+OTHER_OBLIGATIONS_TITLE = "Nghĩa vụ và miễn Giấy chứng nhận — chỉ áp dụng cho hóa chất Phụ lục II"
 OTHER_OBLIGATIONS = [
     "Nhập khẩu để KINH DOANH: phải có Giấy chứng nhận đủ điều kiện sản xuất, kinh doanh hóa chất có điều kiện (Điều 8, 9, 10.2).",
-    "Nhập khẩu để TỰ DÙNG: không cần Giấy chứng nhận, chỉ công bố mục đích sử dụng (Điều 10.3). Công bố KHÔNG phải điều kiện thông quan và không có thời hạn cứng — doanh nghiệp chủ động chọn thời điểm công bố.",
-    "Khai báo hóa chất nhập khẩu qua Cổng một cửa quốc gia (Điều 6) — nghĩa vụ chung cho hóa chất thuộc chương 28, 29, không riêng Phụ lục II; phải có phản hồi khai báo mới được thông quan (Điều 6.3.c).",
+    "MIỄN Giấy chứng nhận khi nhập khẩu để TỰ DÙNG (không kinh doanh): chỉ công bố mục đích sử dụng trên Cơ sở dữ liệu chuyên ngành hóa chất (Điều 10.3). Công bố KHÔNG phải điều kiện thông quan và không có thời hạn cứng — doanh nghiệp chủ động chọn thời điểm công bố.",
 ]
+
+# Nghĩa vụ khai báo là nghĩa vụ CHUNG cho hóa chất chương 28/29, không riêng phụ
+# lục nào -> đứng thành mục "A. Khai báo hóa chất nhập khẩu", KHÔNG lặp lại
+# trong khối Phụ lục II ở cuối. lookup.py (tra 1 CAS, không có mục A đứng cạnh)
+# vẫn in kèm — xem format_lookup.
+DECLARATION_RULE = (
+    "Khai báo hóa chất nhập khẩu qua Cổng một cửa quốc gia (Điều 6) — nghĩa vụ "
+    "chung cho hóa chất thuộc chương 28, 29, không riêng Phụ lục II; phải có "
+    "phản hồi khai báo mới được thông quan (Điều 6.3.c)."
+)
 
 # Nguồn duy nhất cho mục "Các trường hợp được miễn trừ" — dùng chung cho
 # CLI (lookup.py/scan.py) và trang HTML (build_html.py) để tránh lệch nội
@@ -129,17 +138,12 @@ EXEMPTIONS = [
             "Hỗn hợp chất không thuộc chương 28/29 nhưng có chứa hóa chất thuộc chương 28/29.",
         ],
     },
+    # Miễn Giấy chứng nhận của Phụ lục II (Điều 10.3) KHÔNG nằm ở đây: nó dính
+    # liền với nghĩa vụ Giấy chứng nhận, nên ở chung khối OTHER_OBLIGATIONS cuối
+    # trang — tách ra hai chỗ thì đọc mục miễn trừ mà không thấy quy định gốc.
     {
         "section": "giayphep",
-        "title": "1. Miễn Giấy chứng nhận đủ điều kiện kinh doanh — Phụ lục II",
-        "cite": "Điều 10, khoản 3",
-        "items": [
-            "Nhập khẩu hóa chất có điều kiện để tự sử dụng (không kinh doanh): không cần Giấy chứng nhận, chỉ cần công bố mục đích sử dụng trên Cơ sở dữ liệu chuyên ngành hóa chất.",
-        ],
-    },
-    {
-        "section": "giayphep",
-        "title": "2. Miễn theo ngưỡng nồng độ — theo TỪNG loại giấy / hoạt động",
+        "title": "1. Miễn theo ngưỡng nồng độ — theo TỪNG loại giấy / hoạt động",
         "cite": "Điều 21, khoản 1-3 (ngưỡng khoản 1/2 cập nhật theo NQ 19/2026/NQ-CP)",
         "items": [
             "Khoản 1 — MIỄN CẤP Giấy chứng nhận / Giấy phép SẢN XUẤT, KINH DOANH: hóa chất có điều kiện và hóa chất cần kiểm soát đặc biệt có hàm lượng ≤ 1% khối lượng hỗn hợp chất. (NQ 19 nới từ <0,1%.)",
@@ -149,7 +153,7 @@ EXEMPTIONS = [
     },
     {
         "section": "giayphep",
-        "title": "3. Miễn trừ khác",
+        "title": "2. Miễn trừ khác",
         "cite": "Điều 21, khoản 4 & 5",
         "items": [
             "(Điều 21.4) San chiết, pha chế hóa chất nhằm phục vụ TRỰC TIẾP cho hoạt động sản xuất nội bộ của chính tổ chức, cá nhân thực hiện việc san chiết, pha chế: miễn cấp Giấy chứng nhận / Giấy phép SẢN XUẤT. (Khoản 4 chỉ miễn giấy khâu sản xuất — không nói tới kinh doanh, khác khoản 1.)",
@@ -158,7 +162,7 @@ EXEMPTIONS = [
     },
     {
         "section": "giayphep",
-        "title": "4. Miễn khi hóa chất nằm trong sản phẩm hoàn chỉnh",
+        "title": "3. Miễn khi hóa chất nằm trong sản phẩm hoàn chỉnh",
         "cite": "Điều 21, khoản 6",
         "lead": (
             "MIỄN CẤP Giấy chứng nhận sản xuất, kinh doanh (với hóa chất có "
@@ -178,7 +182,7 @@ EXEMPTIONS = [
     },
     {
         "section": "giayphep",
-        "title": "5. Miễn Giấy phép XNK bổ sung (NQ 19 thêm mới)",
+        "title": "4. Miễn Giấy phép XNK bổ sung (NQ 19 thêm mới)",
         "cite": "Điều 21, khoản 7-8 (NQ 19/2026/NQ-CP bổ sung, NĐ 26 gốc chỉ tới khoản 6)",
         "items": [
             "Khoản 7 — MIỄN CẤP Giấy phép XUẤT KHẨU, NHẬP KHẨU hóa chất cần kiểm soát đặc biệt dùng trong lĩnh vực thí nghiệm, khối lượng ≤ 1mg/lần nhập khẩu.",
@@ -198,12 +202,12 @@ EXEMPT_SECTIONS = [
     {
         "key": "khaibao",
         "title": "A. Khai báo hóa chất nhập khẩu",
-        "rule": [OTHER_OBLIGATIONS[2]],
+        "rule": [DECLARATION_RULE],
     },
     {
         "key": "giayphep",
         "title": "B. Giấy phép, Giấy chứng nhận",
-        "rule": [IMPORT_RULES["III"][0], IMPORT_RULES["III"][1], OTHER_OBLIGATIONS[0]],
+        "rule": [IMPORT_RULES["III"][0], IMPORT_RULES["III"][1]],
     },
 ]
 
@@ -434,6 +438,8 @@ def format_lookup(cas):
         parts.append("== Nghĩa vụ khác (Phụ lục II) ==")
         parts.extend(
             textwrap.fill(o, width=78, initial_indent="  - ", subsequent_indent="    ")
-            for o in OTHER_OBLIGATIONS
+            # + DECLARATION_RULE: lookup.py không có mục "A. Khai báo" đứng cạnh
+            # như trang HTML/scan.py, bỏ hẳn là mất luôn cửa thông quan thật sự.
+            for o in [*OTHER_OBLIGATIONS, DECLARATION_RULE]
         )
     return "\n".join(parts)
