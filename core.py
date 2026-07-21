@@ -221,8 +221,9 @@ EXEMPT_SECTIONS = [
 # Nguồn NĐ 169/2026 KHÔNG có trong repo (khác nd24.md/nd26.txt) -> không tự sửa
 # câu này; đối chiếu Điều 19 bản gốc trước khi đổi.
 PENALTY_WARNING = (
-    "Lưu ý: Doanh nghiệp tại thời điểm đăng ký tờ khai hải quan không xuất trình "
-    "giấy phép xuất khẩu, nhập khẩu sẽ bị xử phạt theo Điều 19 Nghị định "
+    "Lưu ý: Trường hợp phải có giấy phép xuất khẩu, nhập khẩu, tại thời điểm "
+    "đăng ký tờ khai doanh nghiệp không xuất trình giấy phép sẽ bị xử phạt theo "
+    "Điều 19 Nghị định "
     "169/2026/NĐ-CP ngày 15/5/2026 của Chính phủ quy định xử phạt vi phạm hành "
     "chính trong lĩnh vực hải quan."
 )
