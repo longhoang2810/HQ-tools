@@ -43,6 +43,9 @@ IMPORT_RULES = {
     ],
     "III": [
         "PHẢI CÓ: Giấy phép xuất khẩu, nhập khẩu hóa chất cần kiểm soát đặc biệt — đây là điều kiện thông quan (Điều 14.2).",
+        # Nguồn CV 2595/HC-QLHC KHÔNG có trong repo (như PENALTY_WARNING) -> đối
+        # chiếu bản gốc công văn trước khi sửa câu này.
+        "Chấp nhận Giấy phép dạng file PDF có chữ ký số của Bộ Công Thương để thông quan — không bắt buộc bản giấy (Công văn 2595/HC-QLHC ngày 31/12/2025 của Cục Hóa chất).",
         "Đã được cấp Giấy phép nhập khẩu thì MIỄN khai báo hóa chất (Điều 6.7.a).",
         "Các trường hợp được miễn Giấy phép XNK quy định tại Điều 21 NĐ 26/2026/NĐ-CP.",
         "Nhập khẩu để sản xuất sản phẩm khác: lập tài khoản và công bố mục đích sử dụng trên Cơ sở dữ liệu chuyên ngành KHI nhập khẩu (Điều 14.3) không phải điều kiện thông quan.",
@@ -116,7 +119,8 @@ OTHER_OBLIGATIONS = [
 # cấp phép của NQ 19 là "hồ sơ, trình tự, thủ tục" -> ngoài phạm vi công cụ này.
 EXEMPTIONS = [
     {
-        "title": "1. Miễn khai báo hóa chất nhập khẩu",
+        "section": "khaibao",
+        "title": "Miễn khai báo hóa chất nhập khẩu",
         "cite": "Điều 6, khoản 7",
         "items": [
             "Hóa chất cần kiểm soát đặc biệt / hóa chất cấm đã được cấp Giấy phép nhập khẩu (khỏi khai báo riêng, vì đã qua thủ tục cấp phép).",
@@ -126,14 +130,16 @@ EXEMPTIONS = [
         ],
     },
     {
-        "title": "2. Miễn Giấy chứng nhận đủ điều kiện kinh doanh — Phụ lục II",
+        "section": "giayphep",
+        "title": "1. Miễn Giấy chứng nhận đủ điều kiện kinh doanh — Phụ lục II",
         "cite": "Điều 10, khoản 3",
         "items": [
             "Nhập khẩu hóa chất có điều kiện để tự sử dụng (không kinh doanh): không cần Giấy chứng nhận, chỉ cần công bố mục đích sử dụng trên Cơ sở dữ liệu chuyên ngành hóa chất.",
         ],
     },
     {
-        "title": "3. Miễn theo ngưỡng nồng độ — theo TỪNG loại giấy / hoạt động",
+        "section": "giayphep",
+        "title": "2. Miễn theo ngưỡng nồng độ — theo TỪNG loại giấy / hoạt động",
         "cite": "Điều 21, khoản 1-3 (ngưỡng khoản 1/2 cập nhật theo NQ 19/2026/NQ-CP)",
         "items": [
             "Khoản 1 — MIỄN CẤP Giấy chứng nhận / Giấy phép SẢN XUẤT, KINH DOANH: hóa chất có điều kiện và hóa chất cần kiểm soát đặc biệt có hàm lượng ≤ 1% khối lượng hỗn hợp chất. (NQ 19 nới từ <0,1%.)",
@@ -142,7 +148,8 @@ EXEMPTIONS = [
         ],
     },
     {
-        "title": "4. Miễn trừ khác",
+        "section": "giayphep",
+        "title": "3. Miễn trừ khác",
         "cite": "Điều 21, khoản 4 & 5",
         "items": [
             "(Điều 21.4) San chiết, pha chế hóa chất nhằm phục vụ TRỰC TIẾP cho hoạt động sản xuất nội bộ của chính tổ chức, cá nhân thực hiện việc san chiết, pha chế: miễn cấp Giấy chứng nhận / Giấy phép SẢN XUẤT. (Khoản 4 chỉ miễn giấy khâu sản xuất — không nói tới kinh doanh, khác khoản 1.)",
@@ -150,7 +157,8 @@ EXEMPTIONS = [
         ],
     },
     {
-        "title": "5. Miễn khi hóa chất nằm trong sản phẩm hoàn chỉnh",
+        "section": "giayphep",
+        "title": "4. Miễn khi hóa chất nằm trong sản phẩm hoàn chỉnh",
         "cite": "Điều 21, khoản 6",
         "lead": (
             "MIỄN CẤP Giấy chứng nhận sản xuất, kinh doanh (với hóa chất có "
@@ -169,12 +177,33 @@ EXEMPTIONS = [
         ],
     },
     {
-        "title": "6. Miễn Giấy phép XNK bổ sung (NQ 19 thêm mới)",
+        "section": "giayphep",
+        "title": "5. Miễn Giấy phép XNK bổ sung (NQ 19 thêm mới)",
         "cite": "Điều 21, khoản 7-8 (NQ 19/2026/NQ-CP bổ sung, NĐ 26 gốc chỉ tới khoản 6)",
         "items": [
             "Khoản 7 — MIỄN CẤP Giấy phép XUẤT KHẨU, NHẬP KHẨU hóa chất cần kiểm soát đặc biệt dùng trong lĩnh vực thí nghiệm, khối lượng ≤ 1mg/lần nhập khẩu.",
             "Khoản 8 — MIỄN CẤP Giấy phép XUẤT KHẨU, NHẬP KHẨU hóa chất cần kiểm soát đặc biệt với xuất khẩu, nhập khẩu tại chỗ; và mua bán hóa chất giữa doanh nghiệp trong khu hải quan riêng với doanh nghiệp nội địa.",
         ],
+    },
+]
+
+# Hai nghĩa vụ khác nhau, hay bị lẫn: KHAI BÁO (mọi hóa chất chương 28/29) và
+# GIẤY PHÉP/GIẤY CHỨNG NHẬN (theo phụ lục). Mỗi mục nói QUY ĐỊNH trước rồi mới
+# tới MIỄN TRỪ của chính nó — đọc "miễn trừ" mà không biết đang miễn cái gì thì
+# dễ áp nhầm ngưỡng của giấy phép sang khai báo và ngược lại.
+# Phần "quy định" TRỎ VỀ IMPORT_RULES/OTHER_OBLIGATIONS, không chép lại chữ:
+# chép lại là hai nguồn phải đồng bộ tay. test_hai_muc_quy_dinh_mien_tru_dung_dieu
+# chốt đúng điều luật nếu ai đó xếp lại thứ tự các danh sách kia.
+EXEMPT_SECTIONS = [
+    {
+        "key": "khaibao",
+        "title": "A. Khai báo hóa chất nhập khẩu",
+        "rule": [OTHER_OBLIGATIONS[2]],
+    },
+    {
+        "key": "giayphep",
+        "title": "B. Giấy phép, Giấy chứng nhận",
+        "rule": [IMPORT_RULES["III"][0], IMPORT_RULES["III"][1], OTHER_OBLIGATIONS[0]],
     },
 ]
 
@@ -333,14 +362,19 @@ def cas_status(cas):
 
 
 def format_exemptions():
-    lines = ["CÁC TRƯỜNG HỢP ĐƯỢC MIỄN TRỪ (NĐ 26/2026/NĐ-CP)", ""]
-    for group in EXEMPTIONS:
-        lines.append(f"{group['title']} ({group['cite']})")
-        if "lead" in group:
-            lines.append(f"  {group['lead']}")
-        for item in group["items"]:
-            lines.append(f"  - {item}")
-        lines.append("")
+    lines = ["QUY ĐỊNH & CÁC TRƯỜNG HỢP MIỄN TRỪ (NĐ 26/2026/NĐ-CP)", ""]
+    for sect in EXEMPT_SECTIONS:
+        lines.extend([sect["title"].upper(), "", "  Quy định:"])
+        lines.extend(f"  - {item}" for item in sect["rule"])
+        lines.extend(["", "  Trường hợp miễn trừ:"])
+        for group in EXEMPTIONS:
+            if group["section"] != sect["key"]:
+                continue
+            lines.append(f"  {group['title']} ({group['cite']})")
+            if "lead" in group:
+                lines.append(f"    {group['lead']}")
+            lines.extend(f"    - {item}" for item in group["items"])
+            lines.append("")
     lines.append(textwrap.fill(PENALTY_WARNING, width=78))
     lines.extend(["", OTHER_OBLIGATIONS_TITLE.upper(), ""])
     lines.extend(f"  - {item}" for item in OTHER_OBLIGATIONS)

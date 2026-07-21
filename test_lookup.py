@@ -200,9 +200,10 @@ def _run_js(snippet):
     script = re.search(r"<script>(.*)</script>", html.read_text(encoding="utf-8"), re.S).group(1)
     stub = (
         "const document = { getElementById: () => ({ addEventListener() {}, focus() {} }),"
-        " querySelector: () => null };\n"
+        " querySelector: () => null, querySelectorAll: () => [] };\n"
         "const location = { hash: '' };\n"
         "function addEventListener() {}\n"
+        "const scrollY = 0;\n"
     )
     proc = subprocess.run(
         [node, "-e", stub + script + "\n" + snippet],
@@ -407,7 +408,11 @@ def test_khong_con_noi_dung_ho_so_trinh_tu_thu_tuc():
     )
     for banned in (
         "UBND cấp tỉnh",        # tham quyen cap (phan cap NQ 19)
-        "Bộ Công Thương",       # tham quyen cap
+        # Chan "ai CAP giay" chu khong chan moi lan nhac ten bo: CV 2595 cho phep
+        # dung GP ban PDF ky so cua BCT de thong quan — day la viec cua khau
+        # thong quan, dung pham vi, khong phai tham quyen cap phep.
+        "Bộ Công Thương cấp",   # tham quyen cap
+        "thẩm quyền cấp",       # tham quyen cap
         "gia hạn 1 lần",        # thu tuc
         "Điều 30.4",            # khoi chuyen tiep
         "Khoản 9",              # mien XUAT TRINH ho so
@@ -561,6 +566,27 @@ def test_unknown_khong_con_ghi_chu():
     # CLI thì ngược lại: lookup.py in mỗi format_report, không có bảng đứng trước,
     # nên vẫn phải tự nói tra ra gì — bỏ nốt thì in ra chuỗi rỗng.
     assert format_report("000-00-0") == "CAS 000-00-0: không có trong dữ liệu NĐ 24 (Phụ lục I-IV)."
+
+
+def test_hai_muc_quy_dinh_mien_tru_dung_dieu():
+    # Phần "Quy định" của mỗi mục TRỎ VỀ IMPORT_RULES/OTHER_OBLIGATIONS theo chỉ
+    # số -> ai xếp lại thứ tự hai danh sách kia là mục này im lặng dẫn nhầm điều
+    # luật (miễn trừ khai báo áp sang giấy phép và ngược lại). Chốt theo Điều.
+    sect = {s["key"]: s for s in core.EXEMPT_SECTIONS}
+    kb = " ".join(sect["khaibao"]["rule"])
+    gp = " ".join(sect["giayphep"]["rule"])
+    assert "Điều 6" in kb and "khai báo" in kb.lower()
+    assert "Giấy phép" not in kb, "mục khai báo không được nói về giấy phép"
+    assert "Điều 14.2" in gp and "Điều 8, 9, 10.2" in gp
+    assert "chữ ký số" in gp and "2595/HC-QLHC" in gp, "thiếu CV 2595 (GP bản PDF ký số)"
+    # Mọi nhóm miễn trừ phải nằm trong đúng một mục — thiếu section là rơi khỏi
+    # cả hai mục, biến mất im lặng khỏi trang lẫn CLI.
+    keys = {s["key"] for s in core.EXEMPT_SECTIONS}
+    assert all(g.get("section") in keys for g in EXEMPTIONS)
+    rep = core.format_exemptions()
+    for g in EXEMPTIONS:
+        assert g["title"] in rep
+    assert rep.index("A. KHAI BÁO") < rep.index("B. GIẤY PHÉP") < rep.index("Miễn trừ khác")
 
 
 def test_toan_van_hai_nghi_dinh_nhung_trong_trang():

@@ -173,12 +173,19 @@ def full_text_html():
 
 
 def exemptions_html():
-    parts = ['<h2>Các trường hợp được miễn trừ</h2>', '<p class="cite">Nghị định 26/2026/NĐ-CP</p>']
-    for group in core.EXEMPTIONS:
-        parts.append(f'<h3>{esc(group["title"])} ({cite_link(group["cite"])})</h3>')
-        if "lead" in group:
-            parts.append(f'<p class="lead">{esc(group["lead"])}</p>')
-        parts.append("<ul>" + "".join(f"<li>{esc(item)}</li>" for item in group["items"]) + "</ul>")
+    parts = ['<h2>Quy định &amp; các trường hợp miễn trừ</h2>', '<p class="cite">Nghị định 26/2026/NĐ-CP</p>']
+    for sect in core.EXEMPT_SECTIONS:
+        parts.append(f'<h3 class="sect">{esc(sect["title"])}</h3>')
+        parts.append('<p class="lead">Quy định</p>')
+        parts.append("<ul>" + "".join(f"<li>{esc(item)}</li>" for item in sect["rule"]) + "</ul>")
+        parts.append('<p class="lead">Trường hợp miễn trừ</p>')
+        for group in core.EXEMPTIONS:
+            if group["section"] != sect["key"]:
+                continue
+            parts.append(f'<h4>{esc(group["title"])} ({cite_link(group["cite"])})</h4>')
+            if "lead" in group:
+                parts.append(f'<p class="sub-lead">{esc(group["lead"])}</p>')
+            parts.append("<ul>" + "".join(f"<li>{esc(item)}</li>" for item in group["items"]) + "</ul>")
     parts.append(f'<div class="warn-note">{esc(core.PENALTY_WARNING)}</div>')
     parts.append(f'<h2>{esc(core.OTHER_OBLIGATIONS_TITLE)}</h2>')
     parts.append("<ul>" + "".join(f"<li>{esc(item)}</li>" for item in core.OTHER_OBLIGATIONS) + "</ul>")
@@ -272,6 +279,12 @@ HTML = """<!doctype html>
   .exempt .warn-note { background: var(--red-bg); border: 1px solid var(--red-line); border-radius: 8px; padding: 10px 14px; margin-top: 14px; color: var(--red-ink); font-size: 0.93rem; }
   .exempt .cite { color: var(--muted); font-size: 0.85rem; }
   .exempt .lead { font-weight: 600; margin: 6px 0 4px; }
+  /* Hai mục lớn (khai báo / giấy phép) phải tách hẳn nhau: đọc nhầm mục là áp
+     nhầm ngưỡng miễn trừ của giấy phép sang khai báo. */
+  .exempt h3.sect { font-size: 1.05rem; color: var(--ink); margin: 22px 0 8px; padding-top: 14px; border-top: 2px solid var(--line); }
+  .exempt h3.sect + .lead, .exempt ul + .lead { color: var(--blue-dark); text-transform: uppercase; font-size: 0.78rem; letter-spacing: .04em; margin-top: 12px; }
+  .exempt h4 { font-size: 0.93rem; margin: 12px 0 4px; color: var(--blue-dark); }
+  .exempt .sub-lead { font-weight: 600; margin: 4px 0; text-align: justify; }
 
   /* Ghi chú "Ngoại trừ": thông tin, không phải cảnh báo -> xám trung tính, để
      không tranh chỗ với cờ đỏ họ chất vốn mới là thứ cần chú ý. */
@@ -308,6 +321,13 @@ HTML = """<!doctype html>
   details.doc p { font-size: 0.9rem; text-align: justify; margin: 6px 0; }
   details.doc td, details.doc th { font-size: 0.82rem; padding: 5px 8px; text-transform: none; }
   details.doc :target { background: #fff6d6; }
+
+  /* Nút nổi góc phải: toàn văn dài mấy nghìn dòng, cuộn ngược lên tìm lại thẻ
+     <summary> để đóng là không khả thi. */
+  .fab { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; z-index: 9; }
+  .fab button { cursor: pointer; font-size: 0.85rem; font-weight: 600; padding: 9px 14px; border-radius: 99px; border: 1px solid var(--line); background: #fff; color: var(--blue-dark); box-shadow: 0 2px 8px rgba(20,30,50,0.14); }
+  .fab button:hover { border-color: var(--blue); background: #f2f6fc; }
+  .fab button[hidden] { display: none; }
 
   .note { color: var(--muted); font-size: 0.88rem; text-align: justify; }
   footer { text-align: center; color: var(--muted); font-size: 0.82rem; margin-top: 30px; }
@@ -374,6 +394,11 @@ HTML = """<!doctype html>
 </div>
 
 __FULL_TEXT_HTML__
+
+<div class="fab">
+  <button id="fab-collapse" onclick="collapseDocs()" hidden>✕ Thu gọn toàn văn</button>
+  <button id="fab-top" onclick="scrollTo({ top: 0 })" hidden>↑ Lên đầu trang</button>
+</div>
 
 <footer>Bản tóm tắt để tra cứu nhanh — luôn đối chiếu điều luật gốc trước khi ra quyết định thông quan.</footer>
 
@@ -793,6 +818,24 @@ function openHash() {
 }
 addEventListener("hashchange", openHash);
 openHash();
+
+// Nut noi: thu gon toan van + len dau trang.
+const docsEls = [...document.querySelectorAll("details.doc")];
+function syncFab() {
+  const openDoc = docsEls.some(d => d.open);
+  document.getElementById("fab-collapse").hidden = !openDoc;
+  document.getElementById("fab-top").hidden = scrollY < 400;
+}
+function collapseDocs() {
+  docsEls.forEach(d => d.open = false);
+  // Sau khi dong, vi tri cuon dang o giua vung vua bi xoa -> dua ve dau khoi
+  // toan van thay vi de nguoi doc roi vao footer khong biet minh o dau.
+  docsEls[0].scrollIntoView({ block: "start" });
+  syncFab();
+}
+docsEls.forEach(d => d.addEventListener("toggle", syncFab));
+addEventListener("scroll", syncFab, { passive: true });
+syncFab();
 </script>
 </body>
 </html>

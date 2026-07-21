@@ -19,9 +19,16 @@ cột "Phụ lục" của từng dòng kết quả → đúng Phụ lục trong 
 họ chất và ở khối "Vùng mù" → Phụ lục III; dẫn chiếu ở mục "Các trường hợp được
 miễn trừ" (Điều 6, 10, 21) → đúng Điều của NĐ 26.
 
-Trang này cũng có mục **"Các trường hợp được miễn trừ"** cố định ở cuối
-(NĐ 26 Điều 6.7, Điều 10.3, Điều 21), và ngay trên nó là khối cảnh báo
-**"Vùng mù: mục Phụ lục III không có mã CAS"** — xem Giới hạn đã biết.
+Trang này cũng có mục **"Quy định & các trường hợp miễn trừ"** cố định ở cuối,
+tách làm **hai mục lớn** vì đây là hai nghĩa vụ khác nhau hay bị lẫn:
+**A. Khai báo hóa chất nhập khẩu** (quy định Điều 6 → miễn trừ Điều 6.7) và
+**B. Giấy phép, Giấy chứng nhận** (quy định Điều 14.2 / Điều 8, 9, 10.2 → miễn
+trừ Điều 10.3, Điều 21). Ngay trên nó là khối cảnh báo **"Vùng mù: mục Phụ lục
+III không có mã CAS"** — xem Giới hạn đã biết.
+
+Góc phải dưới có hai nút nổi: **✕ Thu gọn toàn văn** (hiện khi đang mở toàn văn
+— cuộn ngược mấy nghìn dòng tìm lại thẻ đóng là không khả thi) và **↑ Lên đầu
+trang**.
 
 Trang có **hai chế độ tra**, tự chọn bằng nút trên ô nhập:
 
@@ -103,9 +110,14 @@ nay nằm luôn trong repo để đối chiếu lại về sau. Sửa
 tóm tắt trong `core.py` xong chạy lại `python3 build_html.py` để cập nhật trang
 HTML.
 
-`PENALTY_WARNING` (chế tài khi không xuất trình được giấy phép lúc đăng ký tờ
-khai — Điều 19 **NĐ 169/2026/NĐ-CP**) là ngoại lệ: **không có văn bản nguồn trong
-repo** để đối chiếu như `nd24.md`/`nd26.txt`. Đối chiếu bản gốc trước khi sửa câu này.
+Hai câu sau là ngoại lệ: **không có văn bản nguồn trong repo** để đối chiếu như
+`nd24.md`/`nd26.txt` — đối chiếu bản gốc trước khi sửa.
+
+- `PENALTY_WARNING` — chế tài khi không xuất trình được giấy phép lúc đăng ký tờ
+  khai (Điều 19 **NĐ 169/2026/NĐ-CP**).
+- Dòng "chấp nhận Giấy phép bản PDF có chữ ký số của Bộ Công Thương để thông
+  quan" trong `IMPORT_RULES["III"]` (**CV 2595/HC-QLHC** ngày 31/12/2025 của Cục
+  Hóa chất).
 
 ## Phạm vi: "chất này cần GIẤY GÌ"
 
