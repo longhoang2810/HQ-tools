@@ -114,14 +114,18 @@ nay nằm luôn trong repo để đối chiếu lại về sau. Sửa
 tóm tắt trong `core.py` xong chạy lại `python3 build_html.py` để cập nhật trang
 HTML.
 
-Hai câu sau là ngoại lệ: **không có văn bản nguồn trong repo** để đối chiếu như
-`nd24.md`/`nd26.txt` — đối chiếu bản gốc trước khi sửa.
+`PENALTY_WARNING` (chế tài, Điều 19 **NĐ 169/2026/NĐ-CP**) có bản gốc
+`169_2026_ND-CP_679683.docx` trong repo — số hiệu, ngày 15/5/2026 và tên nghị
+định khớp; hiệu lực 01/7/2026, thay NĐ 128/2020. Lưu ý khi sửa câu này:
+Điều 19 **khoản 4** phạt hành vi *"phải có ... giấy phép nhưng KHÔNG CÓ giấy
+phép"*, còn khoản 5 phạt gấp 2 nếu quá 30 ngày kể từ ngày hàng về đến cửa khẩu
+mới nộp hồ sơ hải quan; khoản 7 giới hạn "giấy phép nêu tại Điều này" là giấy
+phép theo **Luật Quản lý ngoại thương** (NĐ 26 có căn cứ luật này).
 
-- `PENALTY_WARNING` — chế tài khi không xuất trình được giấy phép lúc đăng ký tờ
-  khai (Điều 19 **NĐ 169/2026/NĐ-CP**).
-- Dòng "chấp nhận Giấy phép bản PDF có chữ ký số của Bộ Công Thương để thông
-  quan" trong `IMPORT_RULES["III"]` (**CV 2595/HC-QLHC** ngày 31/12/2025 của Cục
-  Hóa chất).
+Còn một câu **không có văn bản nguồn trong repo** — đối chiếu bản gốc trước khi
+sửa: dòng "chấp nhận Giấy phép bản PDF có chữ ký số của Bộ Công Thương để thông
+quan" trong `IMPORT_RULES["III"]` (**CV 2595/HC-QLHC** ngày 31/12/2025 của Cục
+Hóa chất).
 
 ## Phạm vi: "chất này cần GIẤY GÌ"
 
