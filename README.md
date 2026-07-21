@@ -14,8 +14,10 @@ có mạng — dữ liệu đã nhúng sẵn trong file). Dán mô tả DN vào 
 Cuối trang có **toàn văn cả hai nghị định** (NĐ 24 gồm đủ Phụ lục I–IV, NĐ 26 đủ
 31 Điều), mở bằng link "📖 Đọc toàn văn" ở đầu trang. Nhúng thẳng vào file HTML —
 không cần kèm file `.docx`, vì trang hay được gửi lẻ một file. Mỗi Điều/Phụ lục
-có mục lục riêng để nhảy tới, và dẫn chiếu trong mục "Các trường hợp được miễn
-trừ" (Điều 6, 10, 21) là **link bấm được** sang đúng Điều của NĐ 26.
+có mục lục riêng để nhảy tới. Mọi dẫn chiếu trên trang đều là **link bấm được**:
+cột "Phụ lục" của từng dòng kết quả → đúng Phụ lục trong NĐ 24; số mục ở cờ đỏ
+họ chất và ở khối "Vùng mù" → Phụ lục III; dẫn chiếu ở mục "Các trường hợp được
+miễn trừ" (Điều 6, 10, 21) → đúng Điều của NĐ 26.
 
 Trang này cũng có mục **"Các trường hợp được miễn trừ"** cố định ở cuối
 (NĐ 26 Điều 6.7, Điều 10.3, Điều 21), và ngay trên nó là khối cảnh báo

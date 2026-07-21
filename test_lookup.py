@@ -569,8 +569,13 @@ def test_toan_van_hai_nghi_dinh_nhung_trong_trang():
     # link chết thì cán bộ bấm vào không thấy gì mà cũng không báo lỗi.
     html = Path(__file__).with_name("Tra-cuu-hoa-chat-ND24.html").read_text(encoding="utf-8")
     ids = set(re.findall(r'id="(nd2[46]-[^"]+)"', html))
-    hrefs = set(re.findall(r'href="#(nd2[46]-[^"]+)"', html))
+    hrefs = {h for h in re.findall(r'href="#(nd2[46]-[^"]+)"', html) if "${" not in h}
     assert not hrefs - ids, f"link tới mục không tồn tại: {hrefs - ids}"
+    # Link dựng lúc chạy trong JS (annexLink) không soi tĩnh được -> chốt riêng:
+    # mọi Phụ lục hiện trong cột "Phụ lục" phải có đích trong khối toàn văn.
+    assert 'href="#nd24-pl-${esc(a).toLowerCase()}"' in html, "annexLink đổi dạng id"
+    for a in core.ANNEX_DISPLAY_ORDER:
+        assert f"nd24-pl-{a.lower()}" in ids, f"cột Phụ lục link tới PL {a} nhưng không có đích"
     assert all(i.isascii() for i in ids), "id có dấu -> location.hash percent-encode sẽ không khớp"
     assert len([i for i in ids if i.startswith("nd26-dieu-")]) == 31, "NĐ 26 có 31 Điều"
     assert len([i for i in ids if i.startswith("nd24-dieu-")]) == 5, "NĐ 24 có 5 Điều"

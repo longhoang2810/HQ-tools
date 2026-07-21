@@ -45,11 +45,13 @@ def pl3_no_cas_html():
     parts = [
         f'<h2>⚠ {esc(core.PL3_NO_CAS_TITLE)}</h2>',
         f'<p class="lead">{esc(core.PL3_NO_CAS_LEAD)}</p>',
+        '<p class="cite">📖 <a href="#nd24-pl-iii">Mở nguyên văn Phụ lục III của NĐ 24</a>'
+        " để đối chiếu mô tả từng mục.</p>",
     ]
     for group in sorted({e["category"] for e in core.PL3_NO_CAS}):
         parts.append(f"<h3>{esc(group)}</h3>")
         items = "".join(
-            f'<li><b>{esc(e["stt"])}</b> {esc(e["ten"])}</li>'
+            f'<li><b><a href="#nd24-pl-iii">{esc(e["stt"])}</a></b> {esc(e["ten"])}</li>'
             for e in core.PL3_NO_CAS
             if e["category"] == group
         )
@@ -280,6 +282,9 @@ HTML = """<!doctype html>
   .fam-hint { margin-top: 8px; background: var(--red-bg); border: 1px solid var(--red-line); border-left: 3px solid var(--red-ink); border-radius: 6px; padding: 7px 10px; color: var(--red-ink); font-size: 0.8rem; font-weight: 600; text-align: left; }
   .fam-hint ul { margin: 4px 0 0; padding-left: 18px; font-weight: 400; }
   .fam-hint .cite { color: var(--red-ink); opacity: .8; font-size: 0.76rem; }
+  /* Link sang toàn văn nằm trong khối đã có màu riêng -> giữ nguyên màu chữ của
+     khối, chỉ gạch chân, để không phá tương phản cảnh báo. */
+  .fam-hint a, .blind-spot a, td a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 
   /* Cảnh báo vùng mù: viền đỏ để không bị đọc lướt như chú thích thường —
      đây là chỗ trang có thể im lặng bỏ sót chất cần Giấy phép. */
@@ -400,9 +405,16 @@ function highestAnnex(cas) {
   return null;
 }
 
+// Nhan phu luc la LINK sang nguyen van phu luc do trong khoi toan van cuoi
+// trang — can bo doc dong ket qua xong muon xem chinh chu nghi dinh thi bam
+// ngay tai cho, khong phai cuon di tim.
+function annexLink(a) {
+  return `<a href="#nd24-pl-${esc(a).toLowerCase()}" title="Mở nguyên văn Phụ lục ${esc(a)} của NĐ 24">PL ${esc(a)}</a>`;
+}
+
 function annexLabels(cas) {
   const present = new Set(rowsFor(cas).map(r => r.annex));
-  return ANNEX_DISPLAY_ORDER.filter(a => present.has(a)).map(a => `PL ${a}`).join(", ") || "—";
+  return ANNEX_DISPLAY_ORDER.filter(a => present.has(a)).map(annexLink).join(", ") || "—";
 }
 
 // Doi xung voi extract_cas() trong core.py.
@@ -538,7 +550,7 @@ function hintHtml(cas) {
   }
   const hints = pl3FamilyHints(cas);
   if (hints.length) {
-    const items = hints.map(e => `<li><b>${esc(e.stt)}</b> ${esc(e.ten)} <span class="cite">(${esc(e.category)})</span></li>`).join("");
+    const items = hints.map(e => `<li><b><a href="#nd24-pl-iii" title="Mở nguyên văn Phụ lục III của NĐ 24">${esc(e.stt)}</a></b> ${esc(e.ten)} <span class="cite">(${esc(e.category)})</span></li>`).join("");
     out += `<div class="fam-hint"><b>${esc(PL3_HINT_PREFIX)}</b><ul>${items}</ul></div>`;
   }
   return out;
@@ -662,7 +674,7 @@ function run() {
     const { badge, text: statusText } = statuses[i];
     // Co ho chat nam NGAY TRONG o trang thai, duoi pill: de o khoi canh bao cuoi
     // trang thi can bo doc xong dong xanh la di, khong cuon xuong.
-    table += `<tr class="${badge}"><td class="cas">${esc(cas)}</td><td>${esc(name)}</td><td>${esc(annexLabels(cas))}</td><td><span class="pill ${badge}">${esc(statusText)}</span>${hintHtml(cas)}</td></tr>`;
+    table += `<tr class="${badge}"><td class="cas">${esc(cas)}</td><td>${esc(name)}</td><td>${annexLabels(cas)}</td><td><span class="pill ${badge}">${esc(statusText)}</span>${hintHtml(cas)}</td></tr>`;
   });
   table += "</table></div>";
 

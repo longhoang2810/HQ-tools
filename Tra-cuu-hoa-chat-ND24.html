@@ -95,6 +95,9 @@
   .fam-hint { margin-top: 8px; background: var(--red-bg); border: 1px solid var(--red-line); border-left: 3px solid var(--red-ink); border-radius: 6px; padding: 7px 10px; color: var(--red-ink); font-size: 0.8rem; font-weight: 600; text-align: left; }
   .fam-hint ul { margin: 4px 0 0; padding-left: 18px; font-weight: 400; }
   .fam-hint .cite { color: var(--red-ink); opacity: .8; font-size: 0.76rem; }
+  /* Link sang toàn văn nằm trong khối đã có màu riêng -> giữ nguyên màu chữ của
+     khối, chỉ gạch chân, để không phá tương phản cảnh báo. */
+  .fam-hint a, .blind-spot a, td a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 
   /* Cảnh báo vùng mù: viền đỏ để không bị đọc lướt như chú thích thường —
      đây là chỗ trang có thể im lặng bỏ sót chất cần Giấy phép. */
@@ -178,12 +181,13 @@
 <div class="card exempt blind-spot">
   <h2>⚠ Vùng mù: mục Phụ lục III không có mã CAS — tra theo mã sẽ KHÔNG ra</h2>
   <p class="lead">Nghị định 24/2026/NĐ-CP xếp các mục dưới đây vào Phụ lục III (hóa chất cần kiểm soát đặc biệt) nhưng ghi theo HỌ CHẤT, không có mã CAS.</p>
+  <p class="cite">📖 <a href="#nd24-pl-iii">Mở nguyên văn Phụ lục III của NĐ 24</a> để đối chiếu mô tả từng mục.</p>
   <h3>Phụ lục III › Nhóm 1 › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)</h3>
-  <ul><li><b>26.</b> Các hóa chất, trừ các chất đã được liệt kê tại Bảng 1, chứa 1 nguyên tử phospho liên kết với một nhóm methyl, ethyl hoặc propyl (mạch thẳng hoặc nhánh) nhưng không liên kết thêm với các nguyên tử các bon khác</li><li><b>27.</b> Các hợp chất N,N-Dialkyl (Me, Et, n-Pr hoặc i-Pr) phosphoramidic dihalide</li><li><b>28.</b> Các hợp chất Dialkyl (Me, Et, n-Pr hoặc i-Pr) N,N-dialkyl (Me, Et, n-Pr hoặc i-Pr)-phosphoramidate</li><li><b>32.</b> Các hợp chất N,N-Dialkyl (Me, Et, n-Pr hoặc i-Pr) aminoethyl-2-chloride</li><li><b>33.</b> Các hợp chất N,N-Dialkyl (Me, Et, n-Pr hoặc i-Pr) aminoethane-2-ol</li><li><b>34.</b> Các hợp chất N,N-Dialkyl (Me, Et, n-Pr or i-Pr) aminoethane-2-thiol và các muối proton hóa tương ứng</li></ul>
+  <ul><li><b><a href="#nd24-pl-iii">26.</a></b> Các hóa chất, trừ các chất đã được liệt kê tại Bảng 1, chứa 1 nguyên tử phospho liên kết với một nhóm methyl, ethyl hoặc propyl (mạch thẳng hoặc nhánh) nhưng không liên kết thêm với các nguyên tử các bon khác</li><li><b><a href="#nd24-pl-iii">27.</a></b> Các hợp chất N,N-Dialkyl (Me, Et, n-Pr hoặc i-Pr) phosphoramidic dihalide</li><li><b><a href="#nd24-pl-iii">28.</a></b> Các hợp chất Dialkyl (Me, Et, n-Pr hoặc i-Pr) N,N-dialkyl (Me, Et, n-Pr hoặc i-Pr)-phosphoramidate</li><li><b><a href="#nd24-pl-iii">32.</a></b> Các hợp chất N,N-Dialkyl (Me, Et, n-Pr hoặc i-Pr) aminoethyl-2-chloride</li><li><b><a href="#nd24-pl-iii">33.</a></b> Các hợp chất N,N-Dialkyl (Me, Et, n-Pr hoặc i-Pr) aminoethane-2-ol</li><li><b><a href="#nd24-pl-iii">34.</a></b> Các hợp chất N,N-Dialkyl (Me, Et, n-Pr or i-Pr) aminoethane-2-thiol và các muối proton hóa tương ứng</li></ul>
   <h3>Phụ lục III › Nhóm 1 › Hóa chất khác</h3>
-  <ul><li><b>37.</b> Asen và các hợp chất của asen</li><li><b>38.</b> Các hợp chất của Cr6+</li><li><b>39.</b> Thủy ngân và các hợp chất của thủy ngân</li><li><b>40.</b> Các hợp chất xyanua</li><li><b>41.</b> Chì và các hợp chất của chì</li></ul>
+  <ul><li><b><a href="#nd24-pl-iii">37.</a></b> Asen và các hợp chất của asen</li><li><b><a href="#nd24-pl-iii">38.</a></b> Các hợp chất của Cr6+</li><li><b><a href="#nd24-pl-iii">39.</a></b> Thủy ngân và các hợp chất của thủy ngân</li><li><b><a href="#nd24-pl-iii">40.</a></b> Các hợp chất xyanua</li><li><b><a href="#nd24-pl-iii">41.</a></b> Chì và các hợp chất của chì</li></ul>
   <h3>Phụ lục III › Nhóm 2 › C – Hóa chất thuộc Công ước Rotterdam/Stockholm</h3>
-  <ul><li><b>45.</b> Biphenyl (PCB)</li><li><b>81.</b> Polychlorinated</li></ul>
+  <ul><li><b><a href="#nd24-pl-iii">45.</a></b> Biphenyl (PCB)</li><li><b><a href="#nd24-pl-iii">81.</a></b> Polychlorinated</li></ul>
 </div>
 
 <div class="card exempt">
@@ -881,9 +885,16 @@ function highestAnnex(cas) {
   return null;
 }
 
+// Nhan phu luc la LINK sang nguyen van phu luc do trong khoi toan van cuoi
+// trang — can bo doc dong ket qua xong muon xem chinh chu nghi dinh thi bam
+// ngay tai cho, khong phai cuon di tim.
+function annexLink(a) {
+  return `<a href="#nd24-pl-${esc(a).toLowerCase()}" title="Mở nguyên văn Phụ lục ${esc(a)} của NĐ 24">PL ${esc(a)}</a>`;
+}
+
 function annexLabels(cas) {
   const present = new Set(rowsFor(cas).map(r => r.annex));
-  return ANNEX_DISPLAY_ORDER.filter(a => present.has(a)).map(a => `PL ${a}`).join(", ") || "—";
+  return ANNEX_DISPLAY_ORDER.filter(a => present.has(a)).map(annexLink).join(", ") || "—";
 }
 
 // Doi xung voi extract_cas() trong core.py.
@@ -1019,7 +1030,7 @@ function hintHtml(cas) {
   }
   const hints = pl3FamilyHints(cas);
   if (hints.length) {
-    const items = hints.map(e => `<li><b>${esc(e.stt)}</b> ${esc(e.ten)} <span class="cite">(${esc(e.category)})</span></li>`).join("");
+    const items = hints.map(e => `<li><b><a href="#nd24-pl-iii" title="Mở nguyên văn Phụ lục III của NĐ 24">${esc(e.stt)}</a></b> ${esc(e.ten)} <span class="cite">(${esc(e.category)})</span></li>`).join("");
     out += `<div class="fam-hint"><b>${esc(PL3_HINT_PREFIX)}</b><ul>${items}</ul></div>`;
   }
   return out;
@@ -1143,7 +1154,7 @@ function run() {
     const { badge, text: statusText } = statuses[i];
     // Co ho chat nam NGAY TRONG o trang thai, duoi pill: de o khoi canh bao cuoi
     // trang thi can bo doc xong dong xanh la di, khong cuon xuong.
-    table += `<tr class="${badge}"><td class="cas">${esc(cas)}</td><td>${esc(name)}</td><td>${esc(annexLabels(cas))}</td><td><span class="pill ${badge}">${esc(statusText)}</span>${hintHtml(cas)}</td></tr>`;
+    table += `<tr class="${badge}"><td class="cas">${esc(cas)}</td><td>${esc(name)}</td><td>${annexLabels(cas)}</td><td><span class="pill ${badge}">${esc(statusText)}</span>${hintHtml(cas)}</td></tr>`;
   });
   table += "</table></div>";
 
