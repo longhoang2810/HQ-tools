@@ -572,7 +572,7 @@ def test_unknown_khong_con_ghi_chu():
     src = Path(__file__).with_name("build_html.py").read_text(encoding="utf-8")
     assert "NOTE_GAP" not in src and not hasattr(core, "NOTE_GAP")
     assert "Không tìm thấy trong Phụ lục" not in src, "JS viết tay lại câu 'không tìm thấy'"
-    assert "if (!rowsFor(c).length) return pill" in src, "CAS không có dữ liệu phải bỏ qua thẻ chi tiết"
+    assert '<details class="detail">' not in src, "cột Kết luận không còn dropdown — chỉ pill phẳng"
     # CLI thì ngược lại: lookup.py in mỗi format_report, không có bảng đứng trước,
     # nên vẫn phải tự nói tra ra gì — bỏ nốt thì in ra chuỗi rỗng.
     assert format_report("000-00-0") == "CAS 000-00-0: không có trong dữ liệu NĐ 24 (Phụ lục I-IV)."

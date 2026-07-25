@@ -1226,16 +1226,12 @@ function runLines(text, resultsEl, mode) {
       concl = `<span class="pill ${status.badge}">${esc(status.text)}</span>`;
     } else {
       // Cot khop + cot ket luan xep CUNG thu tu/so -> nhin ngang biet chat nao
-      // lam ca dong vang/do. Chi tiet "can giay gi" nhet luon vao pill (bam mo),
-      // khong con khoi lap lai ben duoi.
+      // lam ca dong vang/do. Pill phang, khong dropdown: ket luan da nam ngay tren pill.
       matchCell = matches.map(c => byName ? esc((rowsFor(c)[0] || {}).name_vn || c) : esc(c)).join("<br>");
       concl = matches.map(c => {
         const s = casStatus(c);
-        const pill = `<span class="pill ${s.badge}">${esc(s.text)}</span>`;
-        // CAS ngoai du lieu: khong co gi de mo -> chi pill, khong dung the chi tiet.
-        if (!rowsFor(c).length) return pill + hintHtml(c);
-        return `<details class="detail"><summary>${pill}</summary><div class="body">${detailFor(c)}</div></details>${hintHtml(c)}`;
-      }).join("");
+        return `<span class="pill ${s.badge}">${esc(s.text)}</span>${hintHtml(c)}`;
+      }).join("<br>");
     }
     concl += byName ? lineCasHint(l) : lineNameHint(l);
     table += `<tr class="${status.badge}"><td>${l.stt === null ? i + 1 : l.stt}</td>`
