@@ -675,6 +675,28 @@ def test_do_ten_khong_bao_nham_tu_thuong():
     assert any("clorua" in n.lower() for n in got["real"]), "tên khai đầy đủ lại không dò được"
 
 
+def test_do_ten_nguyen_to_khong_bao_nham_muoi():
+    # "Natri clorua" (muối ăn, ngoài dữ liệu) KHÔNG được khớp nguyên tố Natri
+    # (7440-23-5, có trong danh mục): chữ "natri" đứng trước gốc muối là HỢP CHẤT.
+    # Nhưng nguyên tố đứng một mình vẫn phải dò được; hợp chất CÓ trong dữ liệu
+    # (natri hydroxit) vẫn khớp nguyên tên.
+    got = _run_js("""
+      const nm = c => (rowsFor(c)[0] || {}).name_vn || c;
+      console.log(JSON.stringify({
+        // muối/oxit NGOÀI dữ liệu -> không được báo nguyên tố
+        muoi: ["Natri clorua", "Canxi cacbonat", "Bari sulfat", "Magie oxit"]
+          .map(t => scanNames(t).length),
+        nguyen_to: scanNames("Natri kim loại dạng thỏi").map(nm),  // Natri đứng một mình
+        hop_chat_trong_dl: scanNames("Dung dịch natri hydroxit 5%"),
+      }));
+    """)
+    if got is None:
+        return
+    assert got["muoi"] == [0, 0, 0, 0], "muối/oxit ngoài dữ liệu bị báo nhầm là nguyên tố"
+    assert any("Natri" in n for n in got["nguyen_to"]), "nguyên tố đứng một mình lại không dò được"
+    assert got["hop_chat_trong_dl"] == ["1310-73-2"], "hợp chất có trong dữ liệu phải khớp nguyên tên"
+
+
 def test_moi_onclick_goi_ham_tu_dinh_nghia():
     # onclick="scrollTo({top:0})" IM LẶNG KHÔNG CHẠY: scope của inline handler có
     # cả chính cái nút, nên `scrollTo` ăn vào Element.prototype.scrollTo — cuộn

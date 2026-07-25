@@ -1006,6 +1006,17 @@ const NAME_INDEX = (() => {
     .sort((a, b) => b.n.length - a.n.length);
 })();
 
+// Goc muoi/oxit: ten nguyen to don ("Natri") dung NGAY TRUOC mot trong cac tu nay
+// la HOP CHAT ("natri clorua" = muoi an), khong phai nguyen to Natri (7440-23-5).
+// ponytail: danh sach goc muoi thong dung, khong phu het; hop chat CO trong du
+// lieu van khop nguyen ten (dai hon) truoc nen khong bi anh huong.
+const ANION_SUFFIX = new Set(["clorua","oxit","dioxit","trioxit","peroxit","hydroxit",
+  "hidroxit","sulfat","sunfat","sulfit","sunfit","cacbonat","carbonat","bicacbonat",
+  "bicarbonat","hydrocacbonat","nitrat","nitrit","photphat","phosphat","phosphit",
+  "silicat","borat","cromat","dicromat","permanganat","xyanua","xianua","sunfua",
+  "sulfua","bromua","iotua","iodua","florua","clorat","peclorat","hypoclorit","axetat",
+  "acetat","oxalat","stearat","benzoat","citrat","lactat","gluconat","thiosunfat"]);
+
 // Ten hoa chat XUAT HIEN trong doan van, theo thu tu gap (doi xung extractCas).
 function scanNames(text) {
   let hay = normWords(text);
@@ -1013,6 +1024,12 @@ function scanNames(text) {
   for (const { n, cas } of NAME_INDEX) {
     const i = hay.indexOf(" " + n + " ");
     if (i === -1) continue;
+    // Ten mot tu ma tu ke sau la goc muoi -> la hop chat, khong bao nguyen to.
+    if (!n.includes(" ")) {
+      const rest = hay.slice(i + n.length + 2);
+      const sp = rest.indexOf(" ");
+      if (ANION_SUFFIX.has(sp === -1 ? rest : rest.slice(0, sp))) continue;
+    }
     for (const c of cas) hits.push([i, c]);
     // Che cum vua khop (giu nguyen do dai de vi tri cac cum khac khong lech).
     hay = hay.slice(0, i) + " " + "\u0000".repeat(n.length) + " " + hay.slice(i + n.length + 2);
