@@ -629,6 +629,27 @@ def test_dong_hang_khong_cat_nham_ten_hoa_chat():
     assert got[3]["stt"] == 10 and got[3]["mota"] == "Chloroform 67-66-3"
 
 
+def test_do_ten_khong_bao_nham_tu_thuong():
+    # Hai lỗi làm "Đồng (I) clorua" khớp mọi mô tả có ống/đóng/đông/dòng/động:
+    #  (1) normName đổi đ->d TRƯỚC toLowerCase -> "Đ" hoa thoát, thành "đ" rồi bị
+    #      xóa -> "Đồng" ra "ong", khớp "Ống nhựa".
+    #  (2) alias cắt ngoặc GIỮA tên -> "Đồng (I) clorua" còn trơ "Đồng" (->"dong"),
+    #      đụng "đóng/đông/dòng/động" (đều chuẩn hóa ra "dong").
+    # Chốt: mô tả từ thường KHÔNG báo chất; tên khai đủ thì VẪN báo.
+    got = _run_js("""
+      const nm = c => (rowsFor(c)[0] || {}).name_vn || c;
+      const fp = ["dán ống nhựa", "đóng gói thùng", "hàng đông lạnh",
+                  "dòng điện cao", "dầu bôi trơn động cơ"]
+        .map(t => scanNames(t).length);
+      const real = scanNames("hỗn hợp Đồng (I) clorua").map(nm);
+      console.log(JSON.stringify({ fp, real }));
+    """)
+    if got is None:
+        return
+    assert got["fp"] == [0, 0, 0, 0, 0], "từ thường (ống/đóng/đông/dòng/động) bị báo nhầm là hóa chất"
+    assert any("clorua" in n.lower() for n in got["real"]), "tên khai đầy đủ lại không dò được"
+
+
 def test_moi_onclick_goi_ham_tu_dinh_nghia():
     # onclick="scrollTo({top:0})" IM LẶNG KHÔNG CHẠY: scope của inline handler có
     # cả chính cái nút, nên `scrollTo` ăn vào Element.prototype.scrollTo — cuộn

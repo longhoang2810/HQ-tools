@@ -472,7 +472,10 @@ function extractCas(text) {
 }
 
 function normName(s) {
-  return s.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/đ/g, "d").toLowerCase();
+  // toLowerCase TRUOC roi moi đ->d: chu "Đ" hoa (U+0110) khong khop /đ/ thuong,
+  // neu doi truoc thi no thoat, toLowerCase thanh "đ", roi normWords xoa "đ" (ngoai
+  // [a-z]) -> "Đồng" ra "ong", khop nham "Ống nhua". Ha bac xuong truoc la sach.
+  return s.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().replace(/đ/g, "d");
 }
 
 // Bo het dau cau ve khoang trang -> so khop theo TU, khong theo ky tu: "N,N-dimetyl"
@@ -492,13 +495,17 @@ const NAME_INDEX = (() => {
   for (const r of DATA) {
     for (const name of [r.name_vn, r.name_en]) {
       // Index them PHAN DAU ten, bo duoi qualifier ("... và các muối proton hóa
-      // chat tuong ung", "... and its salts") va phan trong ngoac ("Selen (dạng
+      // chat tuong ung", "... and its salts") va ngoac O CUOI ten ("Selen (dạng
       // bột)"): DN khai ten thuong mai, khong ai khai kem duoi cua nghi dinh.
       // BAT BUOC, khong phai tien nghi: thieu no thi "N,N-dimetyl amino etanol"
       // (108-01-0, PL II) khong khop ten day du roi tut xuong khop chu "etanol"
       // nam trong doan -> bao ra Etanol (64-17-5, PL I). Sai chat, va giau mat
       // nghia vu Giay chung nhan SX-KD cua chat that.
-      for (const alias of [name, name.split(/ và | and | \\(/i)[0]]) {
+      // CHI bo ngoac O CUOI: "Đồng (I) clorua" co ngoac GIUA ten, bo di con moi
+      // "Đồng" -> khop nham "đóng/đông/dòng/động" (deu chuan hoa ra "dong"). Giu
+      // nguyen "(I) clorua" -> alias "dong i clorua", khong dinh tu thuong.
+      const head = name.replace(/ (?:và|and) .*$/i, "").replace(/\\s*\\([^)]*\\)\\s*$/, "").trim();
+      for (const alias of [name, head]) {
         const n = normWords(alias).trim();
         // >=3 ky tu: ten ngan nhat trong du lieu la "clo"/"flo"/"oxy"; nguong nay
         // khong bo sot ten nao ma chan manh vun 1-2 ky tu khop lung tung.
