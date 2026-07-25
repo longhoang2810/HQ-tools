@@ -610,6 +610,25 @@ def test_che_do_dong_hang():
     assert "Không thấy mã CAS" in got[4]["text"]
 
 
+def test_dong_hang_khong_cat_nham_ten_hoa_chat():
+    # Tên hóa chất kiểu "2.4-D", "1.1.1-Trichloroethane" bắt đầu bằng "số." KHÔNG
+    # phải STT -> nếu cắt sẽ hỏng mô tả ("4-D"). Chỉ coi là STT khi sau "."/")" có
+    # khoảng trắng (danh sách đánh số thật luôn có). Mã CAS vẫn trích từ nguyên dòng.
+    got = _run_js("""
+      const txt = "1.1.1-Trichloroethane 71-55-6"
+        + "\\n2.4-D 94-75-7"
+        + "\\n1. Acetone 67-64-1"
+        + "\\n10)\\tChloroform 67-66-3";
+      console.log(JSON.stringify(parseLines(txt).map(r => ({stt: r.stt, mota: r.mota}))));
+    """)
+    if got is None:
+        return
+    assert got[0]["stt"] is None and got[0]["mota"].startswith("1.1.1-Trichloroethane")
+    assert got[1]["stt"] is None and got[1]["mota"].startswith("2.4-D")
+    assert got[2]["stt"] == 1 and got[2]["mota"] == "Acetone 67-64-1"
+    assert got[3]["stt"] == 10 and got[3]["mota"] == "Chloroform 67-66-3"
+
+
 def test_moi_onclick_goi_ham_tu_dinh_nghia():
     # onclick="scrollTo({top:0})" IM LẶNG KHÔNG CHẠY: scope của inline handler có
     # cả chính cái nút, nên `scrollTo` ăn vào Element.prototype.scrollTo — cuộn

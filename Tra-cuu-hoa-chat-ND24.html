@@ -1129,9 +1129,9 @@ function parseLines(text) {
   for (const raw of text.split("\n")) {
     const line = raw.replace(/\s+$/, "");
     if (!line.trim()) continue;
-    // STT: "1<tab>", "1." hoac "1)" dau dong. Ma CAS khong lot vao day vi con
-    // co dau "-" ngay sau chu so.
-    const m = line.match(/^\s*(\d{1,4})[.)\t]\s*/);
+    // STT: "1<tab>", "1. " hoac "1) " dau dong. Sau dau "." / ")" bat buoc co
+    // khoang trang de khong cat nham ten hoa chat kieu "2.4-D", "1.1.1-...".
+    const m = line.match(/^\s*(\d{1,4})(?:[.)]\s+|\t\s*)/);
     out.push({
       stt: m ? Number(m[1]) : null,
       mota: (m ? line.slice(m[0].length) : line).replace(/\t/g, " ").trim(),
