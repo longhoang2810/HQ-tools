@@ -43,7 +43,7 @@ def pl3_no_cas_html():
     parts = [
         f'<details class="fold"><summary><h2>⚠ {esc(core.PL3_NO_CAS_TITLE)}</h2></summary>',
         f'<p class="lead">{esc(core.PL3_NO_CAS_LEAD)}</p>',
-        '<p class="cite">📖 <a href="#nd24-pl-iii">Mở nguyên văn Phụ lục III của NĐ 24</a>'
+        '<p class="cite"><a href="#nd24-pl-iii">Mở nguyên văn Phụ lục III của NĐ 24</a>'
         " để đối chiếu mô tả từng mục.</p>",
     ]
     for group in sorted({e["category"] for e in core.PL3_NO_CAS}):
@@ -164,7 +164,7 @@ def full_text_html():
         )
         parts.append(
             f'<details class="doc" id="doc-{doc}">'
-            f"<summary>📖 Toàn văn {esc(title)}</summary>"
+            f"<summary>Toàn văn {esc(title)}</summary>"
             f'<div class="doc-body"><nav class="doc-toc">{links}</nav>{body}</div>'
             "</details>"
         )
@@ -208,137 +208,186 @@ HTML = """<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tra cứu hóa chất – NĐ 24 &amp; 26/2026/NĐ-CP</title>
 <style>
+  /* ===== Hệ màu công vụ: một màu chủ đạo xanh mực (navy) cho giao diện;
+     đỏ/vàng/xanh lá CHỈ dành cho kết luận (verdict), không dùng trang trí. ===== */
   :root {
-    --blue: #1a5fb4; --blue-dark: #123f7a;
-    --ink: #1c2530; --muted: #5b6673; --line: #dfe4ea;
-    --bg: #f4f6f9; --card: #ffffff;
-    --red-bg: #fdecea; --red-line: #f3b9b2; --red-ink: #9a2f21;
-    --green-bg: #eaf6ec; --green-line: #b9dcc0;
-    --amber-bg: #fff8e6; --amber-line: #f0d488;
+    --navy: #123a63; --navy-deep: #0c2743; --navy-tint: #eef2f8;
+    --ink: #16212e; --muted: #566270; --faint: #8a95a3;
+    --line: #dce2ea; --line-strong: #c3ccd7;
+    --bg: #eceff4; --paper: #ffffff;
+
+    --red: #9c261a; --red-bg: #fbeae7; --red-line: #e8b4ab;
+    --green: #1d7442; --green-bg: #e7f3eb; --green-line: #afd7bc;
+    --amber: #856310; --amber-bg: #faf1d7; --amber-line: #e3cc8b;
+
+    --r-card: 10px; --r-ctrl: 7px; --r-tag: 6px;
+    --shadow: 0 1px 2px rgba(16,32,54,.05), 0 8px 24px -14px rgba(16,32,54,.2);
+    --focus: 0 0 0 3px rgba(18,58,99,.22);
   }
   * { box-sizing: border-box; }
-  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; max-width: 880px; margin: 0 auto; padding: 32px 20px 60px; color: var(--ink); background: var(--bg); line-height: 1.5; }
-  header { text-align: center; margin-bottom: 26px; padding-top: 18px; position: relative; }
-  header::before { content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 64px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--blue), #2f7d3c); }
-  h1 { font-size: 1.9rem; margin: 0 0 6px; letter-spacing: -0.01em; }
-  header p { color: var(--muted); margin: 0; font-size: 1rem; }
-  header .author { margin-top: 8px; font-size: 0.85rem; font-weight: 600; color: var(--blue-dark); }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    max-width: 900px; margin: 0 auto; padding: 44px 24px 104px;
+    color: var(--ink); background: var(--bg); line-height: 1.6; font-size: 16px;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  ::selection { background: #cadcef; }
+  a { color: var(--navy); }
+  :focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
 
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(20,30,50,0.05); }
+  /* ---- Masthead công vụ: canh trái, dấu gạch navy như văn bản chính thống ---- */
+  header { margin-bottom: 28px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+  header::before { content: ""; display: block; width: 42px; height: 4px; border-radius: 2px; background: var(--navy); margin-bottom: 18px; }
+  h1 { font-size: 2rem; line-height: 1.1; margin: 0 0 6px; letter-spacing: -0.022em; font-weight: 800; }
+  header .sub { margin: 0; color: var(--muted); font-size: 1rem; font-variant-numeric: tabular-nums; }
+  header .author { margin: 14px 0 0; font-size: 0.82rem; font-weight: 600; color: var(--navy-deep); }
+  header .docs { margin: 5px 0 0; font-size: 0.82rem; color: var(--muted); }
+  header .docs a { color: var(--navy); text-decoration: none; border-bottom: 1px solid rgba(18,58,99,.32); padding-bottom: 1px; }
+  header .docs a:hover { border-bottom-color: var(--navy); }
 
-  .instructions { display: flex; gap: 12px; align-items: flex-start; }
-  .instructions .icon { font-size: 1.4rem; line-height: 1; }
-  .instructions ol { margin: 8px 0 0; padding-left: 20px; }
-  .instructions li { margin-bottom: 4px; text-align: justify; }
-  .instructions h2 { margin: 0; font-size: 1.05rem; }
+  /* ---- Panel ---- */
+  .card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-card); padding: 22px 24px; margin-bottom: 20px; box-shadow: var(--shadow); }
 
-  .modes { display: flex; gap: 8px; margin-bottom: 12px; }
-  .mode-btn { cursor: pointer; font-size: 0.92rem; font-weight: 600; padding: 7px 16px; border-radius: 8px; border: 1px solid var(--line); background: #fff; color: var(--muted); }
-  .mode-btn:hover { border-color: var(--blue); }
-  .mode-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .instructions h2 { margin: 0 0 10px; font-size: 1.02rem; font-weight: 700; }
+  .instructions ol { margin: 0; padding-left: 22px; }
+  .instructions li { margin-bottom: 6px; text-align: justify; }
+  .instructions ul { margin: 6px 0 2px; padding-left: 20px; }
+  .instructions b { color: var(--ink); }
 
-  .input-row { display: flex; gap: 12px; align-items: stretch; }
-  textarea { flex: 1; min-height: 110px; font-size: 1rem; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; resize: vertical; font-family: inherit; }
-  textarea:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
-  button#run-btn { flex: 0 0 auto; align-self: stretch; min-width: 130px; font-size: 1.05rem; font-weight: 600; cursor: pointer; background: var(--blue); color: #fff; border: none; border-radius: 8px; padding: 10px 20px; transition: background .15s; }
-  button#run-btn:hover { background: var(--blue-dark); }
-  .toolbar { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
-  .toolbar .hint { color: var(--muted); font-size: 0.82rem; margin-left: auto; }
-  button.mini { font-size: 0.86rem; cursor: pointer; background: #fff; color: var(--blue-dark); border: 1px solid var(--line); border-radius: 7px; padding: 5px 12px; font-weight: 600; }
-  button.mini:hover { border-color: var(--blue); background: #f2f6fc; }
-  @media (max-width: 560px) { .input-row { flex-direction: column; } button#run-btn { padding: 12px; } .toolbar .hint { display: none; } }
+  /* ---- Ô nhập ---- */
+  .modes { display: inline-flex; gap: 4px; padding: 4px; background: var(--navy-tint); border: 1px solid var(--line); border-radius: var(--r-ctrl); margin-bottom: 14px; max-width: 100%; }
+  .mode-btn { cursor: pointer; font-size: 0.92rem; font-weight: 600; padding: 8px 18px; border-radius: 5px; border: 1px solid transparent; background: transparent; color: var(--muted); transition: color .15s, background .15s, box-shadow .15s; }
+  .mode-btn:hover { color: var(--navy); }
+  .mode-btn.active { background: var(--paper); border-color: var(--line); color: var(--navy-deep); box-shadow: 0 1px 2px rgba(16,32,54,.09); }
 
-  #count { margin: 0 0 10px; font-weight: 600; color: var(--ink); }
-  .stats { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 12px; }
-  .chip { display: inline-block; padding: 4px 12px; border-radius: 99px; font-size: 0.86rem; font-weight: 700; border: 1px solid transparent; }
-  .chip.warn { background: var(--red-bg); border-color: var(--red-line); color: var(--red-ink); }
-  .chip.ok { background: var(--green-bg); border-color: var(--green-line); color: #24632f; }
-  .chip.unknown { background: var(--amber-bg); border-color: var(--amber-line); color: #7a600e; }
+  .input-row { display: flex; gap: 14px; align-items: stretch; }
+  textarea { flex: 1; min-height: 128px; font-size: 1rem; padding: 14px 16px; border: 1px solid var(--line-strong); border-radius: var(--r-ctrl); resize: vertical; font-family: inherit; line-height: 1.55; color: var(--ink); background: #fff; }
+  textarea::placeholder { color: var(--faint); }
+  textarea:focus { outline: none; border-color: var(--navy); box-shadow: var(--focus); }
+  button#run-btn { flex: 0 0 auto; align-self: stretch; min-width: 150px; font-size: 1rem; font-weight: 700; cursor: pointer; background: var(--navy); color: #fff; border: 1px solid var(--navy); border-radius: var(--r-ctrl); padding: 12px 24px; transition: background .15s, transform .05s; }
+  button#run-btn:hover { background: var(--navy-deep); }
+  button#run-btn:active { transform: translateY(1px); }
+  .toolbar { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+  .toolbar .hint { color: var(--faint); font-size: 0.82rem; margin-left: auto; }
+  .toolbar kbd { font: inherit; font-size: 0.78rem; font-weight: 700; background: var(--navy-tint); border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; color: var(--navy-deep); }
+  button.mini { font-size: 0.86rem; cursor: pointer; background: #fff; color: var(--navy-deep); border: 1px solid var(--line-strong); border-radius: var(--r-ctrl); padding: 7px 14px; font-weight: 600; transition: background .15s, border-color .15s; }
+  button.mini:hover { border-color: var(--navy); background: var(--navy-tint); }
+  @media (max-width: 560px) {
+    body { padding: 30px 16px 92px; }
+    h1 { font-size: 1.58rem; }
+    .input-row { flex-direction: column; }
+    button#run-btn { padding: 13px; }
+    .toolbar .hint { display: none; }
+  }
 
-  .table-wrap { overflow-x: auto; }
-  table { border-collapse: collapse; width: 100%; }
-  th, td { padding: 9px 10px; text-align: left; vertical-align: top; font-size: 0.93rem; border-bottom: 1px solid var(--line); }
-  th { color: var(--muted); font-weight: 600; font-size: 0.82rem; text-transform: uppercase; letter-spacing: .03em; }
+  /* ---- Kết quả ---- */
+  #results > .card { animation: rise .3s cubic-bezier(.16,1,.3,1) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+  @media (prefers-reduced-motion: reduce) { #results > .card { animation: none; } }
+
+  #count { margin: 0; font-weight: 700; font-size: 1.05rem; color: var(--ink); }
+  .stats { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 2px; }
+  .chip { display: inline-flex; align-items: center; padding: 5px 12px; border-radius: var(--r-tag); font-size: 0.84rem; font-weight: 700; border: 1px solid transparent; }
+  .chip.warn { background: var(--red-bg); border-color: var(--red-line); color: var(--red); }
+  .chip.ok { background: var(--green-bg); border-color: var(--green-line); color: var(--green); }
+  .chip.unknown { background: var(--amber-bg); border-color: var(--amber-line); color: var(--amber); }
+
+  .table-wrap { overflow-x: auto; margin: 16px -4px 0; padding: 0 4px; }
+  table { border-collapse: collapse; width: 100%; min-width: 620px; }
+  th, td { padding: 12px 12px; text-align: left; vertical-align: top; font-size: 0.93rem; border-bottom: 1px solid var(--line); }
+  thead th { color: var(--muted); font-weight: 700; font-size: 0.72rem; text-transform: uppercase; letter-spacing: .07em; border-bottom: 1.5px solid var(--line-strong); }
+  tbody tr:last-child td { border-bottom: none; }
+  th:first-child, td:first-child { width: 1%; white-space: nowrap; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+  td:nth-child(2) { min-width: 190px; }
+  td:last-child { min-width: 230px; }
   tr.warn td { background: var(--red-bg); }
   tr.ok td { background: var(--green-bg); }
   tr.unknown td { background: var(--amber-bg); }
-  .cas { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .pill { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
-  .pill.warn { background: var(--red-ink); color: #fff; }
-  .pill.ok { background: #2f7d3c; color: #fff; }
-  .pill.unknown { background: #9a7a12; color: #fff; }
+  tr.warn td:first-child { box-shadow: inset 3px 0 0 var(--red); }
+  tr.ok td:first-child { box-shadow: inset 3px 0 0 var(--green); }
+  tr.unknown td:first-child { box-shadow: inset 3px 0 0 var(--amber); }
+  .cas { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--navy-deep); }
+  .pill { display: inline-block; margin: 1px 0; padding: 4px 11px; border-radius: var(--r-tag); font-size: 0.8rem; font-weight: 700; line-height: 1.35; }
+  .pill.warn { background: var(--red); color: #fff; }
+  .pill.ok { background: var(--green); color: #fff; }
+  .pill.unknown { background: var(--amber); color: #fff; }
 
-  .exempt h2 { font-size: 1.1rem; margin: 0 0 4px; }
-  .exempt h3 { font-size: 0.95rem; margin: 16px 0 6px; color: var(--blue-dark); }
-  .exempt ul { margin: 4px 0 0; padding-left: 20px; }
-  .exempt li { margin-bottom: 4px; text-align: justify; }
+  .exempt h2 { font-size: 1.18rem; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .exempt h3 { font-size: 0.96rem; margin: 18px 0 6px; color: var(--navy-deep); }
+  .exempt ul { margin: 6px 0 0; padding-left: 22px; }
+  .exempt li { margin-bottom: 6px; text-align: justify; }
   .exempt .lead, .exempt .warn-note { text-align: justify; }
-  .exempt .warn-note { background: var(--red-bg); border: 1px solid var(--red-line); border-radius: 8px; padding: 10px 14px; margin-top: 14px; color: var(--red-ink); font-size: 0.93rem; }
-  .exempt .cite { color: var(--muted); font-size: 0.85rem; }
-  .exempt .lead { font-weight: 600; margin: 6px 0 4px; }
+  .exempt .warn-note { background: var(--red-bg); border: 1px solid var(--red-line); border-radius: var(--r-ctrl); padding: 12px 16px; margin-top: 16px; color: var(--red); font-size: 0.93rem; }
+  .exempt .cite { color: var(--muted); font-size: 0.84rem; }
+  .exempt .lead { font-weight: 600; margin: 8px 0 4px; }
   /* Hai mục lớn (khai báo / giấy phép) phải tách hẳn nhau: đọc nhầm mục là áp
      nhầm ngưỡng miễn trừ của giấy phép sang khai báo. */
-  .exempt h3.sect { font-size: 1.05rem; color: var(--ink); margin: 22px 0 8px; padding-top: 14px; border-top: 2px solid var(--line); }
-  .exempt h3.sect + .lead, .exempt ul + .lead { color: var(--blue-dark); text-transform: uppercase; font-size: 0.78rem; letter-spacing: .04em; margin-top: 12px; }
-  .exempt h4 { font-size: 0.93rem; margin: 12px 0 4px; color: var(--blue-dark); }
+  .exempt h3.sect { font-size: 1.06rem; color: var(--ink); margin: 26px 0 8px; padding-top: 16px; border-top: 1px solid var(--line-strong); }
+  .exempt h3.sect + .lead, .exempt ul + .lead { color: var(--navy); text-transform: uppercase; font-size: 0.75rem; letter-spacing: .07em; font-weight: 700; margin-top: 14px; }
+  .exempt h4 { font-size: 0.93rem; margin: 14px 0 4px; color: var(--navy-deep); }
   .exempt .sub-lead { font-weight: 600; margin: 4px 0; text-align: justify; }
 
-  /* Ghi chú "Ngoại trừ": thông tin, không phải cảnh báo -> xám trung tính, để
-     không tranh chỗ với cờ đỏ họ chất vốn mới là thứ cần chú ý. */
-  .excl-note { margin-top: 8px; background: #f2f6fc; border: 1px solid var(--line); border-left: 3px solid var(--blue); border-radius: 6px; padding: 7px 10px; color: var(--muted); font-size: 0.78rem; text-align: left; font-weight: 400; }
+  /* Ghi chú "Ngoại trừ": thông tin, không phải cảnh báo -> nền xanh nhạt trung
+     tính, để không tranh chỗ với cờ đỏ họ chất vốn mới là thứ cần chú ý. */
+  .excl-note { margin-top: 10px; background: var(--navy-tint); border: 1px solid var(--line); border-radius: var(--r-tag); padding: 9px 12px; color: var(--muted); font-size: 0.79rem; text-align: left; font-weight: 400; }
+  .excl-note b, .excl-note strong { color: var(--navy-deep); }
 
   /* Cờ họ chất: nằm trong ô trạng thái, phải "cãi lại" được pill xanh ngay
      cạnh nó nên dùng nền/viền đỏ, không phải chữ xám mờ. */
-  .fam-hint { margin-top: 8px; background: var(--red-bg); border: 1px solid var(--red-line); border-left: 3px solid var(--red-ink); border-radius: 6px; padding: 7px 10px; color: var(--red-ink); font-size: 0.8rem; font-weight: 600; text-align: left; }
+  .fam-hint { margin-top: 8px; background: var(--red-bg); border: 1px solid var(--red-line); border-radius: var(--r-tag); padding: 9px 12px; color: var(--red); font-size: 0.81rem; font-weight: 600; text-align: left; }
   .fam-hint ul { margin: 4px 0 0; padding-left: 18px; font-weight: 400; }
-  .fam-hint .cite { color: var(--red-ink); opacity: .8; font-size: 0.76rem; }
+  .fam-hint .cite { color: var(--red); opacity: .82; font-size: 0.76rem; }
   /* Link sang toàn văn nằm trong khối đã có màu riêng -> giữ nguyên màu chữ của
      khối, chỉ gạch chân, để không phá tương phản cảnh báo. */
   .fam-hint a, .blind-spot a, td a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 
-  /* Cảnh báo vùng mù: viền đỏ để không bị đọc lướt như chú thích thường —
+  /* Cảnh báo vùng mù: nền đỏ đậm hơn để không bị đọc lướt như chú thích thường —
      đây là chỗ trang có thể im lặng bỏ sót chất cần Giấy phép. */
-  .blind-spot { border-color: var(--red-line); border-left: 4px solid var(--red-ink); }
-  .blind-spot h2 { color: var(--red-ink); }
-  .blind-spot .lead { font-weight: 400; background: var(--red-bg); border-radius: 8px; padding: 10px 14px; margin: 8px 0 4px; }
+  .blind-spot { border-color: var(--red-line); background: linear-gradient(var(--paper), var(--paper)) padding-box, var(--paper); }
+  .blind-spot h2 { color: var(--red); }
+  .blind-spot .lead { font-weight: 400; background: var(--red-bg); border: 1px solid var(--red-line); border-radius: var(--r-ctrl); padding: 12px 16px; margin: 8px 0 4px; }
   .blind-spot li { font-size: 0.9rem; }
-  details.fold > summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; gap: 8px; }
+  details.fold > summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; gap: 10px; }
   details.fold > summary::-webkit-details-marker { display: none; }
-  details.fold > summary::before { content: "▸"; color: var(--red-ink); transition: transform .12s; }
+  details.fold > summary::before { content: "\\203A"; font-size: 1.3em; line-height: 1; color: var(--red); transition: transform .15s; }
   details.fold[open] > summary::before { transform: rotate(90deg); }
   details.fold > summary h2 { display: inline; }
 
   /* Toàn văn hai nghị định — nhúng thẳng vào trang để không phải mở file .docx
      rời (trang vẫn là 1 file chạy offline). Đóng sẵn, mở khi cần đọc. */
-  header .docs { margin-top: 10px; font-size: 0.85rem; }
-  header .docs a { color: var(--blue-dark); text-decoration: none; border-bottom: 1px dashed var(--blue); }
-  details.doc { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(20,30,50,0.05); }
-  details.doc > summary { cursor: pointer; padding: 16px 22px; font-weight: 600; }
-  details.doc .doc-body { padding: 0 22px 20px; border-top: 1px solid var(--line); }
-  details.doc .doc-toc { font-size: 0.8rem; color: var(--muted); margin: 14px 0 18px; line-height: 2; }
-  details.doc .doc-toc a { color: var(--blue-dark); text-decoration: none; }
+  details.doc { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-card); margin-bottom: 20px; box-shadow: var(--shadow); }
+  details.doc > summary { cursor: pointer; padding: 18px 24px; font-weight: 700; color: var(--navy-deep); list-style: none; display: flex; align-items: center; gap: 10px; }
+  details.doc > summary::-webkit-details-marker { display: none; }
+  details.doc > summary::before { content: "\\203A"; font-size: 1.3em; color: var(--navy); transition: transform .15s; }
+  details.doc[open] > summary::before { transform: rotate(90deg); }
+  details.doc .doc-body { padding: 4px 24px 22px; border-top: 1px solid var(--line); }
+  details.doc .doc-toc { font-size: 0.8rem; color: var(--muted); margin: 16px 0 20px; line-height: 2; }
+  details.doc .doc-toc a { color: var(--navy); text-decoration: none; }
   details.doc .doc-toc a:hover { text-decoration: underline; }
-  details.doc h3 { font-size: 1rem; color: var(--blue-dark); margin: 20px 0 6px; scroll-margin-top: 12px; }
+  details.doc h3 { font-size: 1rem; color: var(--navy-deep); margin: 22px 0 6px; scroll-margin-top: 12px; }
   details.doc h4 { font-size: 0.9rem; margin: 14px 0 6px; }
   details.doc p { font-size: 0.9rem; text-align: justify; margin: 6px 0; }
-  details.doc td, details.doc th { font-size: 0.82rem; padding: 5px 8px; text-transform: none; }
-  details.doc :target { background: #fff6d6; }
+  details.doc td, details.doc th { font-size: 0.82rem; padding: 6px 9px; text-transform: none; }
+  details.doc :target { background: #fdf1c7; box-shadow: 0 0 0 4px #fdf1c7; border-radius: 2px; }
 
   /* Nút nổi góc phải: toàn văn dài mấy nghìn dòng, cuộn ngược lên tìm lại thẻ
      <summary> để đóng là không khả thi. */
-  .fab { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; z-index: 9; }
-  .fab button { cursor: pointer; font-size: 0.85rem; font-weight: 600; padding: 9px 14px; border-radius: 99px; border: 1px solid var(--line); background: #fff; color: var(--blue-dark); box-shadow: 0 2px 8px rgba(20,30,50,0.14); }
-  .fab button:hover { border-color: var(--blue); background: #f2f6fc; }
+  .fab { position: fixed; right: 18px; bottom: 18px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; z-index: 20; }
+  .fab button { cursor: pointer; font-size: 0.84rem; font-weight: 600; padding: 10px 15px; border-radius: var(--r-ctrl); border: 1px solid var(--line-strong); background: var(--paper); color: var(--navy-deep); box-shadow: 0 6px 18px -6px rgba(16,32,54,.35); transition: background .15s, border-color .15s; }
+  .fab button:hover { border-color: var(--navy); background: var(--navy-tint); }
   .fab button[hidden] { display: none; }
 
   .note { color: var(--muted); font-size: 0.88rem; text-align: justify; }
-  footer { text-align: center; color: var(--muted); font-size: 0.82rem; margin-top: 30px; }
+  footer { text-align: center; color: var(--faint); font-size: 0.82rem; margin-top: 40px; padding-top: 22px; border-top: 1px solid var(--line); }
 
   @media print {
-    body { background: #fff; padding: 0; max-width: none; }
-    .instructions, #input-card, footer, header::before { display: none; }
-    .card { box-shadow: none; border-color: #bbb; break-inside: avoid; }
-    .pill { border: 1px solid #888; color: #000 !important; background: #fff !important; }
+    body { background: #fff; padding: 0; max-width: none; color: #000; }
+    .instructions, #input-card, footer, .fab, header::before { display: none; }
+    .card, details.doc { box-shadow: none; border-color: #999; break-inside: avoid; }
+    header { border-color: #000; }
+    tr.warn td:first-child, tr.ok td:first-child, tr.unknown td:first-child { box-shadow: none; }
+    .pill { border: 1px solid #666; color: #000 !important; background: #fff !important; }
   }
 </style>
 </head>
@@ -346,41 +395,38 @@ HTML = """<!doctype html>
 
 <header>
   <h1>Tra cứu hóa chất</h1>
-  <p>Nghị định 24/2026/NĐ-CP &amp; Nghị định 26/2026/NĐ-CP</p>
+  <p class="sub">Nghị định 24/2026/NĐ-CP · Nghị định 26/2026/NĐ-CP</p>
   <p class="author">Tác giả: Nguyễn Hoàng Long - HQ KCX&amp;KCN</p>
-  <p class="docs">📖 Đọc toàn văn: <a href="#doc-nd24">NĐ 24/2026/NĐ-CP</a> · <a href="#doc-nd26">NĐ 26/2026/NĐ-CP</a></p>
+  <p class="docs">Toàn văn: <a href="#doc-nd24">NĐ 24/2026/NĐ-CP</a> · <a href="#doc-nd26">NĐ 26/2026/NĐ-CP</a></p>
 </header>
 
 <div class="card instructions">
-  <div class="icon">ℹ️</div>
-  <div>
-    <h2>Hướng dẫn sử dụng</h2>
-    <ol>
-      <li>Copy nguyên mô tả hàng hóa — <b>mỗi dòng một dòng hàng</b> (dán thẳng từ Excel được), hoặc một đoạn. Không cần tách tay từng mã CAS.</li>
-      <li>Dán vào ô bên dưới rồi bấm <b>Tra cứu</b>. Kết quả là bảng theo từng dòng hàng, hai chế độ tra:
-        <ul>
-          <li><b>Tìm theo mã CAS</b> (mặc định): mỗi dòng tra theo mọi mã CAS xuất hiện trong dòng đó. Chính xác nhất.</li>
-          <li><b>Tìm theo tên chất</b>: mỗi dòng dò tên hóa chất có trong mô tả. Dùng khi không khai mã CAS — kết quả chỉ là gợi ý, xem cảnh báo trong bảng.</li>
-        </ul>
-      </li>
-      <li>Kiểm tra các trường hợp miễn trừ Khai báo hóa chất và miễn trừ Giấy phép xuất khẩu, nhập khẩu ở bên dưới.</li>
-    </ol>
-  </div>
+  <h2>Hướng dẫn sử dụng</h2>
+  <ol>
+    <li>Copy nguyên mô tả hàng hóa — <b>mỗi dòng một dòng hàng</b> (dán thẳng từ Excel được), hoặc một đoạn. Không cần tách tay từng mã CAS.</li>
+    <li>Dán vào ô bên dưới rồi bấm <b>Tra cứu</b>. Kết quả là bảng theo từng dòng hàng, hai chế độ tra:
+      <ul>
+        <li><b>Tìm theo mã CAS</b> (mặc định): mỗi dòng tra theo mọi mã CAS xuất hiện trong dòng đó. Chính xác nhất.</li>
+        <li><b>Tìm theo tên chất</b>: mỗi dòng dò tên hóa chất có trong mô tả. Dùng khi không khai mã CAS — kết quả chỉ là gợi ý, xem cảnh báo trong bảng.</li>
+      </ul>
+    </li>
+    <li>Kiểm tra các trường hợp miễn trừ Khai báo hóa chất và miễn trừ Giấy phép xuất khẩu, nhập khẩu ở bên dưới.</li>
+  </ol>
 </div>
 
 <div class="card" id="input-card">
-  <div class="modes">
-    <button class="mode-btn active" id="mode-cas" aria-pressed="true" onclick="setMode('cas')">🔢 Tìm theo mã CAS</button>
-    <button class="mode-btn" id="mode-name" aria-pressed="false" onclick="setMode('name')">🔤 Tìm theo tên chất</button>
+  <div class="modes" role="tablist" aria-label="Chế độ tra cứu">
+    <button class="mode-btn active" id="mode-cas" aria-pressed="true" onclick="setMode('cas')">Tìm theo mã CAS</button>
+    <button class="mode-btn" id="mode-name" aria-pressed="false" onclick="setMode('name')">Tìm theo tên chất</button>
   </div>
   <div class="input-row">
     <textarea id="input" placeholder="Dán mô tả hàng hóa — mỗi dòng một dòng hàng (copy từ Excel được), hoặc một đoạn. Ví dụ:&#10;1&#9;Dung môi công nghiệp CAS 67-56-1&#10;2&#9;Keo dán, thùng 20kg&#10;3&#9;Hỗn hợp 107-13-1 và 103-79-7"></textarea>
-    <button id="run-btn" onclick="run()">🔍 Tra cứu</button>
+    <button id="run-btn" onclick="run()">Tra cứu</button>
   </div>
   <div class="toolbar">
-    <button class="mini" onclick="randomExampleForMode()">🎲 Ví dụ ngẫu nhiên</button>
-    <button class="mini" onclick="clearAll()">✕ Xóa</button>
-    <span class="hint">Mẹo: nhấn <b>Ctrl+Enter</b> (⌘+Enter trên Mac) để tra cứu nhanh</span>
+    <button class="mini" onclick="randomExampleForMode()">Ví dụ ngẫu nhiên</button>
+    <button class="mini" onclick="clearAll()">Xóa</button>
+    <span class="hint">Mẹo: <kbd>Ctrl</kbd>+<kbd>Enter</kbd> (<kbd>⌘</kbd>+<kbd>Enter</kbd> trên Mac) để tra nhanh</span>
   </div>
 </div>
 
@@ -397,7 +443,7 @@ HTML = """<!doctype html>
 __FULL_TEXT_HTML__
 
 <div class="fab">
-  <button id="fab-collapse" onclick="collapseDocs()" hidden>✕ Thu gọn toàn văn</button>
+  <button id="fab-collapse" onclick="collapseDocs()" hidden>Thu gọn toàn văn</button>
   <button id="fab-top" onclick="goTop()" hidden>↑ Lên đầu trang</button>
 </div>
 

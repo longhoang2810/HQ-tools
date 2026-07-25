@@ -5,137 +5,186 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tra cứu hóa chất – NĐ 24 &amp; 26/2026/NĐ-CP</title>
 <style>
+  /* ===== Hệ màu công vụ: một màu chủ đạo xanh mực (navy) cho giao diện;
+     đỏ/vàng/xanh lá CHỈ dành cho kết luận (verdict), không dùng trang trí. ===== */
   :root {
-    --blue: #1a5fb4; --blue-dark: #123f7a;
-    --ink: #1c2530; --muted: #5b6673; --line: #dfe4ea;
-    --bg: #f4f6f9; --card: #ffffff;
-    --red-bg: #fdecea; --red-line: #f3b9b2; --red-ink: #9a2f21;
-    --green-bg: #eaf6ec; --green-line: #b9dcc0;
-    --amber-bg: #fff8e6; --amber-line: #f0d488;
+    --navy: #123a63; --navy-deep: #0c2743; --navy-tint: #eef2f8;
+    --ink: #16212e; --muted: #566270; --faint: #8a95a3;
+    --line: #dce2ea; --line-strong: #c3ccd7;
+    --bg: #eceff4; --paper: #ffffff;
+
+    --red: #9c261a; --red-bg: #fbeae7; --red-line: #e8b4ab;
+    --green: #1d7442; --green-bg: #e7f3eb; --green-line: #afd7bc;
+    --amber: #856310; --amber-bg: #faf1d7; --amber-line: #e3cc8b;
+
+    --r-card: 10px; --r-ctrl: 7px; --r-tag: 6px;
+    --shadow: 0 1px 2px rgba(16,32,54,.05), 0 8px 24px -14px rgba(16,32,54,.2);
+    --focus: 0 0 0 3px rgba(18,58,99,.22);
   }
   * { box-sizing: border-box; }
-  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; max-width: 880px; margin: 0 auto; padding: 32px 20px 60px; color: var(--ink); background: var(--bg); line-height: 1.5; }
-  header { text-align: center; margin-bottom: 26px; padding-top: 18px; position: relative; }
-  header::before { content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 64px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--blue), #2f7d3c); }
-  h1 { font-size: 1.9rem; margin: 0 0 6px; letter-spacing: -0.01em; }
-  header p { color: var(--muted); margin: 0; font-size: 1rem; }
-  header .author { margin-top: 8px; font-size: 0.85rem; font-weight: 600; color: var(--blue-dark); }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    max-width: 900px; margin: 0 auto; padding: 44px 24px 104px;
+    color: var(--ink); background: var(--bg); line-height: 1.6; font-size: 16px;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  ::selection { background: #cadcef; }
+  a { color: var(--navy); }
+  :focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
 
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(20,30,50,0.05); }
+  /* ---- Masthead công vụ: canh trái, dấu gạch navy như văn bản chính thống ---- */
+  header { margin-bottom: 28px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+  header::before { content: ""; display: block; width: 42px; height: 4px; border-radius: 2px; background: var(--navy); margin-bottom: 18px; }
+  h1 { font-size: 2rem; line-height: 1.1; margin: 0 0 6px; letter-spacing: -0.022em; font-weight: 800; }
+  header .sub { margin: 0; color: var(--muted); font-size: 1rem; font-variant-numeric: tabular-nums; }
+  header .author { margin: 14px 0 0; font-size: 0.82rem; font-weight: 600; color: var(--navy-deep); }
+  header .docs { margin: 5px 0 0; font-size: 0.82rem; color: var(--muted); }
+  header .docs a { color: var(--navy); text-decoration: none; border-bottom: 1px solid rgba(18,58,99,.32); padding-bottom: 1px; }
+  header .docs a:hover { border-bottom-color: var(--navy); }
 
-  .instructions { display: flex; gap: 12px; align-items: flex-start; }
-  .instructions .icon { font-size: 1.4rem; line-height: 1; }
-  .instructions ol { margin: 8px 0 0; padding-left: 20px; }
-  .instructions li { margin-bottom: 4px; text-align: justify; }
-  .instructions h2 { margin: 0; font-size: 1.05rem; }
+  /* ---- Panel ---- */
+  .card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-card); padding: 22px 24px; margin-bottom: 20px; box-shadow: var(--shadow); }
 
-  .modes { display: flex; gap: 8px; margin-bottom: 12px; }
-  .mode-btn { cursor: pointer; font-size: 0.92rem; font-weight: 600; padding: 7px 16px; border-radius: 8px; border: 1px solid var(--line); background: #fff; color: var(--muted); }
-  .mode-btn:hover { border-color: var(--blue); }
-  .mode-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .instructions h2 { margin: 0 0 10px; font-size: 1.02rem; font-weight: 700; }
+  .instructions ol { margin: 0; padding-left: 22px; }
+  .instructions li { margin-bottom: 6px; text-align: justify; }
+  .instructions ul { margin: 6px 0 2px; padding-left: 20px; }
+  .instructions b { color: var(--ink); }
 
-  .input-row { display: flex; gap: 12px; align-items: stretch; }
-  textarea { flex: 1; min-height: 110px; font-size: 1rem; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; resize: vertical; font-family: inherit; }
-  textarea:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
-  button#run-btn { flex: 0 0 auto; align-self: stretch; min-width: 130px; font-size: 1.05rem; font-weight: 600; cursor: pointer; background: var(--blue); color: #fff; border: none; border-radius: 8px; padding: 10px 20px; transition: background .15s; }
-  button#run-btn:hover { background: var(--blue-dark); }
-  .toolbar { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
-  .toolbar .hint { color: var(--muted); font-size: 0.82rem; margin-left: auto; }
-  button.mini { font-size: 0.86rem; cursor: pointer; background: #fff; color: var(--blue-dark); border: 1px solid var(--line); border-radius: 7px; padding: 5px 12px; font-weight: 600; }
-  button.mini:hover { border-color: var(--blue); background: #f2f6fc; }
-  @media (max-width: 560px) { .input-row { flex-direction: column; } button#run-btn { padding: 12px; } .toolbar .hint { display: none; } }
+  /* ---- Ô nhập ---- */
+  .modes { display: inline-flex; gap: 4px; padding: 4px; background: var(--navy-tint); border: 1px solid var(--line); border-radius: var(--r-ctrl); margin-bottom: 14px; max-width: 100%; }
+  .mode-btn { cursor: pointer; font-size: 0.92rem; font-weight: 600; padding: 8px 18px; border-radius: 5px; border: 1px solid transparent; background: transparent; color: var(--muted); transition: color .15s, background .15s, box-shadow .15s; }
+  .mode-btn:hover { color: var(--navy); }
+  .mode-btn.active { background: var(--paper); border-color: var(--line); color: var(--navy-deep); box-shadow: 0 1px 2px rgba(16,32,54,.09); }
 
-  #count { margin: 0 0 10px; font-weight: 600; color: var(--ink); }
-  .stats { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 12px; }
-  .chip { display: inline-block; padding: 4px 12px; border-radius: 99px; font-size: 0.86rem; font-weight: 700; border: 1px solid transparent; }
-  .chip.warn { background: var(--red-bg); border-color: var(--red-line); color: var(--red-ink); }
-  .chip.ok { background: var(--green-bg); border-color: var(--green-line); color: #24632f; }
-  .chip.unknown { background: var(--amber-bg); border-color: var(--amber-line); color: #7a600e; }
+  .input-row { display: flex; gap: 14px; align-items: stretch; }
+  textarea { flex: 1; min-height: 128px; font-size: 1rem; padding: 14px 16px; border: 1px solid var(--line-strong); border-radius: var(--r-ctrl); resize: vertical; font-family: inherit; line-height: 1.55; color: var(--ink); background: #fff; }
+  textarea::placeholder { color: var(--faint); }
+  textarea:focus { outline: none; border-color: var(--navy); box-shadow: var(--focus); }
+  button#run-btn { flex: 0 0 auto; align-self: stretch; min-width: 150px; font-size: 1rem; font-weight: 700; cursor: pointer; background: var(--navy); color: #fff; border: 1px solid var(--navy); border-radius: var(--r-ctrl); padding: 12px 24px; transition: background .15s, transform .05s; }
+  button#run-btn:hover { background: var(--navy-deep); }
+  button#run-btn:active { transform: translateY(1px); }
+  .toolbar { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+  .toolbar .hint { color: var(--faint); font-size: 0.82rem; margin-left: auto; }
+  .toolbar kbd { font: inherit; font-size: 0.78rem; font-weight: 700; background: var(--navy-tint); border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; color: var(--navy-deep); }
+  button.mini { font-size: 0.86rem; cursor: pointer; background: #fff; color: var(--navy-deep); border: 1px solid var(--line-strong); border-radius: var(--r-ctrl); padding: 7px 14px; font-weight: 600; transition: background .15s, border-color .15s; }
+  button.mini:hover { border-color: var(--navy); background: var(--navy-tint); }
+  @media (max-width: 560px) {
+    body { padding: 30px 16px 92px; }
+    h1 { font-size: 1.58rem; }
+    .input-row { flex-direction: column; }
+    button#run-btn { padding: 13px; }
+    .toolbar .hint { display: none; }
+  }
 
-  .table-wrap { overflow-x: auto; }
-  table { border-collapse: collapse; width: 100%; }
-  th, td { padding: 9px 10px; text-align: left; vertical-align: top; font-size: 0.93rem; border-bottom: 1px solid var(--line); }
-  th { color: var(--muted); font-weight: 600; font-size: 0.82rem; text-transform: uppercase; letter-spacing: .03em; }
+  /* ---- Kết quả ---- */
+  #results > .card { animation: rise .3s cubic-bezier(.16,1,.3,1) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+  @media (prefers-reduced-motion: reduce) { #results > .card { animation: none; } }
+
+  #count { margin: 0; font-weight: 700; font-size: 1.05rem; color: var(--ink); }
+  .stats { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 2px; }
+  .chip { display: inline-flex; align-items: center; padding: 5px 12px; border-radius: var(--r-tag); font-size: 0.84rem; font-weight: 700; border: 1px solid transparent; }
+  .chip.warn { background: var(--red-bg); border-color: var(--red-line); color: var(--red); }
+  .chip.ok { background: var(--green-bg); border-color: var(--green-line); color: var(--green); }
+  .chip.unknown { background: var(--amber-bg); border-color: var(--amber-line); color: var(--amber); }
+
+  .table-wrap { overflow-x: auto; margin: 16px -4px 0; padding: 0 4px; }
+  table { border-collapse: collapse; width: 100%; min-width: 620px; }
+  th, td { padding: 12px 12px; text-align: left; vertical-align: top; font-size: 0.93rem; border-bottom: 1px solid var(--line); }
+  thead th { color: var(--muted); font-weight: 700; font-size: 0.72rem; text-transform: uppercase; letter-spacing: .07em; border-bottom: 1.5px solid var(--line-strong); }
+  tbody tr:last-child td { border-bottom: none; }
+  th:first-child, td:first-child { width: 1%; white-space: nowrap; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+  td:nth-child(2) { min-width: 190px; }
+  td:last-child { min-width: 230px; }
   tr.warn td { background: var(--red-bg); }
   tr.ok td { background: var(--green-bg); }
   tr.unknown td { background: var(--amber-bg); }
-  .cas { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .pill { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
-  .pill.warn { background: var(--red-ink); color: #fff; }
-  .pill.ok { background: #2f7d3c; color: #fff; }
-  .pill.unknown { background: #9a7a12; color: #fff; }
+  tr.warn td:first-child { box-shadow: inset 3px 0 0 var(--red); }
+  tr.ok td:first-child { box-shadow: inset 3px 0 0 var(--green); }
+  tr.unknown td:first-child { box-shadow: inset 3px 0 0 var(--amber); }
+  .cas { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--navy-deep); }
+  .pill { display: inline-block; margin: 1px 0; padding: 4px 11px; border-radius: var(--r-tag); font-size: 0.8rem; font-weight: 700; line-height: 1.35; }
+  .pill.warn { background: var(--red); color: #fff; }
+  .pill.ok { background: var(--green); color: #fff; }
+  .pill.unknown { background: var(--amber); color: #fff; }
 
-  .exempt h2 { font-size: 1.1rem; margin: 0 0 4px; }
-  .exempt h3 { font-size: 0.95rem; margin: 16px 0 6px; color: var(--blue-dark); }
-  .exempt ul { margin: 4px 0 0; padding-left: 20px; }
-  .exempt li { margin-bottom: 4px; text-align: justify; }
+  .exempt h2 { font-size: 1.18rem; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .exempt h3 { font-size: 0.96rem; margin: 18px 0 6px; color: var(--navy-deep); }
+  .exempt ul { margin: 6px 0 0; padding-left: 22px; }
+  .exempt li { margin-bottom: 6px; text-align: justify; }
   .exempt .lead, .exempt .warn-note { text-align: justify; }
-  .exempt .warn-note { background: var(--red-bg); border: 1px solid var(--red-line); border-radius: 8px; padding: 10px 14px; margin-top: 14px; color: var(--red-ink); font-size: 0.93rem; }
-  .exempt .cite { color: var(--muted); font-size: 0.85rem; }
-  .exempt .lead { font-weight: 600; margin: 6px 0 4px; }
+  .exempt .warn-note { background: var(--red-bg); border: 1px solid var(--red-line); border-radius: var(--r-ctrl); padding: 12px 16px; margin-top: 16px; color: var(--red); font-size: 0.93rem; }
+  .exempt .cite { color: var(--muted); font-size: 0.84rem; }
+  .exempt .lead { font-weight: 600; margin: 8px 0 4px; }
   /* Hai mục lớn (khai báo / giấy phép) phải tách hẳn nhau: đọc nhầm mục là áp
      nhầm ngưỡng miễn trừ của giấy phép sang khai báo. */
-  .exempt h3.sect { font-size: 1.05rem; color: var(--ink); margin: 22px 0 8px; padding-top: 14px; border-top: 2px solid var(--line); }
-  .exempt h3.sect + .lead, .exempt ul + .lead { color: var(--blue-dark); text-transform: uppercase; font-size: 0.78rem; letter-spacing: .04em; margin-top: 12px; }
-  .exempt h4 { font-size: 0.93rem; margin: 12px 0 4px; color: var(--blue-dark); }
+  .exempt h3.sect { font-size: 1.06rem; color: var(--ink); margin: 26px 0 8px; padding-top: 16px; border-top: 1px solid var(--line-strong); }
+  .exempt h3.sect + .lead, .exempt ul + .lead { color: var(--navy); text-transform: uppercase; font-size: 0.75rem; letter-spacing: .07em; font-weight: 700; margin-top: 14px; }
+  .exempt h4 { font-size: 0.93rem; margin: 14px 0 4px; color: var(--navy-deep); }
   .exempt .sub-lead { font-weight: 600; margin: 4px 0; text-align: justify; }
 
-  /* Ghi chú "Ngoại trừ": thông tin, không phải cảnh báo -> xám trung tính, để
-     không tranh chỗ với cờ đỏ họ chất vốn mới là thứ cần chú ý. */
-  .excl-note { margin-top: 8px; background: #f2f6fc; border: 1px solid var(--line); border-left: 3px solid var(--blue); border-radius: 6px; padding: 7px 10px; color: var(--muted); font-size: 0.78rem; text-align: left; font-weight: 400; }
+  /* Ghi chú "Ngoại trừ": thông tin, không phải cảnh báo -> nền xanh nhạt trung
+     tính, để không tranh chỗ với cờ đỏ họ chất vốn mới là thứ cần chú ý. */
+  .excl-note { margin-top: 10px; background: var(--navy-tint); border: 1px solid var(--line); border-radius: var(--r-tag); padding: 9px 12px; color: var(--muted); font-size: 0.79rem; text-align: left; font-weight: 400; }
+  .excl-note b, .excl-note strong { color: var(--navy-deep); }
 
   /* Cờ họ chất: nằm trong ô trạng thái, phải "cãi lại" được pill xanh ngay
      cạnh nó nên dùng nền/viền đỏ, không phải chữ xám mờ. */
-  .fam-hint { margin-top: 8px; background: var(--red-bg); border: 1px solid var(--red-line); border-left: 3px solid var(--red-ink); border-radius: 6px; padding: 7px 10px; color: var(--red-ink); font-size: 0.8rem; font-weight: 600; text-align: left; }
+  .fam-hint { margin-top: 8px; background: var(--red-bg); border: 1px solid var(--red-line); border-radius: var(--r-tag); padding: 9px 12px; color: var(--red); font-size: 0.81rem; font-weight: 600; text-align: left; }
   .fam-hint ul { margin: 4px 0 0; padding-left: 18px; font-weight: 400; }
-  .fam-hint .cite { color: var(--red-ink); opacity: .8; font-size: 0.76rem; }
+  .fam-hint .cite { color: var(--red); opacity: .82; font-size: 0.76rem; }
   /* Link sang toàn văn nằm trong khối đã có màu riêng -> giữ nguyên màu chữ của
      khối, chỉ gạch chân, để không phá tương phản cảnh báo. */
   .fam-hint a, .blind-spot a, td a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 
-  /* Cảnh báo vùng mù: viền đỏ để không bị đọc lướt như chú thích thường —
+  /* Cảnh báo vùng mù: nền đỏ đậm hơn để không bị đọc lướt như chú thích thường —
      đây là chỗ trang có thể im lặng bỏ sót chất cần Giấy phép. */
-  .blind-spot { border-color: var(--red-line); border-left: 4px solid var(--red-ink); }
-  .blind-spot h2 { color: var(--red-ink); }
-  .blind-spot .lead { font-weight: 400; background: var(--red-bg); border-radius: 8px; padding: 10px 14px; margin: 8px 0 4px; }
+  .blind-spot { border-color: var(--red-line); background: linear-gradient(var(--paper), var(--paper)) padding-box, var(--paper); }
+  .blind-spot h2 { color: var(--red); }
+  .blind-spot .lead { font-weight: 400; background: var(--red-bg); border: 1px solid var(--red-line); border-radius: var(--r-ctrl); padding: 12px 16px; margin: 8px 0 4px; }
   .blind-spot li { font-size: 0.9rem; }
-  details.fold > summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; gap: 8px; }
+  details.fold > summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; gap: 10px; }
   details.fold > summary::-webkit-details-marker { display: none; }
-  details.fold > summary::before { content: "▸"; color: var(--red-ink); transition: transform .12s; }
+  details.fold > summary::before { content: "\203A"; font-size: 1.3em; line-height: 1; color: var(--red); transition: transform .15s; }
   details.fold[open] > summary::before { transform: rotate(90deg); }
   details.fold > summary h2 { display: inline; }
 
   /* Toàn văn hai nghị định — nhúng thẳng vào trang để không phải mở file .docx
      rời (trang vẫn là 1 file chạy offline). Đóng sẵn, mở khi cần đọc. */
-  header .docs { margin-top: 10px; font-size: 0.85rem; }
-  header .docs a { color: var(--blue-dark); text-decoration: none; border-bottom: 1px dashed var(--blue); }
-  details.doc { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(20,30,50,0.05); }
-  details.doc > summary { cursor: pointer; padding: 16px 22px; font-weight: 600; }
-  details.doc .doc-body { padding: 0 22px 20px; border-top: 1px solid var(--line); }
-  details.doc .doc-toc { font-size: 0.8rem; color: var(--muted); margin: 14px 0 18px; line-height: 2; }
-  details.doc .doc-toc a { color: var(--blue-dark); text-decoration: none; }
+  details.doc { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-card); margin-bottom: 20px; box-shadow: var(--shadow); }
+  details.doc > summary { cursor: pointer; padding: 18px 24px; font-weight: 700; color: var(--navy-deep); list-style: none; display: flex; align-items: center; gap: 10px; }
+  details.doc > summary::-webkit-details-marker { display: none; }
+  details.doc > summary::before { content: "\203A"; font-size: 1.3em; color: var(--navy); transition: transform .15s; }
+  details.doc[open] > summary::before { transform: rotate(90deg); }
+  details.doc .doc-body { padding: 4px 24px 22px; border-top: 1px solid var(--line); }
+  details.doc .doc-toc { font-size: 0.8rem; color: var(--muted); margin: 16px 0 20px; line-height: 2; }
+  details.doc .doc-toc a { color: var(--navy); text-decoration: none; }
   details.doc .doc-toc a:hover { text-decoration: underline; }
-  details.doc h3 { font-size: 1rem; color: var(--blue-dark); margin: 20px 0 6px; scroll-margin-top: 12px; }
+  details.doc h3 { font-size: 1rem; color: var(--navy-deep); margin: 22px 0 6px; scroll-margin-top: 12px; }
   details.doc h4 { font-size: 0.9rem; margin: 14px 0 6px; }
   details.doc p { font-size: 0.9rem; text-align: justify; margin: 6px 0; }
-  details.doc td, details.doc th { font-size: 0.82rem; padding: 5px 8px; text-transform: none; }
-  details.doc :target { background: #fff6d6; }
+  details.doc td, details.doc th { font-size: 0.82rem; padding: 6px 9px; text-transform: none; }
+  details.doc :target { background: #fdf1c7; box-shadow: 0 0 0 4px #fdf1c7; border-radius: 2px; }
 
   /* Nút nổi góc phải: toàn văn dài mấy nghìn dòng, cuộn ngược lên tìm lại thẻ
      <summary> để đóng là không khả thi. */
-  .fab { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; z-index: 9; }
-  .fab button { cursor: pointer; font-size: 0.85rem; font-weight: 600; padding: 9px 14px; border-radius: 99px; border: 1px solid var(--line); background: #fff; color: var(--blue-dark); box-shadow: 0 2px 8px rgba(20,30,50,0.14); }
-  .fab button:hover { border-color: var(--blue); background: #f2f6fc; }
+  .fab { position: fixed; right: 18px; bottom: 18px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; z-index: 20; }
+  .fab button { cursor: pointer; font-size: 0.84rem; font-weight: 600; padding: 10px 15px; border-radius: var(--r-ctrl); border: 1px solid var(--line-strong); background: var(--paper); color: var(--navy-deep); box-shadow: 0 6px 18px -6px rgba(16,32,54,.35); transition: background .15s, border-color .15s; }
+  .fab button:hover { border-color: var(--navy); background: var(--navy-tint); }
   .fab button[hidden] { display: none; }
 
   .note { color: var(--muted); font-size: 0.88rem; text-align: justify; }
-  footer { text-align: center; color: var(--muted); font-size: 0.82rem; margin-top: 30px; }
+  footer { text-align: center; color: var(--faint); font-size: 0.82rem; margin-top: 40px; padding-top: 22px; border-top: 1px solid var(--line); }
 
   @media print {
-    body { background: #fff; padding: 0; max-width: none; }
-    .instructions, #input-card, footer, header::before { display: none; }
-    .card { box-shadow: none; border-color: #bbb; break-inside: avoid; }
-    .pill { border: 1px solid #888; color: #000 !important; background: #fff !important; }
+    body { background: #fff; padding: 0; max-width: none; color: #000; }
+    .instructions, #input-card, footer, .fab, header::before { display: none; }
+    .card, details.doc { box-shadow: none; border-color: #999; break-inside: avoid; }
+    header { border-color: #000; }
+    tr.warn td:first-child, tr.ok td:first-child, tr.unknown td:first-child { box-shadow: none; }
+    .pill { border: 1px solid #666; color: #000 !important; background: #fff !important; }
   }
 </style>
 </head>
@@ -143,41 +192,38 @@
 
 <header>
   <h1>Tra cứu hóa chất</h1>
-  <p>Nghị định 24/2026/NĐ-CP &amp; Nghị định 26/2026/NĐ-CP</p>
+  <p class="sub">Nghị định 24/2026/NĐ-CP · Nghị định 26/2026/NĐ-CP</p>
   <p class="author">Tác giả: Nguyễn Hoàng Long - HQ KCX&amp;KCN</p>
-  <p class="docs">📖 Đọc toàn văn: <a href="#doc-nd24">NĐ 24/2026/NĐ-CP</a> · <a href="#doc-nd26">NĐ 26/2026/NĐ-CP</a></p>
+  <p class="docs">Toàn văn: <a href="#doc-nd24">NĐ 24/2026/NĐ-CP</a> · <a href="#doc-nd26">NĐ 26/2026/NĐ-CP</a></p>
 </header>
 
 <div class="card instructions">
-  <div class="icon">ℹ️</div>
-  <div>
-    <h2>Hướng dẫn sử dụng</h2>
-    <ol>
-      <li>Copy nguyên mô tả hàng hóa — <b>mỗi dòng một dòng hàng</b> (dán thẳng từ Excel được), hoặc một đoạn. Không cần tách tay từng mã CAS.</li>
-      <li>Dán vào ô bên dưới rồi bấm <b>Tra cứu</b>. Kết quả là bảng theo từng dòng hàng, hai chế độ tra:
-        <ul>
-          <li><b>Tìm theo mã CAS</b> (mặc định): mỗi dòng tra theo mọi mã CAS xuất hiện trong dòng đó. Chính xác nhất.</li>
-          <li><b>Tìm theo tên chất</b>: mỗi dòng dò tên hóa chất có trong mô tả. Dùng khi không khai mã CAS — kết quả chỉ là gợi ý, xem cảnh báo trong bảng.</li>
-        </ul>
-      </li>
-      <li>Kiểm tra các trường hợp miễn trừ Khai báo hóa chất và miễn trừ Giấy phép xuất khẩu, nhập khẩu ở bên dưới.</li>
-    </ol>
-  </div>
+  <h2>Hướng dẫn sử dụng</h2>
+  <ol>
+    <li>Copy nguyên mô tả hàng hóa — <b>mỗi dòng một dòng hàng</b> (dán thẳng từ Excel được), hoặc một đoạn. Không cần tách tay từng mã CAS.</li>
+    <li>Dán vào ô bên dưới rồi bấm <b>Tra cứu</b>. Kết quả là bảng theo từng dòng hàng, hai chế độ tra:
+      <ul>
+        <li><b>Tìm theo mã CAS</b> (mặc định): mỗi dòng tra theo mọi mã CAS xuất hiện trong dòng đó. Chính xác nhất.</li>
+        <li><b>Tìm theo tên chất</b>: mỗi dòng dò tên hóa chất có trong mô tả. Dùng khi không khai mã CAS — kết quả chỉ là gợi ý, xem cảnh báo trong bảng.</li>
+      </ul>
+    </li>
+    <li>Kiểm tra các trường hợp miễn trừ Khai báo hóa chất và miễn trừ Giấy phép xuất khẩu, nhập khẩu ở bên dưới.</li>
+  </ol>
 </div>
 
 <div class="card" id="input-card">
-  <div class="modes">
-    <button class="mode-btn active" id="mode-cas" aria-pressed="true" onclick="setMode('cas')">🔢 Tìm theo mã CAS</button>
-    <button class="mode-btn" id="mode-name" aria-pressed="false" onclick="setMode('name')">🔤 Tìm theo tên chất</button>
+  <div class="modes" role="tablist" aria-label="Chế độ tra cứu">
+    <button class="mode-btn active" id="mode-cas" aria-pressed="true" onclick="setMode('cas')">Tìm theo mã CAS</button>
+    <button class="mode-btn" id="mode-name" aria-pressed="false" onclick="setMode('name')">Tìm theo tên chất</button>
   </div>
   <div class="input-row">
     <textarea id="input" placeholder="Dán mô tả hàng hóa — mỗi dòng một dòng hàng (copy từ Excel được), hoặc một đoạn. Ví dụ:&#10;1&#9;Dung môi công nghiệp CAS 67-56-1&#10;2&#9;Keo dán, thùng 20kg&#10;3&#9;Hỗn hợp 107-13-1 và 103-79-7"></textarea>
-    <button id="run-btn" onclick="run()">🔍 Tra cứu</button>
+    <button id="run-btn" onclick="run()">Tra cứu</button>
   </div>
   <div class="toolbar">
-    <button class="mini" onclick="randomExampleForMode()">🎲 Ví dụ ngẫu nhiên</button>
-    <button class="mini" onclick="clearAll()">✕ Xóa</button>
-    <span class="hint">Mẹo: nhấn <b>Ctrl+Enter</b> (⌘+Enter trên Mac) để tra cứu nhanh</span>
+    <button class="mini" onclick="randomExampleForMode()">Ví dụ ngẫu nhiên</button>
+    <button class="mini" onclick="clearAll()">Xóa</button>
+    <span class="hint">Mẹo: <kbd>Ctrl</kbd>+<kbd>Enter</kbd> (<kbd>⌘</kbd>+<kbd>Enter</kbd> trên Mac) để tra nhanh</span>
   </div>
 </div>
 
@@ -186,7 +232,7 @@
 <div class="card exempt blind-spot">
   <details class="fold"><summary><h2>⚠ Vùng mù: mục Phụ lục III không có mã CAS — tra theo mã sẽ KHÔNG ra</h2></summary>
   <p class="lead">Nghị định 24/2026/NĐ-CP xếp các mục dưới đây vào Phụ lục III (hóa chất cần kiểm soát đặc biệt) nhưng ghi theo HỌ CHẤT, không có mã CAS.</p>
-  <p class="cite">📖 <a href="#nd24-pl-iii">Mở nguyên văn Phụ lục III của NĐ 24</a> để đối chiếu mô tả từng mục.</p>
+  <p class="cite"><a href="#nd24-pl-iii">Mở nguyên văn Phụ lục III của NĐ 24</a> để đối chiếu mô tả từng mục.</p>
   <h3>Phụ lục III › Nhóm 1 › B – Hóa chất Bảng 2 (Công ước Vũ khí hóa học)</h3>
   <ul><li><b><a href="#nd24-pl-iii">26.</a></b> Các hóa chất, trừ các chất đã được liệt kê tại Bảng 1, chứa 1 nguyên tử phospho liên kết với một nhóm methyl, ethyl hoặc propyl (mạch thẳng hoặc nhánh) nhưng không liên kết thêm với các nguyên tử các bon khác</li><li><b><a href="#nd24-pl-iii">27.</a></b> Các hợp chất N,N-Dialkyl (Me, Et, n-Pr hoặc i-Pr) phosphoramidic dihalide</li><li><b><a href="#nd24-pl-iii">28.</a></b> Các hợp chất Dialkyl (Me, Et, n-Pr hoặc i-Pr) N,N-dialkyl (Me, Et, n-Pr hoặc i-Pr)-phosphoramidate</li><li><b><a href="#nd24-pl-iii">32.</a></b> Các hợp chất N,N-Dialkyl (Me, Et, n-Pr hoặc i-Pr) aminoethyl-2-chloride</li><li><b><a href="#nd24-pl-iii">33.</a></b> Các hợp chất N,N-Dialkyl (Me, Et, n-Pr hoặc i-Pr) aminoethane-2-ol</li><li><b><a href="#nd24-pl-iii">34.</a></b> Các hợp chất N,N-Dialkyl (Me, Et, n-Pr or i-Pr) aminoethane-2-thiol và các muối proton hóa tương ứng</li></ul>
   <h3>Phụ lục III › Nhóm 1 › Hóa chất khác</h3>
@@ -225,7 +271,7 @@
   </details>
 </div>
 
-<details class="doc" id="doc-nd24"><summary>📖 Toàn văn Nghị định 24/2026/NĐ-CP — các danh mục hóa chất (Phụ lục I–IV)</summary><div class="doc-body"><nav class="doc-toc"><a href="#nd24-dieu-1">Điều 1</a> · <a href="#nd24-dieu-2">Điều 2</a> · <a href="#nd24-dieu-3">Điều 3</a> · <a href="#nd24-dieu-4">Điều 4</a> · <a href="#nd24-dieu-5">Điều 5</a> · <a href="#nd24-pl-i">PHỤ LỤC I</a> · <a href="#nd24-pl-ii">PHỤ LỤC II</a> · <a href="#nd24-pl-iii">PHỤ LỤC III</a> · <a href="#nd24-pl-iv">PHỤ LỤC IV</a></nav><div class="table-wrap"><table><tr><th>CHÍNH PHỦ<br>-------</th><th>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM<br>Độc lập - Tự do - Hạnh phúc<br>---------------</th></tr><tr><td>Số: 24/2026/NĐ-CP</td><td>Hà Nội, ngày 17 tháng 01 năm 2026</td></tr></table></div>
+<details class="doc" id="doc-nd24"><summary>Toàn văn Nghị định 24/2026/NĐ-CP — các danh mục hóa chất (Phụ lục I–IV)</summary><div class="doc-body"><nav class="doc-toc"><a href="#nd24-dieu-1">Điều 1</a> · <a href="#nd24-dieu-2">Điều 2</a> · <a href="#nd24-dieu-3">Điều 3</a> · <a href="#nd24-dieu-4">Điều 4</a> · <a href="#nd24-dieu-5">Điều 5</a> · <a href="#nd24-pl-i">PHỤ LỤC I</a> · <a href="#nd24-pl-ii">PHỤ LỤC II</a> · <a href="#nd24-pl-iii">PHỤ LỤC III</a> · <a href="#nd24-pl-iv">PHỤ LỤC IV</a></nav><div class="table-wrap"><table><tr><th>CHÍNH PHỦ<br>-------</th><th>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM<br>Độc lập - Tự do - Hạnh phúc<br>---------------</th></tr><tr><td>Số: 24/2026/NĐ-CP</td><td>Hà Nội, ngày 17 tháng 01 năm 2026</td></tr></table></div>
 <h3>NGHỊ ĐỊNH</h3>
 <h3>QUY ĐỊNH CÁC DANH MỤC HÓA CHẤT THUỘC PHẠM VI ĐIỀU CHỈNH CỦA LUẬT HÓA CHẤT</h3>
 <p>Căn cứ Luật Tổ chức Chính phủ số 63/2025/QH15;</p>
@@ -281,7 +327,7 @@
 <div class="table-wrap"><table><tr><th>STT</th><th>Tên khoa học (danh pháp IUPAC)</th><th>Tên chất</th><th>Mã số CAS</th><th>Công thức hóa học</th><th>Ngưỡng khối lượng hóa chất tồn trữ lớn nhất tại một thời điểm (kg)</th></tr><tr><td>1.</td><td>Acrolein (2-Propenal)</td><td>Acrolein</td><td>107-02-8</td><td>C3H4O</td><td>5.000</td></tr><tr><td>2.</td><td>Acrylonitrile</td><td>Acrylonitril</td><td>107-13-1</td><td>C3H3N</td><td>50.000</td></tr><tr><td>3.</td><td>Acryloyl chloride (2- Propenoyl chloride)</td><td>Acryloyl clorua</td><td>814-68-6</td><td>C3H3ClO</td><td>5.000</td></tr><tr><td>4.</td><td>Aldicarb</td><td>Aldicarb</td><td>116-06-3</td><td>C7H14N2O2S</td><td>5.000</td></tr><tr><td>5.</td><td>Allyl alcohol (2- Propen-1-ol)</td><td>Rượu alyl (2- Propen-1-ol)</td><td>107-18-6</td><td>C3H6O</td><td>5.000</td></tr><tr><td>6.</td><td>Allylamine (2- Propen-1-amine)</td><td>Alylamin (2- Propen-1-amin)</td><td>107-11-9</td><td>C3H7N</td><td>5.000</td></tr><tr><td>7.</td><td>Ammonia (anhydrous)</td><td>Amoniac khan</td><td>7664-41-7</td><td>NH3</td><td>50.000</td></tr><tr><td>8.</td><td>Ammonium nitrate</td><td>Amoni nitrat</td><td>6484-52-2</td><td>NH4NO3</td><td></td></tr><tr><td></td><td></td><td>Hỗn hợp chứa Amoni nitrat ở thành phần khối lượng ≤ 70%</td><td></td><td></td><td>5.000.000</td></tr><tr><td></td><td></td><td>Hỗn hợp chứa Amoni nitrat ở thành phần khối lượng &gt;70% và ≤ 80%</td><td></td><td></td><td>1.250.000</td></tr><tr><td></td><td></td><td>Hỗn hợp chứa Amoni nitrat ở thành phần khối lượng &gt;80% và ≤98%</td><td></td><td></td><td>350.000</td></tr><tr><td></td><td></td><td>Amoni nitrat và hỗn hợp chứa Amoni nitrat ở thành phần khối lượng ≥ 98%</td><td></td><td></td><td>10.000</td></tr><tr><td>9.</td><td>Anabasine, (Pyridine,3-(2S)-2- piperidinyl-)</td><td>Anabasin (Pyridin,3-(2S)-2- piperidinyl)</td><td>494-52-0</td><td>C10H14N2</td><td>50.000</td></tr><tr><td>10.</td><td>Arsen trihydride (arsine)</td><td>Asen hydrua</td><td>7784-42-1</td><td>AsH3</td><td>200</td></tr><tr><td>11.</td><td>Arsenic (V) acid and/or salts</td><td>Axit asenic và hoặc các muối asenat</td><td>---</td><td>H3AsO4</td><td>1.000</td></tr><tr><td>12.</td><td>Arsenic pentoxide</td><td>Asen pentoxit</td><td>1303-28-2</td><td>As2O5</td><td>1.000</td></tr><tr><td>13.</td><td>Arsenic trioxide</td><td>Asen trioxit</td><td>1327-53-3</td><td>As2O3</td><td>100</td></tr><tr><td>14.</td><td>Arsenous tricloride</td><td>Asen triclorua</td><td>7784-34-1</td><td>AsCl3</td><td>50.000</td></tr><tr><td>15.</td><td>Arsenious (III) acid and/or salts</td><td>Axit asenơ và các muối asenit</td><td>---</td><td>HAsO2</td><td>100</td></tr><tr><td>16.</td><td>Acetaldehyde</td><td>Axetaldehit</td><td>75-07-0</td><td>C2H4O</td><td>5.000</td></tr><tr><td>17.</td><td>Acetylene</td><td>Axetylen</td><td>74-86-2</td><td>C2H2</td><td>5.000</td></tr><tr><td>18.</td><td>Azinphos-ethyl</td><td>Azinphos-etyl</td><td>2642-71-9</td><td>C12H16N3O3PS2</td><td>5.000</td></tr><tr><td>19.</td><td>Azinphos-methyl</td><td>Azinphos-metyl</td><td>86-50-0</td><td>C10H12N3O3PS2</td><td>50.000</td></tr><tr><td>20.</td><td>Barium azide</td><td>Bari azit</td><td>18810-58-7</td><td>Ba(N3)2</td><td>10.000</td></tr><tr><td>21.</td><td>Beryllium (powders, compounds)</td><td>Beryli (dạng bột và các hợp chất)</td><td>7440-41-7</td><td>Be</td><td>100</td></tr><tr><td>22.</td><td>Bis (2,4,6- trinitrophenyl) amine</td><td>Bis (2,4,6-trinitrophenyl) amin</td><td>131-73-7</td><td>C12H5N7O12</td><td>10.000</td></tr><tr><td>23.</td><td>Bis (2-chloroethyl) sulphide</td><td>Bis (2-clo etyl) sunfua</td><td>505-60-2</td><td>C4H8Cl2S</td><td>5.000</td></tr><tr><td>24.</td><td>Bis (2- dimethyl aminoethyl) (methyl)amin</td><td>Bis (2- dimetylaminoetyl) (metyl)amin</td><td>3030-47-5</td><td>C9H23N3</td><td>50.000</td></tr><tr><td>25.</td><td>Bis (chloromethyl) ether</td><td>Bis (clo metyl) ete</td><td>542-88-1</td><td>C2H4Cl2O</td><td>50.000</td></tr><tr><td>26.</td><td>2,2- Bis(tert-butylperoxy) butane (&gt;70%)</td><td>2,2-Bis(tert-butylperoxy) butan (&gt;70%)</td><td>2167-23-9</td><td>C12H26O4</td><td>10.000</td></tr><tr><td>27.</td><td>1,1- Bis(tert-butylperoxy) xyclohexan (&gt;80%)</td><td>1,1-Bis(tert-butylperoxy) xyclohexan (&gt;80%)</td><td>3006-86-8</td><td>C14H28O4</td><td>10.000</td></tr><tr><td>28.</td><td>Boron trichloride (Borane, trichloro-)</td><td>Boron triclorua</td><td>10294-34-5</td><td>BCl3</td><td>5.000</td></tr><tr><td>29.</td><td>Boron trifluoride (Borane, trifluoro-)</td><td>Boron triflorua</td><td>20654-88-0 7637-07-2</td><td>BF3</td><td>5.000</td></tr><tr><td>30.</td><td>Boron trifluoride compound with methyl ether (1:1) (Boron, trifluoro (oxybis (metane)-, T-4-</td><td>Hỗn hợp boron triflorua và metyl ete (1:1)</td><td>353-42-4</td><td>C2H6BF3O</td><td>5.000</td></tr><tr><td>31.</td><td>Bromine</td><td>Brom</td><td>7726-95-6</td><td>Br2</td><td>20.000</td></tr><tr><td>32.</td><td>1-Bromo-3- chloropropane</td><td>1-Brom-3- cloropropan</td><td>109-70-6</td><td>C3H6BrCl</td><td>500</td></tr><tr><td>33.</td><td>Bromomethane (methyl bromide)</td><td>Metyl bromua</td><td>74-83-9</td><td>CH3Br</td><td>5.000</td></tr><tr><td>34.</td><td>Bromotrifluorethylene (Ethene, bromotrifluor o-)</td><td>Brom triflo etylen</td><td>598-73-2</td><td>C2BrF3</td><td>10.000</td></tr><tr><td>35.</td><td>1,3-Butadiene</td><td>1,3-Butadien</td><td>106-99-0</td><td>C4H6</td><td>10.000</td></tr><tr><td>36.</td><td>Butane</td><td>Butan</td><td>106-97-8</td><td>C4H10</td><td>10.000</td></tr><tr><td>37.</td><td>1-Butene</td><td>1-Buten</td><td>106-98-9</td><td>C4H8</td><td>10.000</td></tr><tr><td>38.</td><td>2-Butene</td><td>2-Buten</td><td>107-01-7<br>590-18-1<br>624-64-6</td><td>C4H8</td><td>10.000</td></tr><tr><td>39.</td><td>Butene</td><td>Buten</td><td>25167-67-3</td><td>C4H8</td><td>10.000</td></tr><tr><td>40.</td><td>Tert-butyl acrylate</td><td>Tert-butyl acrylat</td><td>1663-39-4</td><td>C7H12O2</td><td>200.000</td></tr><tr><td>41.</td><td>Tert-butyl peroxy isobutyrate (&gt;80%)</td><td>Tert-butyl peroxy isobutyrat (&gt;80%)</td><td>109-13-7</td><td>C8H16O3</td><td>5.000</td></tr><tr><td>42.</td><td>Tert-butyl peroxyacetate (&gt;70%)</td><td>Tert-butyl peroxyaxetat (&gt;70%)</td><td>107-71-1</td><td>C6H12O3</td><td>10.000</td></tr><tr><td>43.</td><td>Tert-butylperoxy isopropylcarbonate (&gt;80%)</td><td>Tert-butylperoxy isopropyl cacbonat (&gt;80%)</td><td>2372-21-6</td><td>C8H16O4</td><td>10.000</td></tr><tr><td>44.</td><td>Carbofuran</td><td>Cacbofuran</td><td>1563-66-2</td><td>C12H15NO3</td><td>5.000</td></tr><tr><td>45.</td><td>Carbon disulfide</td><td>Cacbon disunfua</td><td>75-15-0</td><td>CS2</td><td>10.000</td></tr><tr><td>46.</td><td>Carbon oxysulfide (Carbon oxide sulfide (COS))</td><td>Cacbon oxysunfua</td><td>463-58-1</td><td>COS</td><td>10.000</td></tr><tr><td>47.</td><td>Carbon phenothion</td><td>Cacbon phenothion</td><td>786-19-6</td><td>C11H16ClO2PS3</td><td>5.000</td></tr><tr><td>48.</td><td>Carbonyl dichloride (phosgene)</td><td>Cacbonyl clorua (phosgen)</td><td>75-44-5</td><td>CCl2O</td><td>300</td></tr><tr><td>49.</td><td>Lead 2,4,6-trinitroresorcinoxide lead styphnate)</td><td>Chì 2,4,6-trinitroresorcinoxit</td><td>63918-97-8</td><td>C6HN3O8Pb</td><td>50.000</td></tr><tr><td>50.</td><td>Lead alkyls</td><td>Các ankyl chì</td><td>--</td><td>--</td><td>5.000</td></tr><tr><td>51.</td><td>Lead azide</td><td>Chì azit</td><td>13424-46-9</td><td>PbN6</td><td>10.000</td></tr><tr><td>52.</td><td>1-Chlopropylene (1-Propene, 1-chloro-)</td><td>1-Clo propylene</td><td>590-21-6</td><td>C3H5Cl</td><td>10.000</td></tr><tr><td>53.</td><td>Chlorfenvinphos</td><td>Clo fenvinphos</td><td>470-90-6</td><td>C12H14Cl3O4P</td><td>5.000</td></tr><tr><td>54.</td><td>Chlorine</td><td>Clo</td><td>7782-50-5</td><td>Cl2</td><td>10.000</td></tr><tr><td>55.</td><td>Chlorine dioxide (Chlorine oxide (ClO2))</td><td>Clo dioxit</td><td>10049-04-4</td><td>ClO2</td><td>5.000</td></tr><tr><td>56.</td><td>Chloroform (methane, trichloro-)</td><td>Cloroform</td><td>67-66-3</td><td>CHCl3</td><td>5.000</td></tr><tr><td>57.</td><td>Chloromethyl methyl ether</td><td>Clormetyl metyl ete</td><td>107-30-2</td><td>C2H5ClO</td><td>5.000</td></tr><tr><td>58.</td><td>2-chloropropane</td><td>Isopropyl clorua</td><td>75-29-6</td><td>C3H7Cl</td><td>10.000</td></tr><tr><td>59.</td><td>2-Chloropropylene (1-Propene, 2-chloro-)</td><td>2-Clo propylene</td><td>557-98-2</td><td>C3H5Cl</td><td>10.000</td></tr><tr><td>60.</td><td>Chlorotrinitro benzene</td><td>Clo trinitro benzen</td><td>88-88-0</td><td>C6H2ClN3O6</td><td>5.000</td></tr><tr><td>61.</td><td>Cobalt metal, oxides, carbonates, sulphides, as powders</td><td>Coban kim loại và các hợp chất oxit, carbonnat, sulfua dạng bột</td><td>---</td><td>---</td><td>5.000</td></tr><tr><td>62.</td><td>Crimidine</td><td>Crimidin</td><td>535-89-7</td><td>C7H10ClN3</td><td>5.000</td></tr><tr><td>63.</td><td>Crotonaldehyde (2-Butenal)</td><td>2-Butenal</td><td>4170-30-3<br>123-73-9<br>15798-64-8</td><td>C4H6O</td><td>5.000</td></tr><tr><td>64.</td><td>Demeton</td><td>Demeton</td><td>8065-48-3</td><td>C16H38O6P2S4</td><td>5.000</td></tr><tr><td>65.</td><td>Dialifos</td><td>Dialifos</td><td>10311-84-9</td><td>C14H17CINO4PS2</td><td>50.000</td></tr><tr><td>66.</td><td>Diazodinitrophenol</td><td>Diazo dinitro phenol</td><td>87-31-0</td><td>C6H2N4O5</td><td>10.000</td></tr><tr><td>67.</td><td>Dibenzyl peroxy dicarbonate (&gt;90%)</td><td>Dibenzyl peroxy dicacbonat (&gt;90%)</td><td>2144-45-8</td><td>C16H14O6</td><td>10.000</td></tr><tr><td>68.</td><td>Diborane</td><td>Diboran</td><td>19287-45-7</td><td>B2H6</td><td>5.000</td></tr><tr><td>69.</td><td>1,2-Dibromoethane (ethylene dibromide)</td><td>1,2-Dibrom etan</td><td>106-93-4</td><td>C2H4Br2</td><td>50.000</td></tr><tr><td>70.</td><td>Dichlorosilane (silane, dichloro-)</td><td>Diclo silan</td><td>4109-96-0</td><td>Cl2H2Si</td><td>5.000</td></tr><tr><td>71.</td><td>oo-Diethyl s- ethylsulphinylmethyl phosphorothioate</td><td>oo-Dietyl s- etylsunphinylmetyl photphothioat</td><td>2588-05-8</td><td>C7H17O4PS2</td><td>5.000</td></tr><tr><td>72.</td><td>oo-Diethyl s-ethyl sulphonylmethyl phosphorothioate</td><td>oo-Dietyl s-etyl sunphonylmetyl photphothioat</td><td>2588-06-9</td><td>C7H17O5PS2</td><td>5.000</td></tr><tr><td>73.</td><td>oo-Diethyl s-ethyl thiomethyl phosphorothioate</td><td>oo-Dietyl s-etyl thiometyl photphothioat</td><td>2600-69-3</td><td>C7H17O3PS2</td><td>5.000</td></tr><tr><td>74.</td><td>oo-Diethyl s-iso propylthiomethyl phosphorodithioate</td><td>oo-Dietyl s-iso propylthiometyl photphodithioat</td><td>78-52-4</td><td>C8H19O2PS3</td><td>5.000</td></tr><tr><td>75.</td><td>oo-Diethyl s-propyl thiomethyl phosphorodithioate</td><td>oo-Dietyl s-propyl thiometyl photphodithioat</td><td>3309-68-0</td><td>C8H19O2PS3</td><td>5.000</td></tr><tr><td>76.</td><td>Diethylene glycol dinitrate</td><td>Dietylen glycol dinitrat</td><td>693-21-0</td><td>C4H8N2O7</td><td>10.000</td></tr><tr><td>77.</td><td>Dietyl peroxy dicarbonate (&gt;30%)</td><td>Dietyl peroxy dicarbonat (&gt; 30%)</td><td>14666-78-5</td><td>C6H10O6</td><td>10.000</td></tr><tr><td>78.</td><td>Difluoroethane (Ethane, 1,1 -difluoro-)</td><td>1,1 Diflo etan</td><td>75-37-6</td><td>C2H4F2</td><td>10.000</td></tr><tr><td>79.</td><td>2,2 Dihydro peroxypropane (&gt;30%)</td><td>2,2-Dihydro peroxypropan (&gt;30%)</td><td>2614-76-8</td><td>C3H8O4</td><td>10.000</td></tr><tr><td>80.</td><td>Di-isobutyryl peroxide (&gt; 50%)</td><td>Di-isobutyryl peroxit (&gt; 50%)</td><td>3437-84-1</td><td>C8H14O4</td><td>10.000</td></tr><tr><td>81.</td><td>Dimefox</td><td>Dimefox</td><td>115-26-4</td><td>C4H12FN2OP</td><td>5.000</td></tr><tr><td>82.</td><td>Dimethylamine (Methanamine, N-methyl-)</td><td>Dimetyl amin</td><td>124-40-3</td><td>C2H7N</td><td>5.000</td></tr><tr><td>83.</td><td>Dimethylcarbamoyl chloride</td><td>Dimetylcacbamoyl clorua</td><td>79-44-7</td><td>C3H6CINO</td><td>50.000</td></tr><tr><td>84.</td><td>Dimethyldichlorosilane (silane, dichlorodimethyl-)</td><td>Dimetyldiclo silan</td><td>75-78-5</td><td>C2H6Cl2Si</td><td>5.000</td></tr><tr><td>85.</td><td>Methyl ether (Methane, oxybis-)</td><td>Dimetyl ete</td><td>115-10-6</td><td>C2H6O</td><td>10.000</td></tr><tr><td>86.</td><td>Dimethylnitrosamine</td><td>Dimetyl nitrosamin</td><td>62-75-9</td><td>C2H6N2O</td><td>5.000</td></tr><tr><td>87.</td><td>2,2-Dimethylpropane (Propane, 2,2-dimethyl-)</td><td>2,2-Dimetyl propan</td><td>463-82-1</td><td>C5H12</td><td>10.000</td></tr><tr><td>88.</td><td>Dimetylphosphoramid ocyanidic acid</td><td>Axit dimetyl photphoramido xyanidic</td><td>63917-41-9</td><td>C3H7N2P</td><td>1.000</td></tr><tr><td>89.</td><td>Di-n-propylperoxy dicarbonate (&gt; 80%)</td><td>Di-n-propylperoxy dicacbonat (&gt; 80%)</td><td>16066-38-9</td><td>C8H14O6</td><td>10.000</td></tr><tr><td>90.</td><td>Diphacinone</td><td>Diphacinon</td><td>82-66-6</td><td>C23H16O3</td><td>5.000</td></tr><tr><td>91.</td><td>Di-sec-butyl peroxydicarbonate (&gt; 80%)</td><td>Di-sec-butyl peroxydicacbonat (&gt; 80%)</td><td>19910-65-7</td><td>C10H18O6</td><td>10.000</td></tr><tr><td>92.</td><td>Disulfoton</td><td>Disulfoton</td><td>298-04-4</td><td>C8H19O2PS3</td><td>5.000</td></tr><tr><td>93.</td><td>Epichlorohydrin (oxirane, (chloromethyl-)</td><td>Epiclohydrin</td><td>106-89-8</td><td>C3H5ClO</td><td>5.000</td></tr><tr><td>94.</td><td>Epn (Phosphonothioic acid, P-phenyl-, O-ethyl O-(4-nitrophenyl) ester)</td><td>Epn (Photphonothioic acid, P-phenyl-, O-ethyl O-(4-nitrophenyl) este)</td><td>2104-64-5</td><td>C14H14NO4PS</td><td>5.000</td></tr><tr><td>95.</td><td>Ethane</td><td>Etan</td><td>74-84-0</td><td>C2H6</td><td>10.000</td></tr><tr><td>96.</td><td>Ethion</td><td>Ethion</td><td>563-12-2</td><td>C9H22O4P2S4</td><td>50.000</td></tr><tr><td>97.</td><td>Ethylamine (Ethanamine)</td><td>Etyl amin</td><td>75-04-7</td><td>C2H7N</td><td>5.000</td></tr><tr><td>98.</td><td>Ethyl acetylene (1-Butyne)</td><td>Etyl axetylen</td><td>107-00-6</td><td>C4H6</td><td>10.000</td></tr><tr><td>99.</td><td>Ethyl chloride (Ethane, chloro)</td><td>Etyl clorua</td><td>75-00-3</td><td>C2H5Cl</td><td>10.000</td></tr><tr><td>100.</td><td>Ethyl ether (Ethane, 1,1’-oxybis-)</td><td>Etyl ete</td><td>60-29-7</td><td>C4H10O</td><td>10.000</td></tr><tr><td>101.</td><td>Ethyl mercaptan (Ethanethiol)</td><td>Etyl mercaptan</td><td>75-08-1</td><td>C2H6S</td><td>10.000</td></tr><tr><td>102.</td><td>Ethyl nitrate</td><td>Etyl nitrat</td><td>625-58-1</td><td>C2H5NO3</td><td>50.000</td></tr><tr><td>103.</td><td>Ethyl nitrite (Nitrous acid, ethyl ester)</td><td>Etyl nitro</td><td>109-95-5</td><td>C2H5NO2</td><td>10.000</td></tr><tr><td>104.</td><td>Ethylene glycol dinitrate</td><td>Etylen glycol dinitrat</td><td>628-96-6</td><td>C2H4N2O6</td><td>10.000</td></tr><tr><td>105.</td><td>Ethylene oxide</td><td>Etylen oxit</td><td>75-21-8</td><td>C2H4O</td><td>5.000</td></tr><tr><td>106.</td><td>Ethylenediamine (1,2-Ethanediamine)</td><td>Etylen diamin</td><td>107-15-3</td><td>C2H8N2</td><td>5.000</td></tr><tr><td>107.</td><td>Ethyleneimine</td><td>Etylenimin</td><td>151-56-4</td><td>C2H5N</td><td>10.000</td></tr><tr><td>108.</td><td>3-(2-Ethylhexyloxy) propylamin</td><td>3-(2-Etylhexyloxy) propylamin</td><td>5397-31-9</td><td>C11H25NO</td><td>50.000</td></tr><tr><td>109.</td><td>Fluorine</td><td>Flo</td><td>7782-41-4</td><td>F2</td><td>10.000</td></tr><tr><td>110.</td><td>Fluoroacetic acid</td><td>Axit flo axetic</td><td>144-49-0</td><td>C2H3FO2</td><td>5.000</td></tr><tr><td>111.</td><td>Fluenetil</td><td>Fluenetil (2-floetyl 4 -Biphenylaxetat)</td><td>4301-50-2</td><td>C16H15FO2</td><td>5.000</td></tr><tr><td>112.</td><td>Formaldehyde (Conc. &gt; 90%)</td><td>Formaldehit (Nồng độ ≥ 90%)</td><td>50-00-00</td><td>CH2O</td><td>5.000</td></tr><tr><td>113.</td><td>Furan</td><td>Furan</td><td>110-00-9</td><td>C4H4O</td><td>10.000</td></tr><tr><td>114</td><td>1-guanyl-4-nitrosaminoguanyl-1 -tetrazene</td><td>1 -Guanyl-4-nitrosaminoguanyl-1 -tetrazen</td><td>109-27-3</td><td>C2H8N10O</td><td>10.000</td></tr><tr><td>115.</td><td>1,2,3,7,8,9- Hexachlorodibenzo-p- dioxin</td><td>1,2,3,7,8,9-Hexaclo dibenzo-p-dioxin</td><td>19408-74-3</td><td>C12H2Cl6O2</td><td>100</td></tr><tr><td>116.</td><td>33.6.6.9.9-Hexamethyl-1,2,4,5-tetroxacyclononate (&gt;75%)</td><td>3,3,6,6,9,9-Hexametyl- 1,2,4,5-tetroxacyclononat (&gt;75%)</td><td>22397-33-7</td><td>C12H22O4</td><td>5000</td></tr><tr><td>117.</td><td>Hexamethylphosphor oamide</td><td>Hexametylphotphor oamit</td><td>680-31-9</td><td>C6H18N3OP</td><td>50.000</td></tr><tr><td>118.</td><td>2,2’,4,4’,6,6’-hexanitrostilbene</td><td>2,2’, 4,4’, 6,6’-Hexanitro stilben</td><td>20062-22-0</td><td>C14H6N6O12</td><td>10.000</td></tr><tr><td>119.</td><td>Hydrazine</td><td>Hydrazin</td><td>302-01-2</td><td>H4N2</td><td>5.000</td></tr><tr><td>120.</td><td>Hydrazine nitrate</td><td>Hydrazin nitrat</td><td>13464-97-6</td><td>H5N3O3</td><td>50.000</td></tr><tr><td>121</td><td>Hydrogen</td><td>Hydro</td><td>1333-74-0</td><td>H2</td><td>5.000</td></tr><tr><td>122.</td><td>Hydrogen chloride and Chlohydric acid</td><td>Hydro clorua và axit clohydric</td><td>7647-01-0</td><td>HCl</td><td>25.000</td></tr><tr><td>123.</td><td>Hydrogen fluoride</td><td>Hydro florua</td><td>7664-39-3</td><td>HF</td><td>5.000</td></tr><tr><td>124.</td><td>Hydrogen selenide</td><td>Hydro selenua</td><td>7783-07-5</td><td>H2Se</td><td>10.000</td></tr><tr><td>125.</td><td>Hydrogen sulphide</td><td>Hydro sunfua</td><td>7783-06-4</td><td>H2S</td><td>5.000</td></tr><tr><td>126.</td><td>Hydrocyanic acid</td><td>Axit hydroxyanic</td><td>74-90-8</td><td>HCN</td><td>5.000</td></tr><tr><td>127.</td><td>5-Hydroxy-1,4-naphthalenedione</td><td>5-hydroxy naphthalen-1,4-dion</td><td>481-39-0</td><td>C10H6O3</td><td>10.000</td></tr><tr><td>128.</td><td>Hydroxy acetonitrile (glycolonitrile)</td><td>Hydroxy axetonitril</td><td>107-16-4</td><td>C2H3NO</td><td>5.000</td></tr><tr><td>129.</td><td>Isobenzan</td><td>Isobenzan</td><td>297-78-9</td><td>C9H4Cl8O</td><td>5.000</td></tr><tr><td>130.</td><td>2- methyl-Propanenitrile</td><td>Isobutyronitril (2-metyl propan nitril)</td><td>78-82-0</td><td>C4H7N</td><td>10.000</td></tr><tr><td>131.</td><td>Isodrin</td><td>Isodrin</td><td>465-73-6</td><td>C12H8Cl6</td><td>1.000</td></tr><tr><td>132.</td><td>2-methyl- Butane</td><td>Isopentan</td><td>78-78-4</td><td>C5H12</td><td>5.000</td></tr><tr><td>133.</td><td>2-methyl-1,3-butadiene</td><td>Isopren</td><td>78-79-5</td><td>C5H8</td><td>10.000</td></tr><tr><td>134.</td><td>1-methylethyl chlorocarbonate</td><td>Isopropyl cloformat</td><td>108-23-6</td><td>C4H7ClO2</td><td>5.000</td></tr><tr><td>135.</td><td>Potassium nitrate</td><td>Kali nitrat</td><td>7757-79-1</td><td>KNO3</td><td></td></tr><tr><td></td><td></td><td>Dạng hạt</td><td></td><td></td><td>5.000.000</td></tr><tr><td></td><td></td><td>Dạng tinh thể</td><td></td><td></td><td>1.250.000</td></tr><tr><td>136.</td><td>Liquefied extremely flammable gases (including LPG) and natural gas</td><td>Các khí hóa lỏng đặc biệt dễ cháy (bao gồm cả LPG) và khí thiên nhiên</td><td>---</td><td>---</td><td>50.000</td></tr><tr><td>137.</td><td>Sulfur dichloride</td><td>Lưu huỳnh diclorua</td><td>10545-99-0</td><td>SCl2</td><td>100</td></tr><tr><td>138.</td><td>Sulfur dioxide</td><td>Lưu huỳnh dioxit</td><td>7446-09-5</td><td>SO2</td><td>50.000</td></tr><tr><td>139.</td><td>Sulfur tetrafloride (Sulfur fluoride)</td><td>Lưu huỳnh tetraflorua</td><td>7783-60-0</td><td>SF4</td><td>5.000</td></tr><tr><td>140.</td><td>Sulfur trioxide</td><td>Lưu huỳnh trioxit</td><td>7446-11-9</td><td>SO3</td><td>15.000</td></tr><tr><td>141.</td><td>Methane</td><td>Metan</td><td>74-82-8</td><td>CH4</td><td>10.000</td></tr><tr><td>142.</td><td>Methanol</td><td>Metanol</td><td>67-56-1</td><td>CH4O</td><td>500.000</td></tr><tr><td>143.</td><td>3-Methyl -1-butene</td><td>3-Metyl 1-buten</td><td>563-45-1</td><td>C5H10</td><td>5.000</td></tr><tr><td>144.</td><td>Methyl acrylate</td><td>Metyl acrylat</td><td>96-33-3</td><td>C4H6O2</td><td>500.000</td></tr><tr><td>145.</td><td>Methylamine (Methanamine)</td><td>Metyl amin</td><td>74-89-5</td><td>CH5N</td><td>5.000</td></tr><tr><td>146.</td><td>Methyl chloride (Methane, chloro-)</td><td>Metyl clorua</td><td>74-87-3</td><td>CH3Cl</td><td>5.000</td></tr><tr><td>147.</td><td>Methyl chloroformate (Carbonochloridic acid, methylester)</td><td>Metyl cloformat</td><td>79-22-1</td><td>C2H3ClO2</td><td>5.000</td></tr><tr><td>148.</td><td>Methyl ethyl ketone peroxide (&gt; 60%)</td><td>Metyl etyl keton peroxit (&gt; 60%)</td><td>1338-23-4</td><td>C8H18O6</td><td>5.000</td></tr><tr><td>149.</td><td>Methyl formate (Formic acid, methyl ester)</td><td>Metyl format</td><td>107-31-3</td><td>C2H4O2</td><td>5.000</td></tr><tr><td>150.</td><td>Methyl hydrazine (Hydrazine, methyl-)</td><td>Metyl hydrazin</td><td>60-34-4</td><td>CH6N2</td><td>5.000</td></tr><tr><td>151.</td><td>Methyl isobutyl ketone peroxide (&gt; 60%)</td><td>Metyl isobutyl keton peroxit (nồng độ &gt; 60%)</td><td>37206-20-5</td><td>C12H26O4</td><td>50.000</td></tr><tr><td>152.</td><td>Methyl isocyanate</td><td>Metyl isoxyanat</td><td>624-83-9</td><td>C2H3NO</td><td>150</td></tr><tr><td>153.</td><td>Methyl mercaptan (Methanethiol)</td><td>Metyl mercaptan</td><td>74-93-1</td><td>CH4S</td><td>10.000</td></tr><tr><td>154.</td><td>Methyl thiocyanate (Thiocyanic acid, methyl ester)</td><td>Metyl thioxyanat</td><td>556-64-9</td><td>C2H3NS</td><td>10.000</td></tr><tr><td>155.</td><td>2-Methyl-1 -butene</td><td>2-Metyl 1-buten</td><td>563-46-2</td><td>C5H10</td><td>10.000</td></tr><tr><td>156.</td><td>2-methyl-2- Propenenitrile</td><td>Metacrylonitril</td><td>126-98-7</td><td>C4H5N</td><td>10.000</td></tr><tr><td>157.</td><td>2-Methyl-3- butenenitrile</td><td>2-Metyl-3-buten nitril</td><td>16529-56-9</td><td>C5H7N</td><td>500.000</td></tr><tr><td>158.</td><td>4,4’- Methylenebis (2-chloroaniline) and/or salts, in powder form</td><td>4,4-Metylen bis (2-clo anilin) và/hoặc muối của nó ở dạng bột</td><td>101-14-4</td><td>C13H12C12N2</td><td>10</td></tr><tr><td>159.</td><td>Methyl isocyanate</td><td>Metyl isoxyanat</td><td>624-83-9</td><td>C2H3NO</td><td>5.000</td></tr><tr><td>160.</td><td>n-Methyl-n,2,4,6-tetranitroaniline</td><td>n-Metyl-n, 2,4,6-tetranitroanilin</td><td>479-45-8</td><td>C7H5N5O8</td><td>5.000</td></tr><tr><td>161.</td><td>2-Methylpropene (1-Propene, 2-methyl-)</td><td>2-Metyl 1-propen</td><td>115-11-7</td><td>C4H8</td><td>10.000</td></tr><tr><td>162.</td><td>3-Methylpyridine</td><td>3-Metylpyridin</td><td>108-99-6</td><td>C6H7N</td><td>500</td></tr><tr><td>163.</td><td>Methyltrichlorosilane (Silane, trichloromethyl-)</td><td>Metyl triclo silan</td><td>75-79-6</td><td>CH3Cl3Si</td><td>5.000</td></tr><tr><td>164.</td><td>Mevinphos</td><td>Mevinphos</td><td>7786-34-7</td><td>C7H13O6P</td><td>5.000</td></tr><tr><td>165.</td><td>Sodium chlorate</td><td>Natri clorat</td><td>7775-09-9</td><td>NaClO3</td><td>50.000</td></tr><tr><td>166.</td><td>Sodium picramate</td><td>Natri picramat</td><td>831-52-7</td><td>C6H4N3NaO5</td><td>10.000</td></tr><tr><td>167.</td><td>Sodium selenite</td><td>Natri selenit</td><td>10102-18-8</td><td>Na2SeO3</td><td>50.000</td></tr><tr><td>168.</td><td>Mixtures of sodium hypochlorite</td><td>Hỗn hợp chứa natri hypoclorit</td><td>---</td><td>---</td><td>200.000</td></tr><tr><td>169.</td><td>Nickel compounds in inhalable powder form (oxides, sulphides, carbonate)</td><td>Niken và các hợp chất chứa Ni dạng bột có thể phát tán trong không khí (các loại oxit, cacbonat, sunfua)</td><td>--</td><td>---</td><td>1.000</td></tr><tr><td>170.</td><td>Nickel tetracarbonyl</td><td>Niken tetracacbonyl</td><td>13463-39-3</td><td>C4NiO4</td><td>5.000</td></tr><tr><td>171.</td><td>Nitric acid (cone 80% or greater)</td><td>Axit nitric</td><td>7697-37-2</td><td>HNO3</td><td>5.000</td></tr><tr><td>172.</td><td>Nitroglycerin</td><td>Nitơ glyxerin</td><td>55-63-0</td><td>C3H5N3O9</td><td>5.000</td></tr><tr><td>173</td><td>Nitric oxdide (Nitrogen oxide (NO))</td><td>Nitơ monoxit</td><td>10102-43-9</td><td>NO</td><td>50.000</td></tr><tr><td>174.</td><td>Nitrogen oxides</td><td>Nitơ oxit</td><td>11104-93-1</td><td>NOx</td><td>50.000</td></tr><tr><td>175.</td><td>Nitrocellulose (containing &gt; 12,6% of nitrogen)</td><td>Nitơ xenlulo (hàm lượng &gt; 12,6% nitrogen)</td><td>9004-70-0</td><td>---</td><td>10.000</td></tr><tr><td>176.</td><td>Oleum (Fuming Sulfuric acid) (Sulfuric acid, mixture with sulfur trioxide)</td><td>Oleum (hỗn hợp axit sunfuric với lưu huỳnh trioxit)</td><td>8014-95-7</td><td>H2SO4*nSO3</td><td>5.000</td></tr><tr><td>177.</td><td>Oxygen</td><td>Oxy</td><td>7782-44-7</td><td>O2</td><td>200.000</td></tr><tr><td>178.</td><td>Oxydisulfoton</td><td>Oxydisunfoton</td><td>2497-07-6</td><td>C8H19O3PS3</td><td>5.000</td></tr><tr><td>179.</td><td>Oxygen difloride</td><td>Oxy diflorua</td><td>7783-41-7</td><td>F2O</td><td>5.000</td></tr><tr><td>180.</td><td>Paraoxon (diethyl 4-nitrophenylphosphate)</td><td>Paraoxon (dietyl 4- nitrophenyl photphat)</td><td>311-45-5</td><td>C10H14NO6P</td><td>10.000</td></tr><tr><td>181.</td><td>Parathion</td><td>Parathion</td><td>56-38-2</td><td>C10H14NO5PS</td><td>5.000</td></tr><tr><td>182.</td><td>Parathion-methyl</td><td>Parathion-metyl</td><td>298-00-0</td><td>C10H14NO5PS</td><td>50.000</td></tr><tr><td>183.</td><td>Pensulfothion</td><td>Pensunfothion</td><td>115-90-2</td><td>C11H17O4PS2</td><td>5.000</td></tr><tr><td>184.</td><td>Pentaborane</td><td>Pentaboran</td><td>19624-22-7</td><td>B5H9</td><td>5.000</td></tr><tr><td>185.</td><td>1,3-Pentadiene</td><td>1,3-Pentadien</td><td>504-60-9</td><td>C5H8</td><td>10.000</td></tr><tr><td>186.</td><td>Pentaerythritol tetranitrate</td><td>Pentaerythritol tetranitrat</td><td>78-11-5</td><td>C5H8N4O12</td><td>10.000</td></tr><tr><td>187.</td><td>Pentane</td><td>Pentan</td><td>109-66-0</td><td>C5H12</td><td>5.000</td></tr><tr><td>188.</td><td>1-Pentene</td><td>1-Penten</td><td>109-67-1</td><td>C5H10</td><td>5.000</td></tr><tr><td>189.</td><td>2-Pentene, (E)-</td><td>(E)-2-Penten</td><td>646-04-8</td><td>C5H10</td><td>5.000</td></tr><tr><td>190.</td><td>2-Pentene, (Z)-</td><td>(Z)-2-Penten</td><td>627-20-3</td><td>C5H10</td><td>5.000</td></tr><tr><td>191.</td><td>Peracetic acid (&gt; 60%)</td><td>Axit peraxetic (&gt; 60%)</td><td>79-21-0</td><td>C2H4O3</td><td>5.000</td></tr><tr><td>192.</td><td>Perchloromethylmercaptan (Methanesulfenyl chloride, trichloro-)</td><td>Perclometyl mercaptan</td><td>594-42-3</td><td>CCl4S</td><td>5.000</td></tr><tr><td>193.</td><td>Phosphorus (White, yellow)</td><td>Photpho vàng</td><td>7723-14-0</td><td>P4</td><td>1.000</td></tr><tr><td>194.</td><td>Phorate</td><td>Phorat</td><td>298-02-2</td><td>C7H17O2PS3</td><td>5.000</td></tr><tr><td>195.</td><td>Phosacetim</td><td>Phosacetim</td><td>4104-14-7</td><td>C14H13Cl2N2O2PS</td><td>5.000</td></tr><tr><td>196.</td><td>Phosphamidon</td><td>Phosphamidon</td><td>13171-21-6</td><td>C10H19CINO5P</td><td>50.000</td></tr><tr><td>197.</td><td>Phosphorus oxychloride (Phosphoryl chloride)</td><td>Photpho oxyclorua</td><td>10025-87-3</td><td>POCl3</td><td>5.000</td></tr><tr><td>198.</td><td>Phosphorus trichloride (Phosphorous trichloride)</td><td>Photpho triclorua</td><td>7719-12-2</td><td>PCl3</td><td>5.000</td></tr><tr><td>199.</td><td>Phosphorus trihydride (phosphine)</td><td>Photpho trihydrua (photphin)</td><td>7803-51-2</td><td>PH3</td><td>200</td></tr><tr><td>200.</td><td>Piperidine</td><td>Piperidin</td><td>110-89-4</td><td>C5H11N</td><td>50.000</td></tr><tr><td>201.</td><td>Polychlorodibenzo-furans and Polychlorodibenzo-dioxins (including TCDD)</td><td>Các Polyclo dibenzo furan và Polyclodibenzo dioxin (bao gồm TCDD)</td><td>33857-26-0</td><td>C12H6Cl2O2</td><td>1</td></tr><tr><td>202.</td><td>2- methyl-Aziridine</td><td>Propylen imin</td><td>75-55-8</td><td>C3H7N</td><td>10.000</td></tr><tr><td>203.</td><td>Promurit (1-(3,4-dichlorophenyl) -3-triazene thiocarboxamide)</td><td>Promurit (1-(3,4-diclophenyl)-3-triazenethiocacboxamit)</td><td>5836-73-7</td><td>C7H6Cl2N4S</td><td>5.000</td></tr><tr><td>204.</td><td>1,2-Propadiene</td><td>Propadien</td><td>463-49-0</td><td>C3H4</td><td>10.000</td></tr><tr><td>205.</td><td>2-Propanamine</td><td>Isopropylamin</td><td>75-31-0</td><td>C3H9N</td><td>10.000</td></tr><tr><td>206.</td><td>Propane</td><td>Propan</td><td>74-98-6</td><td>C3H8</td><td>10.000</td></tr><tr><td>207.</td><td>1-propen-2-chloro-1,3-diol-diacetate</td><td>1-Propen-2-clo-1,3-diol diaxetat</td><td>10118-77-6</td><td>C7H9ClO4</td><td>10</td></tr><tr><td>208.</td><td>1-Propene</td><td>Propylen</td><td>115-07-1</td><td>C3H6</td><td>10.000</td></tr><tr><td>209.</td><td>Propionitrile (Propanenitrile)</td><td>Propionitril</td><td>107-12-0</td><td>C3H5N</td><td>5.000</td></tr><tr><td>210.</td><td>Propyl chloroformate (Carbonochloridic acid, propylester)</td><td>Propyl cloformat</td><td>109-61-5</td><td>C4H7ClO2</td><td>5.000</td></tr><tr><td>211.</td><td>Propylamine</td><td>Propylamin</td><td>107-10-8</td><td>C3H9N</td><td>500.000</td></tr><tr><td>212.</td><td>Propylen oxide</td><td>Propylen oxit</td><td>75-56-9</td><td>C3H6O</td><td>5.000</td></tr><tr><td>213.</td><td>1-Propyne</td><td>Propin</td><td>74-99-7</td><td>C3H4</td><td>10.000</td></tr><tr><td>214.</td><td>Pyrazoxon</td><td>Pyrazoxon</td><td>108-34-9</td><td>C8H15N2O4P</td><td>5.000</td></tr><tr><td>215.</td><td>Iron, pentacacbonyl-(Iron carbonyl (Fe (CO)5), (TB-5-11)-)</td><td>Sắt pentacacbonyl</td><td>13463-40-6</td><td>C5FeO5</td><td>5.000</td></tr><tr><td>216.</td><td>Selenium hexafloride</td><td>Selen hexaflorua</td><td>7783-79-1</td><td>SeF6</td><td>5.000</td></tr><tr><td>217.</td><td>Silane</td><td>Silan</td><td>7803-62-5</td><td>SiH4</td><td>10.000</td></tr><tr><td>218</td><td>Stibine (antimony hydril)</td><td>Stibin (antimon hydril)</td><td>7803-52-3</td><td>SbH3</td><td>10.000</td></tr><tr><td>219.</td><td>Sulfotepp</td><td>Sunfotepp</td><td>3689-24-5</td><td>C8H20O5P2S2</td><td>5.000</td></tr><tr><td>220.</td><td>T.E.P.P - (Tetraethyl pyrophosphate)</td><td>Tepp - tetraetyl pyrophotphat</td><td>107-49-3</td><td>C8H20O7P2</td><td>5.000</td></tr><tr><td>221.</td><td>Tellurium hexafloride</td><td>Telu hexaflorua</td><td>7783-80-4</td><td>TeF6</td><td>50.000</td></tr><tr><td>222.</td><td>Tert-butylperoxy maleate (&gt;80%)</td><td>Tert-butylperoxy maleat (&gt;80%)</td><td>1931-62-0</td><td>C8H12O5</td><td>10.000</td></tr><tr><td>223.</td><td>Tert-butylperoxy pivalate (&gt;77%)</td><td>Tert-butylperoxy pivalat (&gt;77%)</td><td>927-07-1</td><td>C9H18O3</td><td>10.000</td></tr><tr><td>224.</td><td>2,3,7,8- tetrachlorodibenzo-p-dioxin</td><td>2,3,7,8-Tetraclo dibenzo-p-dioxin</td><td>1746-01-6</td><td>C12H4Cl4O2</td><td>5.000</td></tr><tr><td>225.</td><td>Tetrafluoroethylene (Ethene, tetrafluoro-)</td><td>Tetraflo etylen</td><td>116-14-3</td><td>C2F4</td><td>10.000</td></tr><tr><td>226.</td><td>Tetrahydro-3,5- dimethyl-1,3,5,- thiadiazine-2-thione (Dazomet)</td><td>Tetrahydro-3,5- dimetyl-1,3,5,- thiadiazin-2-thion (Dazomet)</td><td>533-74-4</td><td>C5H10N2S2</td><td>100.000</td></tr><tr><td>227.</td><td>Tetramethylenedisulp hotetramine</td><td>Tetrametylen disunphotetramin</td><td>80-12-6</td><td>C4H8N4O4S12</td><td>5.000</td></tr><tr><td>228.</td><td>Tetramethylsilane (Silane, tetramethyl-)</td><td>Tetrametyl silan</td><td>75-76-3</td><td>C4H12Si</td><td>5.000</td></tr><tr><td>229.</td><td>Tetranitromethane (Methane, tetranitro-)</td><td>Tetranitro metan</td><td>509-14-8</td><td>CN4O8</td><td>5.000</td></tr><tr><td>230.</td><td>Thionazin</td><td>Thionazin</td><td>297-97-2</td><td>C8H13N2O3PS</td><td>5.000</td></tr><tr><td>231.</td><td>Mercury and Mercury compounds</td><td>Thủy ngân và các hợp chất của thủy ngân</td><td>---</td><td>---</td><td>1</td></tr><tr><td>232.</td><td>Tirpate (2,4-dimethyl-1,3-dithiolane-2-carbo xaldehydeo-methyl carbamoyloxime)</td><td>Tirpate (2,4-Dimetyl-2-formyl-1,3-dithiolan oxim metylcacbamat)</td><td>26419-73-8</td><td>C8H14N2O2S2</td><td>100</td></tr><tr><td>233.</td><td>Titanium tetrachloride (Titanium chloride (TiCl4) (T-4)-)</td><td>Titan tetraclorua</td><td>7550-45-0</td><td>TiCl4</td><td>5.000</td></tr><tr><td>234.</td><td>2,4-Toluene di-isocyanate</td><td>2,4-Toluen diisoxyanat</td><td>584-84-9</td><td>C9H6N2O2</td><td>10.000</td></tr><tr><td>235.</td><td>2,6- Toluene di-isocyanate</td><td>2,6-Toluen di-isoxyanat</td><td>91-08-7</td><td>C9H6N2O2</td><td>10.000</td></tr><tr><td>236.</td><td>Toluene di-isocyanate</td><td>Toluen di-isoxyanat</td><td>26471-62-5</td><td>C9H6N2O2</td><td>10.000</td></tr><tr><td>237.</td><td>1,3,5- Triamino-2,4,6-trinitrobenzene</td><td>1,3,5- Triamino- 2,4,6- trinitro benzen</td><td>3058-38-6</td><td>C6H6N6O6</td><td>10.000</td></tr><tr><td>238.</td><td>Trichlorosilane (Silane, trichloro-)</td><td>Triclo silan</td><td>10025-78-2</td><td>SiHCl3</td><td>5.000</td></tr><tr><td>239.</td><td>Triethylenemelamine</td><td>Trietylenmelamin</td><td>51-18-3</td><td>C9H12N6</td><td>100</td></tr><tr><td>240.</td><td>Trifluorochloroethylene (Ethene, chlorotrifluoro-)</td><td>Triflocloetylen</td><td>79-38-9</td><td>C2ClF3</td><td>10.000</td></tr><tr><td>241.</td><td>Trimethylamine</td><td>Trimetylamin</td><td>75-50-3</td><td>C3H9N</td><td>5.000</td></tr><tr><td>242.</td><td>Trimethylchlorosilane (Silane, chlorotrimethyl-)</td><td>Trimetylclosilan</td><td>75-77-4</td><td>C3H9ClSi</td><td>5.000</td></tr><tr><td>243.</td><td>Trinitroaniline</td><td>Trinitro anilin</td><td>26952-42-1</td><td>C6H4N4O6</td><td>50.000</td></tr><tr><td>244.</td><td>2,4,6-trinitroanisole</td><td>2,4,6-Trinitroanisol</td><td>606-35-9</td><td>C7H5N3O7</td><td>10.000</td></tr><tr><td>245.</td><td>Trinitrobenzene</td><td>1,3,5-Trinitro benzen</td><td>99-35-4</td><td>C6H3N3O6</td><td>5.000</td></tr><tr><td>246.</td><td>Trinitrobenzoic acid</td><td>Axit trinitrobenzoic</td><td>129-66-8</td><td>C7H3N3O8</td><td>10.000</td></tr><tr><td>247.</td><td>Trinitrocresol</td><td>Trinitro cresol</td><td>602-99-3</td><td>C7H5N3O7</td><td>50.000</td></tr><tr><td>248.</td><td>2,4,6- trinitrophenetole</td><td>2,4,6-Trinitrophenetol</td><td>4732-14-3</td><td>C8H7N3O7</td><td>10.000</td></tr><tr><td>249.</td><td>2,4,6-Trinitrophenol (picric acid)</td><td>2,4,6-Trinitrophenol</td><td>88-89-1</td><td>C6H3N3O7</td><td>10.000</td></tr><tr><td>250.</td><td>2,4,6- Trinitroresorcinol (styphnic acid)</td><td>2,4,6- Trinitroresorcinol</td><td>82-71-3</td><td>C6H3N3O8</td><td>10.000</td></tr><tr><td>251.</td><td>2,4,6-trinitrotoluene</td><td>2,4,6-trinitrotoluen</td><td>118-96-7</td><td>C7H5N3O6</td><td>10.000</td></tr><tr><td>252.</td><td>Vinyl acetate monomer (Acetic acid ethenyl ester)</td><td>Vinyl axetat</td><td>108-05-4</td><td>C4H6O2</td><td>10.000</td></tr><tr><td>253.</td><td>Vinyl acetylene (1-Buten-3-yne)</td><td>Vinyl axetylen</td><td>689-97-4</td><td>C4H4</td><td>10.000</td></tr><tr><td>254.</td><td>Vinyl chloride (Ethene, chloro)</td><td>Vinyl clorua</td><td>75-01-4</td><td>C2H3Cl</td><td>10.000</td></tr><tr><td>255.</td><td>Vinyl ethyl ether (Ethene, ethoxy-)</td><td>Vinyl etyl ete</td><td>109-92-2</td><td>C4H8O</td><td>10.000</td></tr><tr><td>256.</td><td>Vinyl fluoride (Ethene, fluoro)</td><td>Vinyl florua</td><td>75-02-5</td><td>C2H3F</td><td>10.000</td></tr><tr><td>257.</td><td>Vinyl methyl ether (Ethene, methoxy-)</td><td>Vinyl metyl ete</td><td>107-25-5</td><td>C3H6O</td><td>10.000</td></tr><tr><td>258.</td><td>Vinylidene chloride (Ethene, 1,1-dichloro-)</td><td>Vinyliden clorua</td><td>75-35-4</td><td>C2H2Cl2</td><td>10.000</td></tr><tr><td>259.</td><td>Vinylidene fluoride (Ethene, 1,1-difluoro-)</td><td>Vinyliden florua</td><td>75-38-7</td><td>C2H2F2</td><td>10.000</td></tr><tr><td>260.</td><td>Warfarin ((RS)-4-hydroxy-3 -(3 -oxo-1 -phenylbutyl)-2H-chromen-2-one)</td><td>Warfarin ((RS)-4-hydroxy-3-(3 -oxo-1 -phenylbutyl)-2H-chromen-2-on)</td><td>81-81-2</td><td>C19H16O4</td><td>5.000</td></tr><tr><td>261.</td><td>Cyanogen (Ethanedinitrile)</td><td>Xyanogen (Etandinitril)</td><td>460-19-5</td><td>C2H2</td><td>10.000</td></tr><tr><td>262.</td><td>Cyanogen chloride</td><td>Xyanogen clorua</td><td>506-77-4</td><td>CCl N</td><td>5.000</td></tr><tr><td>263.</td><td>2-cyanopropan-2-ol (acetone cyanohydrin)</td><td>2-xyano-2-propanol</td><td>75-86-5</td><td>C4H7NO</td><td>5.000</td></tr><tr><td>264.</td><td>Cyathoate</td><td>Xyanthoat</td><td>3734-95-0</td><td>C10H19N2O4PS</td><td>5.000</td></tr><tr><td>265.</td><td>Cyanide compounds</td><td>Các hợp chất xyanua</td><td>---</td><td>---</td><td>5.000</td></tr><tr><td>266.</td><td>Cycloheximide</td><td>Xycloheximit</td><td>66-81-9</td><td>C15H23NO4</td><td>5.000</td></tr><tr><td>267.</td><td>Cyclohexylamine (Cyclohexanamine)</td><td>Xyclohexan amin</td><td>108-91-8</td><td>C6H13N</td><td>5.000</td></tr><tr><td>268.</td><td>Cyclopropane</td><td>Xyclopropan</td><td>75-19-4</td><td>C3H6</td><td>10.000</td></tr><tr><td>269.</td><td>Cyclotetramethylenet etranitramine</td><td>Xyclotetrametylen tetra nitramin</td><td>2691-41-0</td><td>C4H8N8O8</td><td>10.000</td></tr><tr><td>270.</td><td>Cyclotrimethylene trinitramine</td><td>Xyclotrimetylen trinitramin</td><td>121-82-4</td><td>C3H6N6O6</td><td>10.000</td></tr><tr><td>271.</td><td>The following carcinogens or the mixtures containing the following carcinogens at concentrations above 5% by weight: 4-Aminobiphenyl and/or its salts, Benzotrichloride, Benzidine and/or salts, Bis (chloromethyl) ether, Chloromethyl methyl ether, 1,2-Dibromometan, Diethyl sulfate, Dimethyl sulfate, Dimetylcarbamoyl chloride, 1,2-Dibrom-3-chloropropane, 1,2-Dimethyl hydrazin, Dimethylnitrosamine, Hexamethylphosphoric triamide, hydrazine, 2-Naphtylamine and/or salts, 4-Nitrodiphenyl and 1,3 Propanesultone</td><td>Các chất có khả năng gây ung thư hoặc các hỗn hợp chứa các chất có khả năng gây ung thư thành phần khối lượng trên 5%: 4-Aminobiphenyl và/hoặc muối của nó, Benzotriclorid, Benzidin và/hoặc các muối, Bis (clorometyl) ete, Clometyl metyl ete, 1,2-Dibrometan, Dietyl sunphat, Dimetyl sunphat, Dimetylcacbamoyl clorit, 1,2-Dibrom-3-clo propan, 1,2-Dimetylhydrazin, Dimetylnitro amin, Hexametylphotphoric triamit, Hydrazin, 2-Naphtylamin và/hoặc muối của 4-Nitrodiphenyl và 1,3 -Propanesulton</td><td>---</td><td>---</td><td>500</td></tr></table></div>
 <p>**2. Bảng B**</p>
 <div class="table-wrap"><table><tr><th>STT</th><th>Nhóm hóa chất</th><th>Ngưỡng khối lượng hóa chất tồn trữ lớn nhất tại một thời điểm (kg)</th></tr><tr><td>I</td><td>Nguy hại sức khỏe</td><td></td></tr><tr><td>1</td><td>Độc cấp tính cấp 1, tất cả các đường phơi nhiễm</td><td>5.000</td></tr><tr><td>2</td><td>Độc cấp tính<br>- Cấp 2, tất cả các đường phơi nhiễm<br>- Cấp 3, đường hô hấp</td><td>50.000</td></tr><tr><td>3</td><td>Độc tính đến cơ quan cụ thể - phơi nhiễm đơn</td><td>50.000</td></tr><tr><td>II</td><td>Nguy hại vật chất</td><td></td></tr><tr><td>1</td><td>Chất nổ<br>- Chất nổ không bền;<br>- Chất nổ cấp 1.1, 1.2, 1.3, 1.5 hoặc 1.6.</td><td>10.000</td></tr><tr><td>2</td><td>Chất nổ cấp 1.4</td><td>50.000</td></tr><tr><td>3</td><td>Khí dễ cháy cấp 1, cấp 2</td><td>10.000</td></tr><tr><td>4</td><td>Sol khí dễ cháy cấp 1 và cấp 2, có chứa khí dễ cháy cấp 1, cấp 2 hoặc chất lỏng dễ cháy cấp 1</td><td>150.000 (net)</td></tr><tr><td>5</td><td>Sol khí dễ cháy cấp 1 và cấp 2, không chứa khí dễ cháy cấp 1, cấp 2 và không chứa chất lỏng dễ cháy cấp 1</td><td>5 000.000 (net)</td></tr><tr><td>6</td><td>Khí oxi hóa cấp 1</td><td>50.000</td></tr><tr><td>7</td><td>Chất lỏng dễ cháy:<br>- Chất lỏng dễ cháy cấp 1, hoặc<br>- Chất lỏng dễ cháy cấp 2 hoặc cấp 3 ở điều kiện nhiệt độ trên nhiệt độ sôi của chúng, hoặc<br>- Các chất lỏng khác có nhiệt độ chớp cháy ≤60°C, ở điều kiện nhiệt độ trên nhiệt độ sôi của chúng.</td><td>10.000</td></tr><tr><td>8</td><td>Chất lỏng dễ cháy<br>- Chất lỏng dễ cháy cấp 2 hoặc cấp 3 ở điều kiện áp suất cao hoặc nhiệt độ cao có thể tạo ra nguy cơ lớn, hoặc<br>- Các chất lỏng khác có nhiệt độ chớp cháy ≤60°C ở điều kiện áp suất cao hoặc nhiệt độ cao có thể tạo ra nguy cơ lớn.</td><td>50.000</td></tr><tr><td>9</td><td>Chất lỏng dễ cháy cấp 2 hoặc cấp 3 không thuộc trường hợp quy định tại mục 7, mục 8 bảng này.</td><td>5.000.000</td></tr><tr><td>10</td><td>Chất và hỗn hợp tự phản ứng kiểu A hoặc kiểu B; peroxyt hữu cơ kiểu A hoặc kiểu B</td><td>10.000</td></tr><tr><td>11</td><td>Chất và hỗn hợp tự phản ứng kiểu C, D. E. F; peroxyt hữu cơ kiểu C, D. E. F</td><td>50.000</td></tr><tr><td>12</td><td>Chất lỏng tự cháy cấp 1; chất rắn tự cháy cấp 1</td><td>50.000</td></tr><tr><td>13</td><td>Chất lỏng oxi hóa cấp 1,2 hoặc 3; chất rắn oxi hóa cấp 1,2 hoặc 3</td><td>50.000</td></tr><tr><td>14</td><td>Chất hoặc hợp chất khi tiếp xúc với nước gây phát sinh khí dễ cháy cấp 1</td><td>100.000</td></tr><tr><td>III</td><td>Nguy hại cho môi trường</td><td></td></tr><tr><td>1</td><td>Nguy hại cấp tính đến môi trường thủy sinh cấp 1</td><td>100.000</td></tr><tr><td>2</td><td>Nguy hại mãn tính đến môi trường thủy sinh cấp 2</td><td>200.000</td></tr><tr><td>IV</td><td>Nguy hại khác</td><td></td></tr><tr><td>1</td><td>Chất hoặc hợp chất gây nguy hiểm EUH014</td><td>100.000</td></tr><tr><td>2</td><td>Chất hoặc hợp chất gây nguy hiểm EUH029</td><td>50.000</td></tr></table></div></div></details>
-<details class="doc" id="doc-nd26"><summary>📖 Toàn văn Nghị định 26/2026/NĐ-CP — quản lý hoạt động hóa chất</summary><div class="doc-body"><nav class="doc-toc"><a href="#nd26-dieu-1">Điều 1</a> · <a href="#nd26-dieu-2">Điều 2</a> · <a href="#nd26-dieu-3">Điều 3</a> · <a href="#nd26-dieu-4">Điều 4</a> · <a href="#nd26-dieu-5">Điều 5</a> · <a href="#nd26-dieu-6">Điều 6</a> · <a href="#nd26-dieu-7">Điều 7</a> · <a href="#nd26-dieu-8">Điều 8</a> · <a href="#nd26-dieu-9">Điều 9</a> · <a href="#nd26-dieu-10">Điều 10</a> · <a href="#nd26-dieu-11">Điều 11</a> · <a href="#nd26-dieu-12">Điều 12</a> · <a href="#nd26-dieu-13">Điều 13</a> · <a href="#nd26-dieu-14">Điều 14</a> · <a href="#nd26-dieu-15">Điều 15</a> · <a href="#nd26-dieu-16">Điều 16</a> · <a href="#nd26-dieu-17">Điều 17</a> · <a href="#nd26-dieu-18">Điều 18</a> · <a href="#nd26-dieu-19">Điều 19</a> · <a href="#nd26-dieu-20">Điều 20</a> · <a href="#nd26-dieu-21">Điều 21</a> · <a href="#nd26-dieu-22">Điều 22</a> · <a href="#nd26-dieu-23">Điều 23</a> · <a href="#nd26-dieu-24">Điều 24</a> · <a href="#nd26-dieu-25">Điều 25</a> · <a href="#nd26-dieu-26">Điều 26</a> · <a href="#nd26-dieu-27">Điều 27</a> · <a href="#nd26-dieu-28">Điều 28</a> · <a href="#nd26-dieu-29">Điều 29</a> · <a href="#nd26-dieu-30">Điều 30</a> · <a href="#nd26-dieu-31">Điều 31</a></nav><h4>CHÍNH PHỦ</h4>
+<details class="doc" id="doc-nd26"><summary>Toàn văn Nghị định 26/2026/NĐ-CP — quản lý hoạt động hóa chất</summary><div class="doc-body"><nav class="doc-toc"><a href="#nd26-dieu-1">Điều 1</a> · <a href="#nd26-dieu-2">Điều 2</a> · <a href="#nd26-dieu-3">Điều 3</a> · <a href="#nd26-dieu-4">Điều 4</a> · <a href="#nd26-dieu-5">Điều 5</a> · <a href="#nd26-dieu-6">Điều 6</a> · <a href="#nd26-dieu-7">Điều 7</a> · <a href="#nd26-dieu-8">Điều 8</a> · <a href="#nd26-dieu-9">Điều 9</a> · <a href="#nd26-dieu-10">Điều 10</a> · <a href="#nd26-dieu-11">Điều 11</a> · <a href="#nd26-dieu-12">Điều 12</a> · <a href="#nd26-dieu-13">Điều 13</a> · <a href="#nd26-dieu-14">Điều 14</a> · <a href="#nd26-dieu-15">Điều 15</a> · <a href="#nd26-dieu-16">Điều 16</a> · <a href="#nd26-dieu-17">Điều 17</a> · <a href="#nd26-dieu-18">Điều 18</a> · <a href="#nd26-dieu-19">Điều 19</a> · <a href="#nd26-dieu-20">Điều 20</a> · <a href="#nd26-dieu-21">Điều 21</a> · <a href="#nd26-dieu-22">Điều 22</a> · <a href="#nd26-dieu-23">Điều 23</a> · <a href="#nd26-dieu-24">Điều 24</a> · <a href="#nd26-dieu-25">Điều 25</a> · <a href="#nd26-dieu-26">Điều 26</a> · <a href="#nd26-dieu-27">Điều 27</a> · <a href="#nd26-dieu-28">Điều 28</a> · <a href="#nd26-dieu-29">Điều 29</a> · <a href="#nd26-dieu-30">Điều 30</a> · <a href="#nd26-dieu-31">Điều 31</a></nav><h4>CHÍNH PHỦ</h4>
 <h4>-------</h4>
 <h4>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h4>
 <p>Độc lập - Tự do - Hạnh phúc</p>
@@ -870,7 +916,7 @@
 <p>Bùi Thanh Sơn</p></div></details>
 
 <div class="fab">
-  <button id="fab-collapse" onclick="collapseDocs()" hidden>✕ Thu gọn toàn văn</button>
+  <button id="fab-collapse" onclick="collapseDocs()" hidden>Thu gọn toàn văn</button>
   <button id="fab-top" onclick="goTop()" hidden>↑ Lên đầu trang</button>
 </div>
 
