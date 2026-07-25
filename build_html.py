@@ -752,14 +752,25 @@ function runLines(text, resultsEl) {
     ${stats}
     <div class="table-wrap"><table><tr><th>STT</th><th>Mô tả</th><th>Mã CAS</th><th>Kết luận</th></tr>`;
   lines.forEach((l, i) => {
-    const { badge, text: statusText } = statuses[i];
+    const { badge } = statuses[i];
     const short = l.mota.length > 90 ? l.mota.slice(0, 90) + "…" : l.mota;
     const casCell = l.cas.length ? l.cas.map(c => esc(c)).join("<br>") : "—";
-    const flags = l.cas.map(hintHtml).join("") + lineNameHint(l);
+    // Ket luan tra RIENG tung ma, xep cung thu tu/so voi cot Ma CAS -> nhin ngang
+    // la biet ngay ma nao lam ca dong vang/do, khong phai mo khoi chi tiet duoi.
+    let concl;
+    if (!l.cas.length) {
+      concl = `<span class="pill ${statuses[i].badge}">${esc(statuses[i].text)}</span>`;
+    } else {
+      concl = l.cas.map(c => {
+        const s = casStatus(c);
+        return `<span class="pill ${s.badge}">${esc(s.text)}</span>${hintHtml(c)}`;
+      }).join("<br>");
+    }
+    concl += lineNameHint(l);
     table += `<tr class="${badge}"><td>${l.stt === null ? i + 1 : l.stt}</td>`
       + `<td title="${esc(l.mota)}">${esc(short)}</td>`
       + `<td class="cas">${casCell}</td>`
-      + `<td><span class="pill ${badge}">${esc(statusText)}</span>${flags}</td></tr>`;
+      + `<td>${concl}</td></tr>`;
   });
   table += "</table></div>";
 
