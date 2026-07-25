@@ -56,6 +56,7 @@
   .modes { display: inline-flex; gap: 4px; padding: 4px; background: var(--navy-tint); border: 1px solid var(--line); border-radius: var(--r-ctrl); margin-bottom: 14px; max-width: 100%; }
   .mode-btn { cursor: pointer; font-size: 0.92rem; font-weight: 600; padding: 8px 18px; border-radius: 5px; border: 1px solid transparent; background: transparent; color: var(--muted); transition: color .15s, background .15s, box-shadow .15s; }
   .mode-btn:hover { color: var(--navy); }
+  .mode-btn:active { transform: translateY(1px); }
   .mode-btn.active { background: var(--paper); border-color: var(--line); color: var(--navy-deep); box-shadow: 0 1px 2px rgba(16,32,54,.09); }
 
   .input-row { display: flex; gap: 14px; align-items: stretch; }
@@ -68,8 +69,12 @@
   .toolbar { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
   .toolbar .hint { color: var(--faint); font-size: 0.82rem; margin-left: auto; }
   .toolbar kbd { font: inherit; font-size: 0.78rem; font-weight: 700; background: var(--navy-tint); border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; color: var(--navy-deep); }
-  button.mini { font-size: 0.86rem; cursor: pointer; background: #fff; color: var(--navy-deep); border: 1px solid var(--line-strong); border-radius: var(--r-ctrl); padding: 7px 14px; font-weight: 600; transition: background .15s, border-color .15s; }
+  button.mini { font-size: 0.86rem; cursor: pointer; background: #fff; color: var(--navy-deep); border: 1px solid var(--line-strong); border-radius: var(--r-ctrl); padding: 7px 14px; font-weight: 600; transition: background .15s, border-color .15s, transform .05s; }
   button.mini:hover { border-color: var(--navy); background: var(--navy-tint); }
+  button.mini:active { transform: translateY(1px); }
+
+  /* Nhãn ẩn cho screen-reader: ô nhập phải có <label> thật, không mượn placeholder. */
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   @media (max-width: 560px) {
     body { padding: 30px 16px 92px; }
     h1 { font-size: 1.58rem; }
@@ -90,10 +95,12 @@
   .chip.ok { background: var(--green-bg); border-color: var(--green-line); color: var(--green); }
   .chip.unknown { background: var(--amber-bg); border-color: var(--amber-line); color: var(--amber); }
 
-  .table-wrap { overflow-x: auto; margin: 16px -4px 0; padding: 0 4px; }
+  /* overflow:auto + max-height -> tờ khai dài cuộn trong khung riêng, và thead
+     dính đỉnh khung để cán bộ luôn thấy tên cột khi soi 50 dòng. */
+  .table-wrap { overflow: auto; max-height: 78vh; margin: 16px -4px 0; padding: 0 4px; }
   table { border-collapse: collapse; width: 100%; min-width: 620px; }
   th, td { padding: 12px 12px; text-align: left; vertical-align: top; font-size: 0.93rem; border-bottom: 1px solid var(--line); }
-  thead th { color: var(--muted); font-weight: 700; font-size: 0.72rem; text-transform: uppercase; letter-spacing: .07em; border-bottom: 1.5px solid var(--line-strong); }
+  thead th { position: sticky; top: 0; z-index: 1; background: var(--paper); color: var(--muted); font-weight: 700; font-size: 0.72rem; text-transform: uppercase; letter-spacing: .07em; border-bottom: 1.5px solid var(--line-strong); box-shadow: 0 1px 0 var(--line-strong); }
   tbody tr:last-child td { border-bottom: none; }
   th:first-child, td:first-child { width: 1%; white-space: nowrap; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
   td:nth-child(2) { min-width: 190px; }
@@ -183,6 +190,8 @@
     .instructions, #input-card, footer, .fab, header::before { display: none; }
     .card, details.doc { box-shadow: none; border-color: #999; break-inside: avoid; }
     header { border-color: #000; }
+    .table-wrap { max-height: none; overflow: visible; }
+    thead th { position: static; box-shadow: none; }
     tr.warn td:first-child, tr.ok td:first-child, tr.unknown td:first-child { box-shadow: none; }
     .pill { border: 1px solid #666; color: #000 !important; background: #fff !important; }
   }
@@ -212,10 +221,11 @@
 </div>
 
 <div class="card" id="input-card">
-  <div class="modes" role="tablist" aria-label="Chế độ tra cứu">
+  <div class="modes" role="group" aria-label="Chế độ tra cứu">
     <button class="mode-btn active" id="mode-cas" aria-pressed="true" onclick="setMode('cas')">Tìm theo mã CAS</button>
     <button class="mode-btn" id="mode-name" aria-pressed="false" onclick="setMode('name')">Tìm theo tên chất</button>
   </div>
+  <label for="input" class="sr-only">Mô tả hàng hóa cần tra cứu</label>
   <div class="input-row">
     <textarea id="input" placeholder="Dán mô tả hàng hóa — mỗi dòng một dòng hàng (copy từ Excel được), hoặc một đoạn. Ví dụ:&#10;1&#9;Dung môi công nghiệp CAS 67-56-1&#10;2&#9;Keo dán, thùng 20kg&#10;3&#9;Hỗn hợp 107-13-1 và 103-79-7"></textarea>
     <button id="run-btn" onclick="run()">Tra cứu</button>
@@ -1217,7 +1227,7 @@ function runLines(text, resultsEl, mode) {
     ${nameNote}
     ${sttNote}
     ${stats}
-    <div class="table-wrap"><table><tr><th>STT</th><th>Mô tả</th><th>${matchHead}</th><th>Kết luận</th></tr>`;
+    <div class="table-wrap"><table><thead><tr><th>STT</th><th>Mô tả</th><th>${matchHead}</th><th>Kết luận</th></tr></thead><tbody>`;
   per.forEach((p, i) => {
     const { l, matches, status } = p;
     const short = l.mota.length > 90 ? l.mota.slice(0, 90) + "…" : l.mota;
@@ -1240,7 +1250,7 @@ function runLines(text, resultsEl, mode) {
       + `<td${byName ? "" : ' class="cas"'}>${matchCell}</td>`
       + `<td>${concl}</td></tr>`;
   });
-  table += "</table></div>";
+  table += "</tbody></table></div>";
 
   resultsEl.innerHTML = table;
   resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
