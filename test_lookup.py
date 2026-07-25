@@ -141,17 +141,11 @@ def test_html_khong_lech_khoi_core():
     # nếu không nó sẽ mốc lại y như lần "Cần Giấy phép" cũ nằm ở dòng trợ giúp.
     assert "Cần Giấy phép" not in src, "chữ verdict viết tay trong build_html.py — dùng __VERDICT_PL3__"
     assert "__VERDICT_JSON__" in src and "VERDICT.pl3" in src
-    # Duyệt đúng các khóa thật của IMPORT_RULES; PL II đã chuyển xuống khối
-    # "Nghĩa vụ khác", hard-code II ở đây sẽ gọi undefined.map và làm nút Tra cứu chết.
-    assert "for (const annex of Object.keys(IMPORT_RULES))" in src
-    # Bộ lọc dòng category cũng phải nhúng từ core — JS từng hard-code
-    # ["I","II","III"] trong khi core.IMPORT_ANNEXES = ("I","III"), làm chất
-    # chỉ thuộc PL II hiện khác nhau giữa HTML và CLI.
-    assert "IMPORT_ANNEXES.includes(r.annex)" in src and "__IMPORT_ANNEXES_JSON__" in src
-    assert '["I", "II", "III"]' not in src, "bộ lọc phụ lục viết tay trong JS — dùng __IMPORT_ANNEXES_JSON__"
-    # Thứ tự ưu tiên phụ lục cũng nhúng từ core — JS từng hard-code bản riêng.
-    assert "__ANNEX_ORDER_JSON__" in src
-    assert '["III", "II", "I", "IV"]' not in src, "ANNEX_ORDER viết tay trong JS — dùng __ANNEX_ORDER_JSON__"
+    # Chi tiết "yêu cầu nhập khẩu" (detailFor + IMPORT_RULES/IMPORT_ANNEXES/ANNEX_ORDER
+    # nhúng qua JS) đã bỏ khỏi kết quả — trang chỉ còn pill verdict. Chốt là đừng
+    # ai vô tình đem mấy khối đó viết TAY lại trong JS (nguồn duy nhất là core.py,
+    # dùng ở phần miễn trừ render sẵn phía Python).
+    assert "IMPORT_RULES" not in src and "IMPORT_ANNEXES" not in src, "khối yêu cầu nhập khẩu quay lại JS — chỉ render phía Python từ core"
     # ...và artifact đã commit phải khớp core.py (chạy lại build_html.py nếu đỏ).
     html = Path(__file__).with_name("Tra-cuu-hoa-chat-ND24.html")
     if html.exists():
@@ -167,7 +161,10 @@ def test_html_co_nut_vi_du_ngau_nhien():
     assert 'onclick="setMode(\'cas\')"' in src and 'onclick="setMode(\'name\')"' in src
     assert 'onclick="clearAll()"' in src
     assert 'const byCas = new Map()' in src
-    assert 'shuffle(items).map(([name, cas]) => `${name} (CAS ${cas})`)' in src
+    # Ca hai che do ra vi du NHIEU DONG HANG (moi dong 1 dong hang), khong con doan phang.
+    assert '${r.name_vn} (CAS ${r.cas})' in src          # mode CAS: dong hang kem ma
+    assert 'Hỗn hợp công nghiệp có ' in src               # mode tên: dòng hàng mô tả bằng tên
+    assert 'items.push(pick(LINE_EXAMPLE_GOODS))' in src  # luôn kèm 1 dòng hàng không tra ra gì
 
 
 def test_vi_du_ngau_nhien_van_con_case_khong_ro():
@@ -265,8 +262,8 @@ def test_che_do_cas_khong_de_ten_lot_vao_bang():
         cas_co_metanol: casMode.includes("67-56-1"),
         cas_co_toluene: casMode.includes("108-88-3"),   // phải KHÔNG — tên không được vào bảng
         cas_nhac_ten: casMode.includes("Toluene"),      // nhưng phải được nhắc tới
-        ten_co_toluene: nameMode.includes("108-88-3"),
-        ten_nhac_ma_cas: nameMode.includes("mã CAS —"),
+        ten_co_toluene: lineMatches(parseLines(__el("input").value)[0], true).includes("108-88-3"),
+        ten_nhac_ma_cas: nameMode.includes("chế độ tra theo tên bỏ qua"),
       }));
     """)
     if got is None:
@@ -390,9 +387,11 @@ def test_pl3_hoa_chat_khac_khong_bi_gan_nham_bang_2():
 
 def test_html_can_deu_chu_thich_va_luu_y():
     src = Path(__file__).with_name("build_html.py").read_text(encoding="utf-8")
-    assert "details.detail .body" in src and "text-align: justify" in src
+    # Chú thích, lưu ý và toàn văn nghị định căn đều cho dễ đọc.
+    assert "text-align: justify" in src
+    assert ".note" in src and "details.doc p" in src
     assert ".exempt li" in src and ".exempt .warn-note" in src
-    assert ".instructions li" in src and ".note" in src
+    assert ".instructions li" in src
 
 
 def test_khong_con_noi_dung_ho_so_trinh_tu_thu_tuc():
@@ -569,10 +568,110 @@ def test_unknown_khong_con_ghi_chu():
     src = Path(__file__).with_name("build_html.py").read_text(encoding="utf-8")
     assert "NOTE_GAP" not in src and not hasattr(core, "NOTE_GAP")
     assert "Không tìm thấy trong Phụ lục" not in src, "JS viết tay lại câu 'không tìm thấy'"
-    assert "if (!rows.length) return;" in src, "CAS không có dữ liệu phải bỏ qua thẻ chi tiết"
+    assert '<details class="detail">' not in src, "cột Kết luận không còn dropdown — chỉ pill phẳng"
     # CLI thì ngược lại: lookup.py in mỗi format_report, không có bảng đứng trước,
     # nên vẫn phải tự nói tra ra gì — bỏ nốt thì in ra chuỗi rỗng.
     assert format_report("000-00-0") == "CAS 000-00-0: không có trong dữ liệu NĐ 24 (Phụ lục I-IV)."
+
+
+def test_che_do_dong_hang_theo_cas():
+    # Mode "theo mã CAS" đọc theo dòng hàng: mỗi dòng vật lý = 1 dòng hàng.
+    # Ca (b) là ca nguy hiểm nhất: dòng KHÔNG có mã CAS mà ra xanh thì cả tờ khai
+    # 50 dòng xanh hết trong khi chưa tra được gì.
+    got = _run_js("""
+      const txt = "1\\tDung moi cong nghiep CAS 67-56-1"
+        + "\\n2\\tKeo dan cong nghiep, thung 20kg"
+        + "\\n3\\tHon hop 107-13-1 va 103-79-7"
+        + "\\n4\\tChat la CAS 000-00-0"
+        + "\\n5\\tKeo dan chua Toluene";
+      console.log(JSON.stringify(parseLines(txt).map(r => {
+        const s = heaviestStatus(r.cas, NO_CAS_STATUS);
+        return { stt: r.stt, cas: r.cas, badge: s.badge, text: s.text,
+          nameHint: lineNameHint(r).length > 0 };
+      })));
+    """)
+    if got is None:
+        return  # không có node -> bỏ qua, phần Python thuần vẫn chạy
+    assert [r["stt"] for r in got] == [1, 2, 3, 4, 5], "không tách đúng STT dán từ Excel"
+    # (a) dòng có chất Phụ lục III -> đỏ
+    assert got[0]["cas"] == ["67-56-1"] and got[0]["badge"] == "warn"
+    assert got[0]["text"] == VERDICT["pl3"]
+    # (b) dòng không có mã CAS -> VÀNG, tuyệt đối không phải xanh
+    assert got[1]["cas"] == [] and got[1]["badge"] == "unknown"
+    assert got[1]["badge"] != "ok", "dòng hàng chưa tra được mà báo xanh"
+    assert "Không thấy mã CAS" in got[1]["text"]
+    # (c) dòng nhiều mã CAS -> lấy verdict NẶNG NHẤT, không phải mã đầu tiên
+    # (107-13-1 là PL I/II/IV, 103-79-7 là PL III).
+    assert got[2]["cas"] == ["107-13-1", "103-79-7"] and got[2]["badge"] == "warn"
+    # (d) mã CAS ngoài dữ liệu vẫn là "Không rõ", khác hẳn dòng trống mã
+    assert got[3]["text"] == VERDICT["unknown"]
+    # (e) cờ tên chỉ là gợi ý: có cờ nhưng KHÔNG đổi kết luận của dòng
+    assert got[4]["nameHint"] and got[4]["badge"] == "unknown"
+    assert "Không thấy mã CAS" in got[4]["text"]
+
+
+def test_che_do_dong_hang_theo_ten():
+    # Mode "theo tên" cũng đọc theo dòng hàng: mỗi dòng kết luận theo TÊN chất khớp
+    # trong mô tả (khi DN không khai CAS). Cùng bất biến (b): dòng không khớp tên
+    # nào -> VÀNG, tuyệt đối không xanh.
+    got = _run_js("""
+      const rows = parseLines("1\\tHon hop dung moi gom Metanol va Toluene"
+        + "\\n2\\tKeo dan cong nghiep, thung 20kg");
+      console.log(JSON.stringify(rows.map(r => {
+        const m = lineMatches(r, true);
+        const s = heaviestStatus(m, NO_NAME_STATUS);
+        return { matches: m, badge: s.badge, text: s.text };
+      })));
+    """)
+    if got is None:
+        return
+    # (a) dòng mô tả bằng tên -> khớp ra chất, kết luận theo tên (không amber vô cớ)
+    assert "67-56-1" in got[0]["matches"] and "108-88-3" in got[0]["matches"]
+    assert got[0]["badge"] in ("warn", "ok"), "dòng khớp được tên mà vẫn amber"
+    # (b) dòng không có tên chất nào -> VÀNG "không khớp tên", tuyệt đối không xanh
+    assert got[1]["matches"] == [] and got[1]["badge"] == "unknown"
+    assert got[1]["badge"] != "ok", "dòng chưa tra được mà báo xanh"
+    assert "Không khớp tên" in got[1]["text"]
+
+
+def test_dong_hang_khong_cat_nham_ten_hoa_chat():
+    # Tên hóa chất kiểu "2.4-D", "1.1.1-Trichloroethane" bắt đầu bằng "số." KHÔNG
+    # phải STT -> nếu cắt sẽ hỏng mô tả ("4-D"). Chỉ coi là STT khi sau "."/")" có
+    # khoảng trắng (danh sách đánh số thật luôn có). Mã CAS vẫn trích từ nguyên dòng.
+    got = _run_js("""
+      const txt = "1.1.1-Trichloroethane 71-55-6"
+        + "\\n2.4-D 94-75-7"
+        + "\\n1. Acetone 67-64-1"
+        + "\\n10)\\tChloroform 67-66-3";
+      console.log(JSON.stringify(parseLines(txt).map(r => ({stt: r.stt, mota: r.mota}))));
+    """)
+    if got is None:
+        return
+    assert got[0]["stt"] is None and got[0]["mota"].startswith("1.1.1-Trichloroethane")
+    assert got[1]["stt"] is None and got[1]["mota"].startswith("2.4-D")
+    assert got[2]["stt"] == 1 and got[2]["mota"] == "Acetone 67-64-1"
+    assert got[3]["stt"] == 10 and got[3]["mota"] == "Chloroform 67-66-3"
+
+
+def test_do_ten_khong_bao_nham_tu_thuong():
+    # Hai lỗi làm "Đồng (I) clorua" khớp mọi mô tả có ống/đóng/đông/dòng/động:
+    #  (1) normName đổi đ->d TRƯỚC toLowerCase -> "Đ" hoa thoát, thành "đ" rồi bị
+    #      xóa -> "Đồng" ra "ong", khớp "Ống nhựa".
+    #  (2) alias cắt ngoặc GIỮA tên -> "Đồng (I) clorua" còn trơ "Đồng" (->"dong"),
+    #      đụng "đóng/đông/dòng/động" (đều chuẩn hóa ra "dong").
+    # Chốt: mô tả từ thường KHÔNG báo chất; tên khai đủ thì VẪN báo.
+    got = _run_js("""
+      const nm = c => (rowsFor(c)[0] || {}).name_vn || c;
+      const fp = ["dán ống nhựa", "đóng gói thùng", "hàng đông lạnh",
+                  "dòng điện cao", "dầu bôi trơn động cơ"]
+        .map(t => scanNames(t).length);
+      const real = scanNames("hỗn hợp Đồng (I) clorua").map(nm);
+      console.log(JSON.stringify({ fp, real }));
+    """)
+    if got is None:
+        return
+    assert got["fp"] == [0, 0, 0, 0, 0], "từ thường (ống/đóng/đông/dòng/động) bị báo nhầm là hóa chất"
+    assert any("clorua" in n.lower() for n in got["real"]), "tên khai đầy đủ lại không dò được"
 
 
 def test_moi_onclick_goi_ham_tu_dinh_nghia():
@@ -632,11 +731,10 @@ def test_toan_van_hai_nghi_dinh_nhung_trong_trang():
     ids = set(re.findall(r'id="(nd2[46]-[^"]+)"', html))
     hrefs = {h for h in re.findall(r'href="#(nd2[46]-[^"]+)"', html) if "${" not in h}
     assert not hrefs - ids, f"link tới mục không tồn tại: {hrefs - ids}"
-    # Link dựng lúc chạy trong JS (annexLink) không soi tĩnh được -> chốt riêng:
-    # mọi Phụ lục hiện trong cột "Phụ lục" phải có đích trong khối toàn văn.
-    assert 'href="#nd24-pl-${esc(a).toLowerCase()}"' in html, "annexLink đổi dạng id"
+    # Cờ họ chất (hintHtml) link tới nguyên văn Phụ lục III -> đích phải có thật.
+    assert "nd24-pl-iii" in ids, "cờ họ chất link tới PL III nhưng không có đích"
     for a in core.ANNEX_DISPLAY_ORDER:
-        assert f"nd24-pl-{a.lower()}" in ids, f"cột Phụ lục link tới PL {a} nhưng không có đích"
+        assert f"nd24-pl-{a.lower()}" in ids, f"thiếu đích nguyên văn Phụ lục {a}"
     assert all(i.isascii() for i in ids), "id có dấu -> location.hash percent-encode sẽ không khớp"
     assert len([i for i in ids if i.startswith("nd26-dieu-")]) == 31, "NĐ 26 có 31 Điều"
     assert len([i for i in ids if i.startswith("nd24-dieu-")]) == 5, "NĐ 24 có 5 Điều"
