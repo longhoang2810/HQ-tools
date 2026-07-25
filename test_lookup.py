@@ -141,17 +141,11 @@ def test_html_khong_lech_khoi_core():
     # nếu không nó sẽ mốc lại y như lần "Cần Giấy phép" cũ nằm ở dòng trợ giúp.
     assert "Cần Giấy phép" not in src, "chữ verdict viết tay trong build_html.py — dùng __VERDICT_PL3__"
     assert "__VERDICT_JSON__" in src and "VERDICT.pl3" in src
-    # Duyệt đúng các khóa thật của IMPORT_RULES; PL II đã chuyển xuống khối
-    # "Nghĩa vụ khác", hard-code II ở đây sẽ gọi undefined.map và làm nút Tra cứu chết.
-    assert "for (const annex of Object.keys(IMPORT_RULES))" in src
-    # Bộ lọc dòng category cũng phải nhúng từ core — JS từng hard-code
-    # ["I","II","III"] trong khi core.IMPORT_ANNEXES = ("I","III"), làm chất
-    # chỉ thuộc PL II hiện khác nhau giữa HTML và CLI.
-    assert "IMPORT_ANNEXES.includes(r.annex)" in src and "__IMPORT_ANNEXES_JSON__" in src
-    assert '["I", "II", "III"]' not in src, "bộ lọc phụ lục viết tay trong JS — dùng __IMPORT_ANNEXES_JSON__"
-    # Thứ tự ưu tiên phụ lục cũng nhúng từ core — JS từng hard-code bản riêng.
-    assert "__ANNEX_ORDER_JSON__" in src
-    assert '["III", "II", "I", "IV"]' not in src, "ANNEX_ORDER viết tay trong JS — dùng __ANNEX_ORDER_JSON__"
+    # Chi tiết "yêu cầu nhập khẩu" (detailFor + IMPORT_RULES/IMPORT_ANNEXES/ANNEX_ORDER
+    # nhúng qua JS) đã bỏ khỏi kết quả — trang chỉ còn pill verdict. Chốt là đừng
+    # ai vô tình đem mấy khối đó viết TAY lại trong JS (nguồn duy nhất là core.py,
+    # dùng ở phần miễn trừ render sẵn phía Python).
+    assert "IMPORT_RULES" not in src and "IMPORT_ANNEXES" not in src, "khối yêu cầu nhập khẩu quay lại JS — chỉ render phía Python từ core"
     # ...và artifact đã commit phải khớp core.py (chạy lại build_html.py nếu đỏ).
     html = Path(__file__).with_name("Tra-cuu-hoa-chat-ND24.html")
     if html.exists():
@@ -393,9 +387,11 @@ def test_pl3_hoa_chat_khac_khong_bi_gan_nham_bang_2():
 
 def test_html_can_deu_chu_thich_va_luu_y():
     src = Path(__file__).with_name("build_html.py").read_text(encoding="utf-8")
-    assert "details.detail .body" in src and "text-align: justify" in src
+    # Chú thích, lưu ý và toàn văn nghị định căn đều cho dễ đọc.
+    assert "text-align: justify" in src
+    assert ".note" in src and "details.doc p" in src
     assert ".exempt li" in src and ".exempt .warn-note" in src
-    assert ".instructions li" in src and ".note" in src
+    assert ".instructions li" in src
 
 
 def test_khong_con_noi_dung_ho_so_trinh_tu_thu_tuc():

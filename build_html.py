@@ -4,7 +4,7 @@ Nhúng luôn data/nd24_chemicals.json + toàn bộ quy tắc từ core.py vào f
 HTML nên chỉ cần double-click mở bằng trình duyệt là chạy được, kể cả
 không có mạng.
 
-Lấy IMPORT_RULES/EXEMPTIONS trực tiếp từ core.py (json.dumps)
+Lấy quy tắc (VERDICT, EXEMPTIONS...) trực tiếp từ core.py (json.dumps)
 thay vì gõ tay lại trong JS — tránh HTML và CLI lệch nội dung với nhau
 (đây chính là nguyên nhân Điều 21 bị thiếu ở bản trước).
 
@@ -20,13 +20,8 @@ import core
 HERE = Path(__file__).parent
 
 DATA_JSON = json.dumps(core.DATA, ensure_ascii=False)
-IMPORT_RULES_JSON = json.dumps(core.IMPORT_RULES, ensure_ascii=False)
-IMPORT_ANNEXES_JSON = json.dumps(core.IMPORT_ANNEXES, ensure_ascii=False)
-ANNEX_ORDER_JSON = json.dumps(core.ANNEX_ORDER, ensure_ascii=False)
 OTHER_OBLIGATION_ANNEXES_JSON = json.dumps(core.OTHER_OBLIGATION_ANNEXES, ensure_ascii=False)
 VERDICT_JSON = json.dumps(core.VERDICT, ensure_ascii=False)
-SUPPRESS_ANNEX_JSON = json.dumps(core.SUPPRESS_ANNEX, ensure_ascii=False)
-ANNEX_DISPLAY_ORDER_JSON = json.dumps(core.ANNEX_DISPLAY_ORDER, ensure_ascii=False)
 PL3_NO_CAS_JSON = json.dumps(core.PL3_NO_CAS, ensure_ascii=False)
 PL3_FAMILY_HINTS_JSON = json.dumps(core.PL3_FAMILY_HINTS, ensure_ascii=False)
 PL3_HINT_PREFIX_JSON = json.dumps(core.PL3_HINT_PREFIX, ensure_ascii=False)
@@ -273,18 +268,6 @@ HTML = """<!doctype html>
   .pill.ok { background: #2f7d3c; color: #fff; }
   .pill.unknown { background: #9a7a12; color: #fff; }
 
-  details.detail { border: 1px solid var(--line); border-radius: 8px; margin-top: 10px; background: #fbfcfd; overflow: hidden; }
-  details.detail[open] { border-color: #c9d3de; }
-  details.detail summary { cursor: pointer; padding: 10px 14px; font-weight: 600; list-style: none; display: flex; align-items: center; gap: 8px; }
-  details.detail summary::-webkit-details-marker { display: none; }
-  details.detail summary::before { content: "▸"; color: var(--muted); transition: transform .12s; }
-  details.detail[open] summary::before { transform: rotate(90deg); }
-  details.detail .body { padding: 2px 16px 16px; font-size: 0.93rem; color: #333; border-top: 1px solid var(--line); margin-top: 4px; padding-top: 12px; text-align: justify; }
-  details.detail .cats { white-space: pre-wrap; color: var(--muted); font-size: 0.9rem; }
-  details.detail h4 { margin: 14px 0 6px; font-size: 0.9rem; color: var(--blue-dark); }
-  details.detail ul.rules { margin: 0; padding-left: 20px; }
-  details.detail ul.rules li { margin-bottom: 5px; text-align: left; }
-
   .exempt h2 { font-size: 1.1rem; margin: 0 0 4px; }
   .exempt h3 { font-size: 0.95rem; margin: 16px 0 6px; color: var(--blue-dark); }
   .exempt ul { margin: 4px 0 0; padding-left: 20px; }
@@ -355,7 +338,6 @@ HTML = """<!doctype html>
     body { background: #fff; padding: 0; max-width: none; }
     .instructions, #input-card, footer, header::before { display: none; }
     .card { box-shadow: none; border-color: #bbb; break-inside: avoid; }
-    details.detail { break-inside: avoid; }
     .pill { border: 1px solid #888; color: #000 !important; background: #fff !important; }
   }
 </style>
@@ -423,14 +405,8 @@ __FULL_TEXT_HTML__
 
 <script>
 const DATA = __DATA_JSON__;
-const IMPORT_RULES = __IMPORT_RULES_JSON__;
-const IMPORT_ANNEXES = __IMPORT_ANNEXES_JSON__;
 const OTHER_OBLIGATION_ANNEXES = __OTHER_OBLIGATION_ANNEXES_JSON__;
 const VERDICT = __VERDICT_JSON__;
-const SUPPRESS_ANNEX = __SUPPRESS_ANNEX_JSON__;
-const ANNEX_DISPLAY_ORDER = __ANNEX_DISPLAY_ORDER_JSON__;
-
-const ANNEX_ORDER = __ANNEX_ORDER_JSON__;
 const PL3_NO_CAS = __PL3_NO_CAS_JSON__;
 const PL3_FAMILY_HINTS = __PL3_FAMILY_HINTS_JSON__;
 const PL3_HINT_PREFIX = __PL3_HINT_PREFIX_JSON__;
@@ -586,32 +562,6 @@ function hintHtml(cas) {
     out += `<div class="fam-hint"><b>${esc(PL3_HINT_PREFIX)}</b><ul>${items}</ul></div>`;
   }
   return out;
-}
-
-// Chi goi cho CAS CO trong du lieu — CAS khong co thi khong dung the chi tiet.
-function detailFor(cas) {
-  const rows = rowsFor(cas);
-  let out = "";
-  const seenAnnex = new Set();
-  // IMPORT_ANNEXES nhúng từ core.py — trước đây JS hard-code ["I","II","III"]
-  // nên chất chỉ thuộc PL II hiện category trong HTML còn CLI lại nói
-  // "Không phát sinh yêu cầu nhập khẩu riêng" (hai nơi hai kiểu).
-  const importRows = rows.filter(r => IMPORT_ANNEXES.includes(r.annex));
-  for (const r of importRows) {
-    out += `- ${r.category}\\n`;
-    seenAnnex.add(r.annex);
-  }
-  if (!importRows.length) return `<div class="cats">Không phát sinh yêu cầu nhập khẩu riêng.</div>`;
-  let html = `<div class="cats">${esc(out.trim())}</div>`;
-  // Cùng quy tắc ẩn khối với core.annexes_to_explain (SUPPRESS_ANNEX nhúng từ core.py).
-  const hidden = new Set();
-  for (const a of seenAnnex) for (const h of (SUPPRESS_ANNEX[a] || [])) hidden.add(h);
-  for (const annex of Object.keys(IMPORT_RULES)) {
-    if (!seenAnnex.has(annex) || hidden.has(annex)) continue;
-    const items = IMPORT_RULES[annex].map(b => `<li>${esc(b)}</li>`).join("");
-    html += `<h4>Yêu cầu nhập khẩu (Phụ lục ${annex})</h4><ul class="rules">${items}</ul>`;
-  }
-  return html;
 }
 
 // Hai che do TUONG MINH thay vi tu doan: can bo chon tra theo gi. Truoc day dò
@@ -927,13 +877,8 @@ out = (
     .replace("__EXEMPTIONS_HTML__", exemptions_html())
     .replace("__FULL_TEXT_HTML__", full_text_html())
     .replace("__DATA_JSON__", DATA_JSON)
-    .replace("__IMPORT_RULES_JSON__", IMPORT_RULES_JSON)
-    .replace("__IMPORT_ANNEXES_JSON__", IMPORT_ANNEXES_JSON)
-    .replace("__ANNEX_ORDER_JSON__", ANNEX_ORDER_JSON)
     .replace("__OTHER_OBLIGATION_ANNEXES_JSON__", OTHER_OBLIGATION_ANNEXES_JSON)
     .replace("__VERDICT_JSON__", VERDICT_JSON)
-    .replace("__SUPPRESS_ANNEX_JSON__", SUPPRESS_ANNEX_JSON)
-    .replace("__ANNEX_DISPLAY_ORDER_JSON__", ANNEX_DISPLAY_ORDER_JSON)
     .replace("__PL3_NO_CAS_JSON__", PL3_NO_CAS_JSON)
     .replace("__PL3_FAMILY_HINTS_JSON__", PL3_FAMILY_HINTS_JSON)
     .replace("__PL3_HINT_PREFIX_JSON__", PL3_HINT_PREFIX_JSON)
