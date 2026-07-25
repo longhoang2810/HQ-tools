@@ -167,7 +167,10 @@ def test_html_co_nut_vi_du_ngau_nhien():
     assert 'onclick="setMode(\'cas\')"' in src and 'onclick="setMode(\'name\')"' in src
     assert 'onclick="clearAll()"' in src
     assert 'const byCas = new Map()' in src
-    assert 'shuffle(items).map(([name, cas]) => `${name} (CAS ${cas})`)' in src
+    # Ca hai che do ra vi du NHIEU DONG HANG (moi dong 1 dong hang), khong con doan phang.
+    assert '${r.name_vn} (CAS ${r.cas})' in src          # mode CAS: dong hang kem ma
+    assert 'Hỗn hợp công nghiệp có ' in src               # mode tên: dòng hàng mô tả bằng tên
+    assert 'items.push(pick(LINE_EXAMPLE_GOODS))' in src  # luôn kèm 1 dòng hàng không tra ra gì
 
 
 def test_vi_du_ngau_nhien_van_con_case_khong_ro():
@@ -266,7 +269,7 @@ def test_che_do_cas_khong_de_ten_lot_vao_bang():
         cas_co_toluene: casMode.includes("108-88-3"),   // phải KHÔNG — tên không được vào bảng
         cas_nhac_ten: casMode.includes("Toluene"),      // nhưng phải được nhắc tới
         ten_co_toluene: nameMode.includes("108-88-3"),
-        ten_nhac_ma_cas: nameMode.includes("mã CAS —"),
+        ten_nhac_ma_cas: nameMode.includes("chế độ tra theo tên bỏ qua"),
       }));
     """)
     if got is None:
@@ -575,8 +578,8 @@ def test_unknown_khong_con_ghi_chu():
     assert format_report("000-00-0") == "CAS 000-00-0: không có trong dữ liệu NĐ 24 (Phụ lục I-IV)."
 
 
-def test_che_do_dong_hang():
-    # Chế độ "Theo dòng hàng": mỗi dòng vật lý = 1 dòng hàng của tờ khai.
+def test_che_do_dong_hang_theo_cas():
+    # Mode "theo mã CAS" đọc theo dòng hàng: mỗi dòng vật lý = 1 dòng hàng.
     # Ca (b) là ca nguy hiểm nhất: dòng KHÔNG có mã CAS mà ra xanh thì cả tờ khai
     # 50 dòng xanh hết trong khi chưa tra được gì.
     got = _run_js("""
@@ -585,10 +588,11 @@ def test_che_do_dong_hang():
         + "\\n3\\tHon hop 107-13-1 va 103-79-7"
         + "\\n4\\tChat la CAS 000-00-0"
         + "\\n5\\tKeo dan chua Toluene";
-      console.log(JSON.stringify(parseLines(txt).map(r => ({
-        stt: r.stt, cas: r.cas, badge: lineStatus(r).badge,
-        text: lineStatus(r).text, nameHint: lineNameHint(r).length > 0,
-      }))));
+      console.log(JSON.stringify(parseLines(txt).map(r => {
+        const s = heaviestStatus(r.cas, NO_CAS_STATUS);
+        return { stt: r.stt, cas: r.cas, badge: s.badge, text: s.text,
+          nameHint: lineNameHint(r).length > 0 };
+      })));
     """)
     if got is None:
         return  # không có node -> bỏ qua, phần Python thuần vẫn chạy
@@ -608,6 +612,30 @@ def test_che_do_dong_hang():
     # (e) cờ tên chỉ là gợi ý: có cờ nhưng KHÔNG đổi kết luận của dòng
     assert got[4]["nameHint"] and got[4]["badge"] == "unknown"
     assert "Không thấy mã CAS" in got[4]["text"]
+
+
+def test_che_do_dong_hang_theo_ten():
+    # Mode "theo tên" cũng đọc theo dòng hàng: mỗi dòng kết luận theo TÊN chất khớp
+    # trong mô tả (khi DN không khai CAS). Cùng bất biến (b): dòng không khớp tên
+    # nào -> VÀNG, tuyệt đối không xanh.
+    got = _run_js("""
+      const rows = parseLines("1\\tHon hop dung moi gom Metanol va Toluene"
+        + "\\n2\\tKeo dan cong nghiep, thung 20kg");
+      console.log(JSON.stringify(rows.map(r => {
+        const m = lineMatches(r, true);
+        const s = heaviestStatus(m, NO_NAME_STATUS);
+        return { matches: m, badge: s.badge, text: s.text };
+      })));
+    """)
+    if got is None:
+        return
+    # (a) dòng mô tả bằng tên -> khớp ra chất, kết luận theo tên (không amber vô cớ)
+    assert "67-56-1" in got[0]["matches"] and "108-88-3" in got[0]["matches"]
+    assert got[0]["badge"] in ("warn", "ok"), "dòng khớp được tên mà vẫn amber"
+    # (b) dòng không có tên chất nào -> VÀNG "không khớp tên", tuyệt đối không xanh
+    assert got[1]["matches"] == [] and got[1]["badge"] == "unknown"
+    assert got[1]["badge"] != "ok", "dòng chưa tra được mà báo xanh"
+    assert "Không khớp tên" in got[1]["text"]
 
 
 def test_dong_hang_khong_cat_nham_ten_hoa_chat():
@@ -707,11 +735,10 @@ def test_toan_van_hai_nghi_dinh_nhung_trong_trang():
     ids = set(re.findall(r'id="(nd2[46]-[^"]+)"', html))
     hrefs = {h for h in re.findall(r'href="#(nd2[46]-[^"]+)"', html) if "${" not in h}
     assert not hrefs - ids, f"link tới mục không tồn tại: {hrefs - ids}"
-    # Link dựng lúc chạy trong JS (annexLink) không soi tĩnh được -> chốt riêng:
-    # mọi Phụ lục hiện trong cột "Phụ lục" phải có đích trong khối toàn văn.
-    assert 'href="#nd24-pl-${esc(a).toLowerCase()}"' in html, "annexLink đổi dạng id"
+    # Cờ họ chất (hintHtml) link tới nguyên văn Phụ lục III -> đích phải có thật.
+    assert "nd24-pl-iii" in ids, "cờ họ chất link tới PL III nhưng không có đích"
     for a in core.ANNEX_DISPLAY_ORDER:
-        assert f"nd24-pl-{a.lower()}" in ids, f"cột Phụ lục link tới PL {a} nhưng không có đích"
+        assert f"nd24-pl-{a.lower()}" in ids, f"thiếu đích nguyên văn Phụ lục {a}"
     assert all(i.isascii() for i in ids), "id có dấu -> location.hash percent-encode sẽ không khớp"
     assert len([i for i in ids if i.startswith("nd26-dieu-")]) == 31, "NĐ 26 có 31 Điều"
     assert len([i for i in ids if i.startswith("nd24-dieu-")]) == 5, "NĐ 24 có 5 Điều"

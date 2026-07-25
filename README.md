@@ -34,32 +34,35 @@ Góc phải dưới có hai nút nổi: **✕ Thu gọn toàn văn** (hiện khi
 — cuộn ngược mấy nghìn dòng tìm lại thẻ đóng là không khả thi) và **↑ Lên đầu
 trang**.
 
-Trang có **hai chế độ tra**, tự chọn bằng nút trên ô nhập:
+Kết quả luôn là **bảng theo từng dòng hàng**: mỗi dòng dán vào = **một dòng hàng**
+của tờ khai (copy thẳng từ Excel được, bắt cả STT dạng `1<tab>`, `1.`, `1)`), một
+đoạn liền cũng được (thành 1 dòng). Bảng ra 1 hàng = 1 dòng hàng: STT · mô tả ·
+chất tra được · kết luận. Có **hai chế độ tra**, khác nhau ở chỗ *lấy gì để tra
+mỗi dòng*, chọn bằng nút trên ô nhập:
 
-| Chế độ | Làm gì | Dùng khi |
+| Chế độ | Tra mỗi dòng theo | Dùng khi |
 |---|---|---|
-| **Tìm theo mã CAS** (mặc định) | Tự tìm mọi mã CAS trong đoạn văn | DN có khai mã CAS — chính xác nhất |
-| **Tìm theo tên chất** | Dò tên hóa chất nằm trong đoạn ("Hỗn hợp dung môi gồm Metanol, Toluene" → ra cả hai); gõ một phần tên ("amino") thì liệt kê các chất mang tên đó. Tiếng Việt hoặc Anh, không cần gõ dấu, tối đa 30 kết quả | DN không khai mã CAS — chỉ là **gợi ý**, xem Giới hạn |
-| **Theo dòng hàng** | Mỗi dòng dán vào = **một dòng hàng** của tờ khai (copy thẳng từ Excel được, bắt cả STT dạng `1<tab>`, `1.`, `1)`). Bảng ra 1 hàng = 1 dòng hàng: STT, mô tả, mã CAS thấy được, kết luận | Cả tờ khai nhiều dòng — cần biết **dòng nào** vướng Phụ lục III |
+| **Tìm theo mã CAS** (mặc định) | Mọi mã CAS xuất hiện trong dòng đó | DN có khai mã CAS — chính xác nhất |
+| **Tìm theo tên chất** | Tên hóa chất (tiếng Việt/Anh, không cần dấu) dò được trong mô tả dòng đó | DN không khai mã CAS — chỉ là **gợi ý**, xem Giới hạn |
 
-Mỗi chế độ chỉ làm đúng việc của nó, nhưng **luôn nhắc chế độ kia** khi đoạn có
-dữ liệu cho nó: tra theo mã CAS mà đoạn còn tên hóa chất không kèm mã thì trang
-báo "còn nhắc tới N tên hóa chất... chuyển sang Tìm theo tên chất"; ngược lại
-tra theo tên mà đoạn có mã CAS thì trang báo đang bỏ qua chúng. Nhờ vậy mô tả
-trộn (vài chất khai mã, vài chất chỉ ghi tên) không bị bỏ sót im lặng, mà cũng
-không kéo cái khớp thừa của dò tên vào kết luận của mọi lô hàng.
+Bảng **không thêm quy tắc pháp lý nào** — kết luận từng chất vẫn đi qua đúng
+`casStatus()`; chế độ tên chỉ đổi *cách tìm ra chất* (dò tên → mã CAS) rồi kết
+luận y như chế độ mã. Mỗi chế độ **nhắc chế độ kia** khi dòng có dữ liệu cho nó:
+mode CAS mà dòng còn tên hóa chất không kèm mã thì hiện cờ "chuyển sang Tìm theo
+tên chất"; mode tên mà dòng có mã CAS thì báo đang bỏ qua chúng. Nhờ vậy không bỏ
+sót im lặng, mà cũng không kéo cái khớp thừa của dò tên vào kết luận mọi lô hàng.
 
-Chế độ **Theo dòng hàng** đảo trục bảng (1 dòng = 1 dòng hàng thay vì 1 chất) nhưng
-**không thêm quy tắc pháp lý nào** — kết luận vẫn đi qua đúng `casStatus()` như hai
-chế độ kia. Ba điểm khóa bằng test (`test_che_do_dong_hang`):
+Điểm khóa bằng test (`test_che_do_dong_hang_theo_cas`, `..._theo_ten`):
 
-1. **Dòng không có mã CAS ra màu VÀNG** ("Không thấy mã CAS — tự kiểm tra"), không
-   bao giờ xanh — để xanh thì tờ khai 50 dòng xanh hết trong khi chưa tra được gì.
-2. **Một dòng nhiều mã CAS** lấy verdict NẶNG NHẤT (PL III > mã ngoài dữ liệu >
-   không cần giấy phép), không phải mã đầu tiên.
-3. **Cờ tên chỉ là gợi ý**: dòng không khai mã CAS mà mô tả có nhắc tên chất trong
-   dữ liệu thì hiện cờ vàng, nhưng cờ **không đổi kết luận** của dòng — đúng khuôn
-   cờ họ chất Phụ lục III.
+1. **Dòng không tra được gì ra màu VÀNG** ("Không thấy mã CAS" / "Không khớp tên
+   — tự kiểm tra"), không bao giờ xanh — để xanh thì tờ khai 50 dòng xanh hết
+   trong khi chưa tra được gì.
+2. **Một dòng nhiều chất** lấy verdict NẶNG NHẤT (PL III > mã ngoài dữ liệu >
+   không cần giấy phép), không phải chất đầu tiên; cột kết luận xếp thẳng hàng với
+   cột chất để thấy ngay chất nào làm cả dòng vàng/đỏ.
+3. **Chế độ tên chỉ là gợi ý**: dò tên khớp thừa được (mô tả "natri clorua" khớp
+   ra "Natri"), nên dòng "không khớp tên" **không** đồng nghĩa hàng không cần giấy
+   phép — luôn đối chiếu mã CAS gốc.
 
 Dán từ Excel có thể vỡ dòng hàng (ô mô tả dài bị xuống dòng). Trang không sửa hộ
 được, nhưng nếu bắt được STT mà dãy đứt quãng — hoặc phần lớn dòng không có STT —
