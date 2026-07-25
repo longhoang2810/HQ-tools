@@ -911,12 +911,6 @@ function rowsFor(cas) {
   return DATA.filter(r => r.cas === cas);
 }
 
-function highestAnnex(cas) {
-  const present = new Set(rowsFor(cas).map(r => r.annex));
-  for (const a of ANNEX_ORDER) if (present.has(a)) return a;
-  return null;
-}
-
 // Doi xung voi extract_cas() trong core.py.
 function extractCas(text) {
   const seen = new Set(), out = [];
@@ -1174,22 +1168,6 @@ function lineCasHint(entry) {
   return `<div class="fam-hint">⚠ Dòng có mã CAS (${esc(entry.cas.join(", "))}) — chế độ tra theo tên bỏ qua. Chuyển sang <b>Tìm theo mã CAS</b> để tra theo mã.</div>`;
 }
 
-function detailsHtml(casList) {
-  let out = "";
-  for (const cas of [...new Set(casList)]) {
-    const rows = rowsFor(cas);
-    // CAS khong co trong du lieu: khong co gi de noi ngoai dieu bang da noi
-    // -> khong dung the chi tiet (bam ra rong thi con te hon la khong co).
-    if (!rows.length) continue;
-    const { badge } = casStatus(cas);
-    const title = `${cas} — ${rows[0].name_vn} (${rows[0].name_en})`;
-    // Chi mo san chi tiet chat can chu y (do/vang); chat on thi thu gon.
-    const open = badge === "ok" ? "" : " open";
-    out += `<details class="detail"${open}><summary><span class="pill ${badge}">PL ${highestAnnex(cas)}</span> ${esc(title)}</summary><div class="body">${detailFor(cas)}</div></details>`;
-  }
-  return out;
-}
-
 function runLines(text, resultsEl, mode) {
   const byName = mode === "name";
   const lines = parseLines(text);
@@ -1248,12 +1226,16 @@ function runLines(text, resultsEl, mode) {
       concl = `<span class="pill ${status.badge}">${esc(status.text)}</span>`;
     } else {
       // Cot khop + cot ket luan xep CUNG thu tu/so -> nhin ngang biet chat nao
-      // lam ca dong vang/do, khong phai mo khoi chi tiet duoi.
+      // lam ca dong vang/do. Chi tiet "can giay gi" nhet luon vao pill (bam mo),
+      // khong con khoi lap lai ben duoi.
       matchCell = matches.map(c => byName ? esc((rowsFor(c)[0] || {}).name_vn || c) : esc(c)).join("<br>");
       concl = matches.map(c => {
         const s = casStatus(c);
-        return `<span class="pill ${s.badge}">${esc(s.text)}</span>${hintHtml(c)}`;
-      }).join("<br>");
+        const pill = `<span class="pill ${s.badge}">${esc(s.text)}</span>`;
+        // CAS ngoai du lieu: khong co gi de mo -> chi pill, khong dung the chi tiet.
+        if (!rowsFor(c).length) return pill + hintHtml(c);
+        return `<details class="detail"><summary>${pill}</summary><div class="body">${detailFor(c)}</div></details>${hintHtml(c)}`;
+      }).join("");
     }
     concl += byName ? lineCasHint(l) : lineNameHint(l);
     table += `<tr class="${status.badge}"><td>${l.stt === null ? i + 1 : l.stt}</td>`
@@ -1263,7 +1245,7 @@ function runLines(text, resultsEl, mode) {
   });
   table += "</table></div>";
 
-  resultsEl.innerHTML = table + detailsHtml(per.flatMap(p => p.matches));
+  resultsEl.innerHTML = table;
   resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 

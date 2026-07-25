@@ -268,7 +268,7 @@ def test_che_do_cas_khong_de_ten_lot_vao_bang():
         cas_co_metanol: casMode.includes("67-56-1"),
         cas_co_toluene: casMode.includes("108-88-3"),   // phải KHÔNG — tên không được vào bảng
         cas_nhac_ten: casMode.includes("Toluene"),      // nhưng phải được nhắc tới
-        ten_co_toluene: nameMode.includes("108-88-3"),
+        ten_co_toluene: lineMatches(parseLines(__el("input").value)[0], true).includes("108-88-3"),
         ten_nhac_ma_cas: nameMode.includes("chế độ tra theo tên bỏ qua"),
       }));
     """)
@@ -572,7 +572,7 @@ def test_unknown_khong_con_ghi_chu():
     src = Path(__file__).with_name("build_html.py").read_text(encoding="utf-8")
     assert "NOTE_GAP" not in src and not hasattr(core, "NOTE_GAP")
     assert "Không tìm thấy trong Phụ lục" not in src, "JS viết tay lại câu 'không tìm thấy'"
-    assert "if (!rows.length) continue;" in src, "CAS không có dữ liệu phải bỏ qua thẻ chi tiết"
+    assert "if (!rowsFor(c).length) return pill" in src, "CAS không có dữ liệu phải bỏ qua thẻ chi tiết"
     # CLI thì ngược lại: lookup.py in mỗi format_report, không có bảng đứng trước,
     # nên vẫn phải tự nói tra ra gì — bỏ nốt thì in ra chuỗi rỗng.
     assert format_report("000-00-0") == "CAS 000-00-0: không có trong dữ liệu NĐ 24 (Phụ lục I-IV)."
