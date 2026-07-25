@@ -161,10 +161,11 @@ def test_html_co_nut_vi_du_ngau_nhien():
     assert 'onclick="setMode(\'cas\')"' in src and 'onclick="setMode(\'name\')"' in src
     assert 'onclick="clearAll()"' in src
     assert 'const byCas = new Map()' in src
-    # Ca hai che do ra vi du NHIEU DONG HANG (moi dong 1 dong hang), khong con doan phang.
-    assert '${r.name_vn} (CAS ${r.cas})' in src          # mode CAS: dong hang kem ma
-    assert 'Hỗn hợp công nghiệp có ' in src               # mode tên: dòng hàng mô tả bằng tên
-    assert 'items.push(pick(LINE_EXAMPLE_GOODS))' in src  # luôn kèm 1 dòng hàng không tra ra gì
+    # Ca hai che do ra vi du NHIEU DONG HANG, moi dong GOP NHIEU CHAT nhu mo ta that.
+    assert 'const MIX_PREFIX' in src and 'g.join(", ")' in src  # gộp nhiều chất/dòng
+    assert '${r.name_vn} (CAS ${r.cas})' in src          # mode CAS: chất kèm mã
+    assert '.filter(n => !extractCas(n).length)' in src   # mode tên: mô tả bằng tên, không mã
+    assert 'lines.push(pick(LINE_EXAMPLE_GOODS))' in src  # luôn kèm 1 dòng hàng không tra ra gì
 
 
 def test_vi_du_ngau_nhien_van_con_case_khong_ro():

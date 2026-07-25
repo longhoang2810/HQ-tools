@@ -1329,28 +1329,36 @@ const LINE_EXAMPLE_GOODS = [
   "Băng keo dán thùng carton",
   "Găng tay bảo hộ lao động",
 ];
+const MIX_PREFIX = ["Hỗn hợp dung môi gồm", "Nguyên liệu sản xuất gồm",
+  "Chế phẩm công nghiệp chứa", "Hỗn hợp gồm"];
 
-// Mode CAS: moi dong hang kem ma CAS + mot dong hang thuong (khong co CAS).
+// Gom danh sach chat thanh 2-3 DONG HANG, moi dong nhieu chat nhu mo ta that,
+// cong them mot dong hang thuong (khong tra ra gi -> luon co ca mau vang) -> ~3-4 dong.
+function mixExample(items) {
+  const nLines = items.length >= 6 ? 3 : 2;
+  const buckets = Array.from({ length: nLines }, () => []);
+  shuffle(items).forEach((it, i) => buckets[i % nLines].push(it));
+  const lines = buckets.filter(b => b.length).map(g => `${pick(MIX_PREFIX)} ${g.join(", ")}`);
+  lines.push(pick(LINE_EXAMPLE_GOODS));
+  document.getElementById("input").value = shuffle(lines)
+    .map((mota, i) => `${i + 1}\t${mota}`).join("\n");
+  run();
+}
+
+// Mode CAS: moi dong gop nhieu chat KEM ma CAS.
 function randomExample() {
   const { rows, known } = exampleRows();
   const items = rows.map(r => `${r.name_vn} (CAS ${r.cas})`);
   const outside = OUTSIDE_DATA.filter(([, cas]) => !known.has(cas));
   if (outside.length) { const [n, c] = pick(outside); items.push(`${n} (CAS ${c})`); }
-  items.push(pick(LINE_EXAMPLE_GOODS));
-  document.getElementById("input").value = shuffle(items)
-    .map((mota, i) => `${i + 1}\t${mota}`).join("\n");
-  run();
+  mixExample(items);
 }
 
-// Mode ten: moi dong hang mo ta bang TEN (khong kem ma CAS) + mot dong hang thuong.
+// Mode ten: moi dong gop nhieu chat mo ta bang TEN (khong kem ma CAS).
 // extractCas de chac ten khong tu chua chuoi dang CAS (se roi sang truc CAS).
 function randomNameExample() {
   const names = exampleRows().rows.map(r => r.name_vn).filter(n => !extractCas(n).length);
-  const items = names.map(n => `Hỗn hợp công nghiệp có ${n}`);
-  items.push(pick(LINE_EXAMPLE_GOODS));
-  document.getElementById("input").value = shuffle(items)
-    .map((mota, i) => `${i + 1}\t${mota}`).join("\n");
-  run();
+  mixExample(names);
 }
 
 const inputEl = document.getElementById("input");
