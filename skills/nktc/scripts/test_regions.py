@@ -21,8 +21,8 @@ class RegionConfigTest(unittest.TestCase):
     def test_default_config_has_nine_regions_and_backup_has_34(self):
         regions = load_regions(REGIONS)
         backup = load_regions(REGIONS_34_BACKUP)
-        self.assertEqual(len(regions), 9)
-        self.assertEqual([name for name, _ in regions], ["hp", "Hn", "PT", "HY", "BN", "TH", "TQ", "QT", "NB"])
+        self.assertEqual(len(regions), 34)
+        self.assertIn("HCM", [name for name, _ in regions])
         self.assertEqual(len(backup), 34)
         self.assertIn("HCM", [name for name, _ in backup])
 

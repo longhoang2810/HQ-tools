@@ -18,9 +18,9 @@ metadata:
 Processes an NKTC (nhập khẩu tại chỗ / on-the-spot import) customs-declaration
 Excel export in two steps and produces **one formatted workbook** with `summary`,
 one sheet per configured province/city, and `unmatched` for rows not matching a
-configured location. `regions.txt` is the current 9-sheet operating list:
-hp, Hn, PT, HY, BN, TH, TQ, QT, NB. `regions-34-backup.txt` retains the full
-34-unit configuration for a later approved expansion. Legacy mode
+configured location. `regions.txt` is the full 34-unit configuration, with aliases for pre-merger
+addresses. `regions-34-backup.txt` is the same configuration retained as a
+portable restore point. Legacy mode
 `--separate-files` still writes
 one .xlsx per configured group. All logic is in `scripts/nktc_process.py` (uses
 `openpyxl`).
@@ -143,9 +143,8 @@ Each file uses the same layout and formatting:
 Safari hoặc Firefox, chọn `.xlsx`, chỉnh vùng trong ô cấu hình rồi tải workbook
 kết quả. Toàn bộ dữ liệu xử lý ngay trên trình duyệt, không có upload/server.
 
-File này đã nhúng ExcelJS nên có dung lượng khoảng 1 MB. Mặc định HTML hiển thị
-9 vùng vận hành. Khi cần 34 vùng, tải `regions-34-backup.txt` qua nút **Nhập
-TXT**; danh sách 34 không tự bật. Khi sửa `regions.txt` hoặc giao diện, dựng lại bằng:
+File này đã nhúng ExcelJS nên có dung lượng khoảng 1 MB. Mặc định HTML hiển thị đủ 34 vùng. `regions-34-backup.txt` là bản dự phòng
+để khôi phục khi cần. Khi sửa `regions.txt` hoặc giao diện, dựng lại bằng:
 
 ```bash
 python3 scripts/build_html.py
