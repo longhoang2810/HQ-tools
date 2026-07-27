@@ -1,0 +1,223 @@
+---
+name: nktc
+description: "Use when processing an NKTC customs-declaration Excel export (nhập khẩu tại chỗ). Filters Ma_LH in {E21, G13}, remaps columns, and builds one formatted .xlsx per province group (hp, Hn, PT, HY, BN, TH, TQ, QT, NB) with accent-insensitive address matching, grouped/merged company rows, Vietnamese header, Times New Roman formatting and borders."
+version: 2.0.0
+author: Hermes Agent
+license: MIT
+platforms: [linux, macos, windows]
+metadata:
+  hermes:
+    tags: [excel, openpyxl, vietnamese, customs, nktc, hai-phong, reporting]
+    related_skills: [powerpoint]
+---
+
+# NKTC – Excel Customs Declaration Processor
+
+## Overview
+
+Processes an NKTC (nhập khẩu tại chỗ / on-the-spot import) customs-declaration
+Excel export in two steps and produces **one formatted workbook with 11 sheets**
+(`summary`, 9 region sheets: hp, Hn, PT, HY, BN, TH, TQ, QT, NB; plus `unmatched` for rows not matching those regions) for the relevant enterprises. Legacy mode
+`--separate-files` still writes one .xlsx per province group. All logic is in
+`scripts/nktc_process.py` (uses `openpyxl`).
+
+The source file is a wide export where the meaningful columns historically sat
+at fixed positions A, B, H, I, J, K, P. The script now first tries to detect the
+source columns from the header row (`So_to_khai`, `Ma_LH`, `Ma_DN_XNK`,
+`Ten_DN_XNK`, `Ma_dia_chi_DN_XNK`, `So_quan_ly_cua_noi_bo_doanh_nghiep`,
+`Tong_tri_gia_tinh_thue`) and falls back to the legacy fixed positions only when
+headers are missing. This prevents shifted monthly exports from silently using
+the company-name column as the address column.
+
+## When to Use
+
+- User attaches/points to an NKTC Excel export and asks for the province lists
+- Any "lọc E21/G13 → tạo các file theo tỉnh" / "danh sách doanh nghiệp nhập
+  khẩu tại chỗ" request
+- If the user sends an NKTC file and says "Try again" / "làm lại" / "chạy lại",
+  run the standard workflow directly; do not ask what to do with the file.
+- Recurring monthly customs report with the same column layout
+
+Don't use for: arbitrary Excel reshaping unrelated to this fixed column layout.
+
+## Source Column Layout (1-based, fixed positions)
+
+| Col | Field                              | Used as |
+|-----|------------------------------------|---------|
+| A   | So_to_khai                         | → D     |
+| B   | Ma_LH (filter ∈ {E21, G13})        | filter  |
+| H   | Ma_DN_XNK                          | → C     |
+| I   | Ten_DN_XNK (sort A→Z)              | → B     |
+| J   | Ma_dia_chi_DN_XNK                  | → A     |
+| K   | So_quan_ly_cua_noi_bo_doanh_nghiep | → E (strip first 8 chars) |
+| P   | Tong_tri_gia_tinh_thue             | → F     |
+
+## What the Script Does
+
+**Step 1 – filter & normalize**
+1. Keep rows where col B (Ma_LH) is in `{E21, G13}` (override with `--ma-lh`,
+   comma-separated). This is the standard filter condition for NKTC exports.
+2. Exclude any row where output E would be blank after stripping the first 8
+   characters from source column K / detected `So_quan_ly_cua_noi_bo_doanh_nghiep`.
+3. Sort by col I (Ten_DN_XNK) A→Z.
+4. Remap to A=J, B=I, C=H, D=A, E=K(−8 chars), F=P.
+   Optionally dump this intermediate table with `--step1-out step1.xlsx`.
+
+**Step 2 – build one workbook with 9 province sheets + `unmatched`**
+For each region below, keep Step-1 rows whose col A (address) matches the
+region's terms, then write a sheet named by region stem into the output workbook.
+Rows that passed the E21/G13 filter but do not match any of the 9 region term sets go into the `unmatched` sheet with source address and reason. A `summary` sheet is written first with Step-1 rows, region rows, unmatched rows, coverage, and per-sheet counts.
+Address
+matching is **accent-insensitive**: terms are stored unaccented, the address
+is de-accented before comparison (đ/Đ → d), so both "Hà Nội" and "Ha Noi"
+match. Matching is also case-insensitive and substring-based.
+
+| File      | Address contains (any of)        |
+|-----------|----------------------------------|
+| `hp`      | hai ph, hai phong, hp, hai duong |
+| `Hn.xlsx` | ha noi                           |
+| `PT.xlsx` | phu tho, vinh phuc               |
+| `HY.xlsx` | hung yen                         |
+| `BN.xlsx` | bac ninh, bac giang              |
+| `TH.xlsx` | thanh hoa                        |
+| `TQ.xlsx` | tuyen quang                      |
+| `QT.xlsx` | quang tri                        |
+| `NB.xlsx` | nam dinh, ninh binh              |
+
+Terms are stored unaccented because matching strips accents first, so accented
+forms are covered automatically: `hải phòng` → `hai phong`, `hà nội` →
+`ha noi`, `phú thọ` → `phu tho`, `vĩnh phúc` → `vinh phuc`, `hưng yên` →
+`hung yen`, `bắc ninh`/`bắc giang` → `bac ninh`/`bac giang`, `thanh hoá` →
+`thanh hoa`, `tuyên quang` → `tuyen quang`, `quảng trị` → `quang tri`,
+`nam định`/`ninh bình` → `nam dinh`/`ninh binh`.
+
+Each file uses the same layout and formatting:
+- Output columns: `A=STT | B=Tên DN XNK | C=Mã DN XNK | D=Số tờ khai |
+  E=Tờ khai XK | F=Trị giá tính thuế (USD) | G=Thuế NK | H=Ghi chú`.
+- E = source K with first 8 chars stripped; G = 0 everywhere; H (`Ghi chú`) has the region/file title (`hp`, `Hn`, etc.) on the first data row only and is blank on the remaining rows.
+- Group rows with same B+C (Tên DN + Mã DN): **merge cells in A, B, C**;
+  keep each row's own D and E. STT is numbered per company group. (Because
+  E21 and G13 declarations for the same company group together, a company can
+  span several D/E rows under one merged STT.)
+- Header rows 1–4:
+  - Row 1: `DANH SÁCH DOANH NGHIỆP LÀM THỦ TỤC NHẬP KHẨU TẠI CHỖ THÁNG MM/YYYY`
+    where **MM = previous month**, **YYYY = current year** (auto-filled from
+    today's date when `--month/--year` are omitted).
+  - Row 2: `(Kèm theo Thông báo số NUM/TB-XNKTC(GC) ngày DD tháng MM năm YYYY)`
+    where the Thông báo **MM = current month**, **YYYY = current year**
+    (auto-filled when `--tb-month/--tb-year` are omitted).
+  - Rows 1–2 merged A:H, bold, size 14, centered.
+  - Row 3 blank. Row 4 column names, bold, centered.
+- Formatting: Times New Roman everywhere; data size 11; cols B & C vertical
+  top; all-borders on the data region; col D (`Số tờ khai`) number format `0`
+  with enough width to avoid scientific notation; col F number format `#,##0.00`.
+
+## References
+
+- `references/export-import.md` — portable archive/export workflow for copying this skill to another Hermes agent or profile, plus Drive upload/auth notes.
+
+## Usage
+
+```bash
+# Default: -o is one OUTPUT .xlsx workbook containing 9 region sheets
+python3 scripts/nktc_process.py INPUT.xlsx -o OUT.xlsx \
+    --month 05 --year 2026 \
+    --tb-no 123 --tb-day 29 --tb-month 5 --tb-year 2026
+
+# Legacy: write 9 separate files into OUTDIR
+python3 scripts/nktc_process.py INPUT.xlsx -o OUTDIR --separate-files \
+    --month 05 --year 2026
+```
+
+When the user attaches an NKTC source file and says "Try again", "làm lại", or otherwise asks to repeat the standard processing without extra details, run the standard workflow directly instead of asking what to do:
+
+```bash
+python3 /Users/cheese/.hermes/skills/productivity/nktc/scripts/nktc_process.py \
+    INPUT.xlsx \
+    -o /Users/cheese/.hermes/cache/documents/nktc_output_T5_2026 \
+    --month 05 --year 2026
+```
+
+For future files, infer the report month/year from the filename when it contains patterns like `T5.2026`, `T05.2026`, `tháng 5 2026`, or `05-2026`; otherwise use the script defaults unless the user specifies month/year. Name the output folder descriptively, e.g. `nktc_output_T5_2026`, and report the full folder path plus the 9 generated files and row/company counts.
+
+Common flags:
+- `--sheet NAME`     pick a specific source sheet (default: active sheet)
+- `--ma-lh E21,G13`  comma-separated loại hình filter values (default E21,G13)
+- `--header-rows 1`  number of header rows in the source before data starts
+- `--step1-out step1.xlsx`  also save the intermediate Step-1 table
+- `-o OUTDIR`        output directory for the 9 region files (default: `.`,
+  created if missing)
+- `--month/--year`   fill the title `THÁNG MM/YYYY`. **Default: previous
+  month + current year**, auto-filled from today's date.
+- `--tb-no/--tb-day/--tb-month/--tb-year`  fill the Thông báo subtitle.
+  `--tb-month/--tb-year` **default to the current month + current year**.
+
+If the user doesn't give month/year values, the script auto-fills them from
+today's date (title = previous month / current year; subtitle = current month
+/ current year). Only `--tb-no` and `--tb-day` are left blank when omitted, so
+the user can fill those by hand.
+
+## Adapting to a Real File
+
+The script detects the source layout from the header row by default and only
+falls back to legacy fixed positions (A,B,H,I,J,K,P) when recognizable headers
+are absent. Before trusting a surprising result, still do a quick header sanity
+check: locate columns named like `Ma_LH`, `Ma_DN_XNK`, `Ten_DN_XNK`,
+`Ma_dia_chi_DN_XNK`, `So_quan_ly_cua_noi_bo_doanh_nghiep`, and
+`Tong_tri_gia_tinh_thue`. Monthly T exports can shift meaningful fields one or
+more columns to the right (for example, T5.xlsx had `Ma_dia_chi_DN_XNK` at K,
+not J). If a real export has **extra header rows** (title banners above the
+column names), pass `--header-rows N` so detection and filtering start from the
+right header/data boundary.
+
+When a province count is unexpectedly zero, diagnose against the detected
+address column before changing region terms. For example, Thanh Hóa rows may be
+missed if the script reads the company-name column as the address column; the
+fix is header-based column detection, not adding more `thanh hoa` spellings.
+
+## Common Pitfalls
+
+1. **Reading by header name.** The script reads by column index on purpose;
+   don't "fix" it to match header strings — real exports have inconsistent
+   header wording.
+2. **Wrong header-rows count.** If the source has a multi-row banner, the
+   first real data rows get treated as headers (or junk rows leak in). Verify
+   with `--step1-out` and inspect the row count.
+3. **Stripping fewer/more than 8 chars on col E.** The spec is exactly 8 — if
+   the internal management number prefix length changes, update `strip8`.
+4. **Grouping key.** Rows group by B+C (name AND code). Two branches with the
+   same name but different Mã DN stay separate — that's intended. E21 and G13
+   declarations for the same B+C group under one STT, so a company may show
+   several D/E rows.
+5. **Trị giá as text.** Source values may be stored as strings with commas;
+   `to_float` strips commas. If totals look wrong, check the raw cell type.
+6. **Mã DN XNK leading zeroes.** Keep company codes as text. The script uses
+   `cell_to_text()` and preserves zero-padded numeric display formats such as
+   `0000000000`; do not coerce output column C back to numeric.
+7. **Address matching is accent-insensitive and broad on purpose.** Terms in
+   `REGIONS` are unaccented; the address is de-accented before matching, so
+   "Hà Nội" and "Ha Noi" both hit. "hai ph" matches abbreviations by design —
+   this can theoretically false-match, so eyeball the address column if a
+   surprising company appears in a file.
+8. **In `--separate-files` mode, `-o` is a directory, not a filename.** Step 2 writes 9 files (`hp.xlsx`,
+   `Hn.xlsx`, …) into the `-o` directory. Passing `-o hp.xlsx` would create a
+   directory literally named `hp.xlsx`. Use `-o OUTDIR` (or omit for cwd).
+9. **A row can land in more than one sheet/file.** If an address contains terms for
+   two regions (rare), it's written to both. Region terms are mutually
+   exclusive in practice, but there's no dedupe across files.
+10. **Editing regions.** To add/rename a province group or change its match
+   terms, edit the `REGIONS` list at the top of the script. Keep terms
+   lowercase and unaccented.
+
+## Verification Checklist
+
+- [ ] Step-1 row count matches expected number of E21 + G13 declarations after excluding rows whose fixed column L has blank rightmost 8 trimmed characters
+- [ ] Workbook contains `summary`, 9 region sheets, and `unmatched`; total data rows across non-summary sheets equals Step-1 row count
+- [ ] Each file's merged ranges include A1:H1, A2:H2, and one A/B/C merge per
+      multi-declaration company
+- [ ] STT increments per company group, not per row
+- [ ] Col E values are source K minus the first 8 chars
+- [ ] Col G all 0, col H all blank
+- [ ] A1/A2 Times New Roman, size 14, bold, centered; col F = `#,##0.00`
+- [ ] Cols B & C vertical alignment = top; thin border on every data cell
+- [ ] Accented and unaccented addresses both land in the right file
