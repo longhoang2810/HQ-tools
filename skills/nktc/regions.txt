@@ -1,46 +1,38 @@
-# NKTC backup region configuration — 34 tỉnh/thành cấp tỉnh hiện hành.
-# Copy toàn bộ nội dung file này vào regions.txt khi nghiệp vụ cần xuất đủ 34 sheet.
-# One active line: sheet_name<TAB>address keyword | address keyword
-# - Lines beginning with # and blank lines are ignored.
-# - Address matching ignores case and Vietnamese accents.
-# - Terms include former provincial names where they merged into a current unit.
+# NKTC all-region configuration: 34 tỉnh/thành sau sáp nhập.
+# Format: Tên sheet<TAB>tên địa phương hiện tại | tên tỉnh/thành cũ cần nhận diện
+# Mỗi sheet dùng tên tỉnh/thành sau sáp nhập. Chỉ sửa phần sau Tab khi cần thêm alias.
 
-# Northern provinces/cities
-Cao Bang	Cao Bang | Tinh Cao Bang
-Lang Son	Lang Son | Tinh Lang Son
-Quang Ninh	Quang Ninh | Tinh Quang Ninh
-BN	Bac Ninh | Tinh Bac Ninh | Bac Giang | Tinh Bac Giang
-HY	Hung Yen | Tinh Hung Yen | Thai Binh | Tinh Thai Binh
-hp	Hai Phong | TP Hai Phong | Thanh pho Hai Phong | Hai Duong | Tinh Hai Duong
-NB	Ninh Binh | Tinh Ninh Binh | Ha Nam | Tinh Ha Nam | Nam Dinh | Tinh Nam Dinh
-PT	Phu Tho | Tinh Phu Tho | Vinh Phuc | Tinh Vinh Phuc | Hoa Binh | Tinh Hoa Binh
-Son La	Son La | Tinh Son La
-Lai Chau	Lai Chau | Tinh Lai Chau
-Dien Bien	Dien Bien | Tinh Dien Bien
-Lao Cai	Lao Cai | Tinh Lao Cai | Yen Bai | Tinh Yen Bai
-TQ	Tuyen Quang | Tinh Tuyen Quang | Ha Giang | Tinh Ha Giang
-Thai Nguyen	Thai Nguyen | Tinh Thai Nguyen | Bac Kan | Tinh Bac Kan
-Hn	Ha Noi | TP Ha Noi | Thanh pho Ha Noi
-
-# North Central and Central provinces/cities
-TH	Thanh Hoa | Tinh Thanh Hoa
-Nghe An	Nghe An | Tinh Nghe An
-Ha Tinh	Ha Tinh | Tinh Ha Tinh
-QT	Quang Tri | Tinh Quang Tri | Quang Binh | Tinh Quang Binh
-Hue	Hue | Thanh pho Hue | Thua Thien Hue | Tinh Thua Thien Hue
-Da Nang	Da Nang | TP Da Nang | Thanh pho Da Nang | Quang Nam | Tinh Quang Nam
-Quang Ngai	Quang Ngai | Tinh Quang Ngai | Kon Tum | Tinh Kon Tum
-Gia Lai	Gia Lai | Tinh Gia Lai | Binh Dinh | Tinh Binh Dinh
-Dak Lak	Dak Lak | Daklak | Tinh Dak Lak | Phu Yen | Tinh Phu Yen
-Khanh Hoa	Khanh Hoa | Tinh Khanh Hoa | Ninh Thuan | Tinh Ninh Thuan
-Lam Dong	Lam Dong | Tinh Lam Dong | Dak Nong | Daknong | Tinh Dak Nong | Binh Thuan | Tinh Binh Thuan
-
-# Southern provinces/cities
-Dong Nai	Dong Nai | Tinh Dong Nai | Binh Phuoc | Tinh Binh Phuoc
-Tay Ninh	Tay Ninh | Tinh Tay Ninh | Long An | Tinh Long An
-HCM	Ho Chi Minh | Thanh pho Ho Chi Minh | TP Ho Chi Minh | TP HCM | TPHCM | TP.HCM | TP. HCM | Binh Duong | Tinh Binh Duong | Ba Ria Vung Tau | Ba Ria - Vung Tau | Tinh Ba Ria Vung Tau
-Dong Thap	Dong Thap | Tinh Dong Thap | Tien Giang | Tinh Tien Giang
-Vinh Long	Vinh Long | Tinh Vinh Long | Ben Tre | Tinh Ben Tre | Tra Vinh | Tinh Tra Vinh
-Can Tho	Can Tho | TP Can Tho | Thanh pho Can Tho | Hau Giang | Tinh Hau Giang | Soc Trang | Tinh Soc Trang
-An Giang	An Giang | Tinh An Giang | Kien Giang | Tinh Kien Giang
-Ca Mau	Ca Mau | Tinh Ca Mau | Bac Lieu | Tinh Bac Lieu
+Cao Bằng	Cao Bang
+Lạng Sơn	Lang Son
+Quảng Ninh	Quang Ninh
+Bắc Ninh	Bac Ninh | Bac Giang
+Hưng Yên	Hung Yen | Thai Binh
+Hải Phòng	Hai Phong | Hai Duong
+Ninh Bình	Ninh Binh | Ha Nam | Nam Dinh
+Phú Thọ	Phu Tho | Vinh Phuc | Hoa Binh
+Sơn La	Son La
+Lai Châu	Lai Chau
+Điện Biên	Dien Bien
+Lào Cai	Lao Cai | Yen Bai
+Tuyên Quang	Tuyen Quang | Ha Giang
+Thái Nguyên	Thai Nguyen | Bac Kan
+Hà Nội	Ha Noi | TP Ha Noi | Thanh pho Ha Noi
+Thanh Hóa	Thanh Hoa
+Nghệ An	Nghe An
+Hà Tĩnh	Ha Tinh
+Quảng Trị	Quang Tri | Quang Binh
+Huế	Hue | Thanh pho Hue | Thua Thien Hue
+Đà Nẵng	Da Nang | TP Da Nang | Thanh pho Da Nang | Quang Nam
+Quảng Ngãi	Quang Ngai | Kon Tum
+Gia Lai	Gia Lai | Binh Dinh
+Đắk Lắk	Dak Lak | Daklak | Phu Yen
+Khánh Hòa	Khanh Hoa | Ninh Thuan
+Lâm Đồng	Lam Dong | Dak Nong | Daknong | Binh Thuan
+Đồng Nai	Dong Nai | Binh Phuoc
+Tây Ninh	Tay Ninh | Long An
+Hồ Chí Minh	Ho Chi Minh | Thanh pho Ho Chi Minh | TP Ho Chi Minh | TP HCM | TPHCM | TP.HCM | TP. HCM | Binh Duong | Ba Ria Vung Tau | Ba Ria - Vung Tau
+Đồng Tháp	Dong Thap | Tien Giang
+Vĩnh Long	Vinh Long | Ben Tre | Tra Vinh
+Cần Thơ	Can Tho | TP Can Tho | Thanh pho Can Tho | Hau Giang | Soc Trang
+An Giang	An Giang | Kien Giang
+Cà Mau	Ca Mau | Bac Lieu

@@ -466,7 +466,7 @@ def write_summary_sheet(ws, step1_rows, counts):
         cell.font = font_hdr
         cell.border = border
     for stem, terms, n_rows, n_grp in counts:
-        ws.append([stem, ", ".join(terms) if terms else "", n_rows, n_grp, "not matched by 9 regions" if not terms else ""])
+        ws.append([stem, ", ".join(terms) if terms else "", n_rows, n_grp, "not matched by configured regions" if not terms else ""])
     for row in ws.iter_rows(min_row=1, max_row=ws.max_row, max_col=5):
         for cell in row:
             cell.font = font_data if cell.row != 7 else font_hdr

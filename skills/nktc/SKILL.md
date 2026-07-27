@@ -1,7 +1,7 @@
 ---
 name: nktc
 description: "Use when processing an NKTC customs-declaration Excel export (nhập khẩu tại chỗ). Filters Ma_LH in {E21, G13}, remaps columns, and builds one formatted .xlsx per configured province/city from regions.txt with accent-insensitive address matching, grouped/merged company rows, Vietnamese header, Times New Roman formatting and borders."
-version: 2.4.0
+version: 3.0.0
 author: Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -18,9 +18,9 @@ metadata:
 Processes an NKTC (nhập khẩu tại chỗ / on-the-spot import) customs-declaration
 Excel export in two steps and produces **one formatted workbook** with `summary`,
 one sheet per configured province/city, and `unmatched` for rows not matching a
-configured location. `regions.txt` is the full 34-unit configuration, with aliases for pre-merger
-addresses. `regions-34-backup.txt` is the same configuration retained as a
-portable restore point. Legacy mode
+configured location. `regions.txt` is the full 34-unit configuration. Sheet
+names are the provincial-level units after the merger; aliases retain recognition
+of pre-merger addresses. Legacy mode
 `--separate-files` still writes
 one .xlsx per configured group. All logic is in `scripts/nktc_process.py` (uses
 `openpyxl`).
@@ -79,16 +79,11 @@ row is assigned to exactly one sheet.
 
 | Sheet/file | Address contains (any of)        |
 |-----------|----------------------------------|
-| `hp`      | hai ph, hai phong, hp, hai duong |
-| `Hn.xlsx` | ha noi                           |
-| `PT.xlsx` | phu tho, vinh phuc               |
-| `HY.xlsx` | hung yen                         |
-| `BN.xlsx` | bac ninh, bac giang              |
-| `TH.xlsx` | thanh hoa                        |
-| `TQ.xlsx` | tuyen quang                      |
-| `QT.xlsx` | quang tri                        |
-| `NB.xlsx` | nam dinh, ninh binh              |
-| `HCM.xlsx` | ho chi minh, tp hcm, tphcm       |
+| `Hải Phòng` | hai phong, hai duong           |
+| `Hà Nội` | ha noi                            |
+| `Phú Thọ` | phu tho, vinh phuc, hoa binh    |
+| `Bắc Ninh` | bac ninh, bac giang             |
+| `Hồ Chí Minh` | ho chi minh, binh duong, ba ria vung tau |
 
 Terms are stored unaccented because matching strips accents first, so accented
 forms are covered automatically: `hải phòng` → `hai phong`, `hà nội` →
@@ -102,8 +97,8 @@ forms are covered automatically: `hải phòng` → `hai phong`, `hà nội` →
 Edit `regions.txt`; no Python change needed. One active line uses:
 
 ```text
-sheet_name<TAB>address keyword | address keyword
-HCM<TAB>Ho Chi Minh | Thanh pho Ho Chi Minh | TP.HCM | TPHCM
+Tên tỉnh/thành sau sáp nhập<TAB>địa danh hiện tại | địa danh cũ
+Hồ Chí Minh<TAB>Ho Chi Minh | TP.HCM | Binh Duong | Ba Ria Vung Tau
 ```
 
 Blank lines and lines beginning with `#` are ignored. Sheet names must be unique,
@@ -143,16 +138,17 @@ Each file uses the same layout and formatting:
 Safari hoặc Firefox, chọn `.xlsx`, chỉnh vùng trong ô cấu hình rồi tải workbook
 kết quả. Toàn bộ dữ liệu xử lý ngay trên trình duyệt, không có upload/server.
 
-File này đã nhúng ExcelJS nên có dung lượng khoảng 1 MB. Mặc định HTML hiển thị đủ 34 vùng. `regions-34-backup.txt` là bản dự phòng
-để khôi phục khi cần. Khi sửa `regions.txt` hoặc giao diện, dựng lại bằng:
+File này đã nhúng ExcelJS nên có dung lượng khoảng 1 MB. Mặc định HTML hiển thị
+đủ 34 vùng với tên sheet sau sáp nhập. Khi sửa `regions.txt` hoặc giao diện,
+dựng lại bằng:
 
 ```bash
 python3 scripts/build_html.py
 ```
 
-Nguồn HTML gồm `NKTC-xu-ly-excel.template.html`, `assets/exceljs.min.js`,
-`regions.txt`, và `regions-34-backup.txt`. Không sửa trực tiếp bundle HTML trừ
-tình huống khẩn cấp; sửa template/TXT rồi build để các thay đổi có thể tái tạo.
+Nguồn HTML gồm `NKTC-xu-ly-excel.template.html`, `assets/exceljs.min.js`, và
+`regions.txt`. Không sửa trực tiếp bundle HTML trừ tình huống khẩn cấp; sửa
+template/TXT rồi build để các thay đổi có thể tái tạo.
 
 HTML hỗ trợ tải lên/tải xuống `regions.txt`, khôi phục mặc định 34 vùng, và giữ
 quy tắc phân vùng như CLI: địa danh khớp ở cuối địa chỉ được ưu tiên, một dòng
@@ -173,8 +169,7 @@ python3 scripts/nktc_process.py INPUT.xlsx -o OUTDIR --separate-files \
 # Use a separate reviewed province/city configuration
 python3 scripts/nktc_process.py INPUT.xlsx -o OUT.xlsx --regions ./regions.txt
 
-# Chỉ khi nghiệp vụ cần mở rộng đủ 34 vùng
-python3 scripts/nktc_process.py INPUT.xlsx -o OUT.xlsx --regions ./regions-34-backup.txt
+
 ```
 
 When the user attaches an NKTC source file and says "Try again", "làm lại", or otherwise asks to repeat the standard processing without extra details, run the standard workflow directly instead of asking what to do:
