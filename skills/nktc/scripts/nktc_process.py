@@ -158,15 +158,41 @@ def cell_to_text(cell):
 
 
 def match_terms(addr, terms):
-    """True if the (de-accented) address contains any of the given terms."""
+    """True if the (de-accented) address contains any configured term."""
     if not addr:
         return False
     s = deaccent(addr)
     return any(t in s for t in terms)
 
 
-def matches_any_region(row, regions):
-    return any(match_terms(row["A"], terms) for _, terms in regions)
+def choose_region(addr, regions):
+    """Choose the region whose locality term appears furthest right in an address."""
+    if not addr:
+        return None
+    s = deaccent(addr)
+    candidates = []
+    for stem, terms in regions:
+        pos = max((s.rfind(term) for term in terms), default=-1)
+        if pos >= 0:
+            candidates.append((pos, stem))
+    if not candidates:
+        return None
+    latest = max(pos for pos, _ in candidates)
+    winners = [stem for pos, stem in candidates if pos == latest]
+    return winners[0] if len(winners) == 1 else None
+
+
+def split_regions(rows, regions):
+    """Assign each row once; locality at the end of the address takes priority."""
+    grouped = {stem: [] for stem, _ in regions}
+    unmatched = []
+    for row in rows:
+        stem = choose_region(row["A"], regions)
+        if stem is None:
+            unmatched.append(row)
+        else:
+            grouped[stem].append(row)
+    return grouped, unmatched
 
 
 def norm_header(v):
@@ -454,12 +480,12 @@ def write_summary_sheet(ws, step1_rows, counts):
 def build_region_workbook(rows, out_path, opts, regions):
     wb = openpyxl.Workbook()
     summary_ws = wb.active
+    grouped, unmatched = split_regions(rows, regions)
     counts = []
     for stem, terms in regions:
         ws = wb.create_sheet()
-        n_rows, n_grp = build_region_sheet(ws, rows, terms, stem, opts)
+        n_rows, n_grp = build_region_sheet(ws, grouped[stem], None, stem, opts)
         counts.append((stem, terms, n_rows, n_grp))
-    unmatched = [r for r in rows if not matches_any_region(r, regions)]
     ws = wb.create_sheet("unmatched")
     n_rows, n_grp = build_unmatched_sheet(ws, unmatched, opts)
     counts.append(("unmatched", [], n_rows, n_grp))
@@ -530,14 +556,14 @@ def main():
             os.makedirs(outdir, exist_ok=True)
 
         print("Step 2: building per-region files")
+        grouped, unmatched = split_regions(rows, regions)
         grand = 0
         for stem, terms in regions:
             out_path = os.path.join(outdir, f"{stem}.xlsx")
-            n_rows, n_grp = build_region_file(rows, out_path, terms, stem, opts)
+            n_rows, n_grp = build_region_file(grouped[stem], out_path, None, stem, opts)
             grand += n_rows
             print(f"  {stem}.xlsx: {n_rows} rows in {n_grp} companies "
                   f"(terms: {', '.join(terms)})")
-        unmatched = [r for r in rows if not matches_any_region(r, regions)]
         out_path = os.path.join(outdir, "unmatched.xlsx")
         wb_unmatched = openpyxl.Workbook()
         n_rows, n_grp = build_unmatched_sheet(wb_unmatched.active, unmatched, opts)

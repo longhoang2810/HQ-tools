@@ -1,7 +1,7 @@
 ---
 name: nktc
 description: "Use when processing an NKTC customs-declaration Excel export (nhập khẩu tại chỗ). Filters Ma_LH in {E21, G13}, remaps columns, and builds one formatted .xlsx per configured province/city from regions.txt with accent-insensitive address matching, grouped/merged company rows, Vietnamese header, Times New Roman formatting and borders."
-version: 2.1.0
+version: 2.2.0
 author: Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -18,8 +18,9 @@ metadata:
 Processes an NKTC (nhập khẩu tại chỗ / on-the-spot import) customs-declaration
 Excel export in two steps and produces **one formatted workbook** with `summary`,
 one sheet per configured province/city, and `unmatched` for rows not matching a
-configured location. `regions.txt` controls the sheet list (currently hp, Hn,
-PT, HY, BN, TH, TQ, QT, NB, HCM). Legacy mode `--separate-files` still writes
+configured location. `regions.txt` controls the sheet list (all 34 current
+provincial-level units, with aliases for pre-merger addresses). Legacy mode
+`--separate-files` still writes
 one .xlsx per configured group. All logic is in `scripts/nktc_process.py` (uses
 `openpyxl`).
 The source file is a wide export where the meaningful columns historically sat
@@ -71,7 +72,9 @@ Rows that passed the E21/G13 filter but do not match any configured location ter
 Address
 matching is **accent-insensitive**: terms are stored unaccented, the address
 is de-accented before comparison (đ/Đ → d), so both "Hà Nội" and "Ha Noi"
-match. Matching is also case-insensitive and substring-based.
+match. If an address contains multiple place names (such as a street named
+Điện Biên Phủ in Hải Phòng), the matching locality furthest right wins; each
+row is assigned to exactly one sheet.
 
 | Sheet/file | Address contains (any of)        |
 |-----------|----------------------------------|

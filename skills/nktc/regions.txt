@@ -1,18 +1,48 @@
-# NKTC region configuration
+# NKTC region configuration — 34 tỉnh/thành cấp tỉnh hiện hành.
 # One active line: sheet_name<TAB>address keyword | address keyword
 # - Lines beginning with # and blank lines are ignored.
 # - Address matching ignores case and Vietnamese accents.
-# - Sheet name must be unique and valid in Excel (max 31 chars; no []:*?/\).
-# - Add a province/city by adding one line. Example:
-# HCM	Ho Chi Minh | Thanh pho Ho Chi Minh | TP Ho Chi Minh | TP HCM | TPHCM | TP.HCM | TP. HCM
+# - sheet_name is the Excel sheet name and --separate-files filename stem.
+# - Terms include former provincial names where they merged into a current unit;
+#   keep them to classify historical addresses. Do not add generic terms (e.g. HP, Q1).
+# - Add/change a reviewed locality by editing one line, then run scripts/test_regions.py.
 
-hp	Hai Phong | TP Hai Phong | Hai Duong
+# Northern provinces/cities
+Cao Bang	Cao Bang | Tinh Cao Bang
+Lang Son	Lang Son | Tinh Lang Son
+Quang Ninh	Quang Ninh | Tinh Quang Ninh
+BN	Bac Ninh | Tinh Bac Ninh | Bac Giang | Tinh Bac Giang
+HY	Hung Yen | Tinh Hung Yen | Thai Binh | Tinh Thai Binh
+hp	Hai Phong | TP Hai Phong | Thanh pho Hai Phong | Hai Duong | Tinh Hai Duong
+NB	Ninh Binh | Tinh Ninh Binh | Ha Nam | Tinh Ha Nam | Nam Dinh | Tinh Nam Dinh
+PT	Phu Tho | Tinh Phu Tho | Vinh Phuc | Tinh Vinh Phuc | Hoa Binh | Tinh Hoa Binh
+Son La	Son La | Tinh Son La
+Lai Chau	Lai Chau | Tinh Lai Chau
+Dien Bien	Dien Bien | Tinh Dien Bien
+Lao Cai	Lao Cai | Tinh Lao Cai | Yen Bai | Tinh Yen Bai
+TQ	Tuyen Quang | Tinh Tuyen Quang | Ha Giang | Tinh Ha Giang
+Thai Nguyen	Thai Nguyen | Tinh Thai Nguyen | Bac Kan | Tinh Bac Kan
 Hn	Ha Noi | TP Ha Noi | Thanh pho Ha Noi
-PT	Phu Tho | Vinh Phuc
-HY	Hung Yen
-BN	Bac Ninh | Bac Giang
-TH	Thanh Hoa
-TQ	Tuyen Quang
-QT	Quang Tri
-NB	Nam Dinh | Ninh Binh
-HCM	Ho Chi Minh | Thanh pho Ho Chi Minh | TP Ho Chi Minh | TP HCM | TPHCM | TP.HCM | TP. HCM
+
+# North Central and Central provinces/cities
+TH	Thanh Hoa | Tinh Thanh Hoa
+Nghe An	Nghe An | Tinh Nghe An
+Ha Tinh	Ha Tinh | Tinh Ha Tinh
+QT	Quang Tri | Tinh Quang Tri | Quang Binh | Tinh Quang Binh
+Hue	Hue | Thanh pho Hue | Thua Thien Hue | Tinh Thua Thien Hue
+Da Nang	Da Nang | TP Da Nang | Thanh pho Da Nang | Quang Nam | Tinh Quang Nam
+Quang Ngai	Quang Ngai | Tinh Quang Ngai | Kon Tum | Tinh Kon Tum
+Gia Lai	Gia Lai | Tinh Gia Lai | Binh Dinh | Tinh Binh Dinh
+Dak Lak	Dak Lak | Daklak | Tinh Dak Lak | Phu Yen | Tinh Phu Yen
+Khanh Hoa	Khanh Hoa | Tinh Khanh Hoa | Ninh Thuan | Tinh Ninh Thuan
+Lam Dong	Lam Dong | Tinh Lam Dong | Dak Nong | Daknong | Tinh Dak Nong | Binh Thuan | Tinh Binh Thuan
+
+# Southern provinces/cities
+Dong Nai	Dong Nai | Tinh Dong Nai | Binh Phuoc | Tinh Binh Phuoc
+Tay Ninh	Tay Ninh | Tinh Tay Ninh | Long An | Tinh Long An
+HCM	Ho Chi Minh | Thanh pho Ho Chi Minh | TP Ho Chi Minh | TP HCM | TPHCM | TP.HCM | TP. HCM | Binh Duong | Tinh Binh Duong | Ba Ria Vung Tau | Ba Ria - Vung Tau | Tinh Ba Ria Vung Tau
+Dong Thap	Dong Thap | Tinh Dong Thap | Tien Giang | Tinh Tien Giang
+Vinh Long	Vinh Long | Tinh Vinh Long | Ben Tre | Tinh Ben Tre | Tra Vinh | Tinh Tra Vinh
+Can Tho	Can Tho | TP Can Tho | Thanh pho Can Tho | Hau Giang | Tinh Hau Giang | Soc Trang | Tinh Soc Trang
+An Giang	An Giang | Tinh An Giang | Kien Giang | Tinh Kien Giang
+Ca Mau	Ca Mau | Tinh Ca Mau | Bac Lieu | Tinh Bac Lieu
