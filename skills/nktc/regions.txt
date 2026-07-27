@@ -1,0 +1,18 @@
+# NKTC region configuration
+# One active line: sheet_name<TAB>address keyword | address keyword
+# - Lines beginning with # and blank lines are ignored.
+# - Address matching ignores case and Vietnamese accents.
+# - Sheet name must be unique and valid in Excel (max 31 chars; no []:*?/\).
+# - Add a province/city by adding one line. Example:
+# HCM	Ho Chi Minh | Thanh pho Ho Chi Minh | TP Ho Chi Minh | TP HCM | TPHCM | TP.HCM | TP. HCM
+
+hp	Hai Phong | TP Hai Phong | Hai Duong
+Hn	Ha Noi | TP Ha Noi | Thanh pho Ha Noi
+PT	Phu Tho | Vinh Phuc
+HY	Hung Yen
+BN	Bac Ninh | Bac Giang
+TH	Thanh Hoa
+TQ	Tuyen Quang
+QT	Quang Tri
+NB	Nam Dinh | Ninh Binh
+HCM	Ho Chi Minh | Thanh pho Ho Chi Minh | TP Ho Chi Minh | TP HCM | TPHCM | TP.HCM | TP. HCM

@@ -43,6 +43,7 @@ Usage:
 import argparse
 import datetime
 import os
+import re
 import sys
 import unicodedata
 
@@ -70,21 +71,10 @@ OUT_HEADERS = [
 
 TNR = "Times New Roman"
 
-# Region output files. Order matters for console output only.
-# key = file stem; value = list of address terms (UNACCENTED, lowercase).
-# Matching is accent-insensitive, so terms are written without accents and
-# both "Hà Nội" and "Ha Noi" forms in the source will match.
-REGIONS = [
-    ("hp", ["hai ph", "hai phong", " hp", "hai duong"]),
-    ("Hn", ["ha noi"]),
-    ("PT", ["phu tho", "vinh phuc"]),
-    ("HY", ["hung yen"]),
-    ("BN", ["bac ninh", "bac giang"]),
-    ("TH", ["thanh hoa"]),
-    ("TQ", ["tuyen quang"]),
-    ("QT", ["quang tri"]),
-    ("NB", ["nam dinh", "ninh binh"]),
-]
+# Region output files live beside this script's SKILL.md in regions.txt.
+DEFAULT_REGIONS_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "regions.txt")
+INVALID_SHEET_CHARS = re.compile(r"[\[\]:*?/\\\\]")
 
 
 def deaccent(s):
@@ -95,6 +85,32 @@ def deaccent(s):
     s = unicodedata.normalize("NFD", s)
     s = "".join(c for c in s if unicodedata.category(c) != "Mn")
     return s.lower()
+
+
+def load_regions(path):
+    """Read sheet<TAB>term | term lines from a UTF-8 region config file."""
+    regions = []
+    seen = set()
+    with open(path, encoding="utf-8") as f:
+        for line_no, raw in enumerate(f, start=1):
+            line = raw.strip()
+            if not line or line.startswith("#"):
+                continue
+            if "\t" not in line:
+                raise ValueError(f"{path}:{line_no}: expected sheet_name<TAB>keywords")
+            stem, raw_terms = (part.strip() for part in line.split("\t", 1))
+            if not stem or len(stem) > 31 or INVALID_SHEET_CHARS.search(stem):
+                raise ValueError(f"{path}:{line_no}: invalid Excel sheet name {stem!r}")
+            if stem.casefold() in seen:
+                raise ValueError(f"{path}:{line_no}: duplicate sheet name {stem!r}")
+            terms = [deaccent(term).strip() for term in raw_terms.split("|") if term.strip()]
+            if not terms:
+                raise ValueError(f"{path}:{line_no}: region needs at least one keyword")
+            seen.add(stem.casefold())
+            regions.append((stem, terms))
+    if not regions:
+        raise ValueError(f"{path}: no regions configured")
+    return regions
 
 
 def strip8(v):
@@ -149,8 +165,8 @@ def match_terms(addr, terms):
     return any(t in s for t in terms)
 
 
-def matches_any_region(row):
-    return any(match_terms(row["A"], terms) for _, terms in REGIONS)
+def matches_any_region(row, regions):
+    return any(match_terms(row["A"], terms) for _, terms in regions)
 
 
 def norm_header(v):
@@ -435,15 +451,15 @@ def write_summary_sheet(ws, step1_rows, counts):
         ws.column_dimensions[col].width = w
 
 
-def build_region_workbook(rows, out_path, opts):
+def build_region_workbook(rows, out_path, opts, regions):
     wb = openpyxl.Workbook()
     summary_ws = wb.active
     counts = []
-    for stem, terms in REGIONS:
+    for stem, terms in regions:
         ws = wb.create_sheet()
         n_rows, n_grp = build_region_sheet(ws, rows, terms, stem, opts)
         counts.append((stem, terms, n_rows, n_grp))
-    unmatched = [r for r in rows if not matches_any_region(r)]
+    unmatched = [r for r in rows if not matches_any_region(r, regions)]
     ws = wb.create_sheet("unmatched")
     n_rows, n_grp = build_unmatched_sheet(ws, unmatched, opts)
     counts.append(("unmatched", [], n_rows, n_grp))
@@ -464,6 +480,8 @@ def main():
     ap.add_argument("--ma-lh", default="E21,G13",
                     help="comma-separated Ma_LH codes to keep")
     ap.add_argument("--header-rows", type=int, default=1)
+    ap.add_argument("--regions", default=DEFAULT_REGIONS_PATH,
+                    help="UTF-8 config: sheet_name<TAB>keyword | keyword (default: regions.txt)")
     ap.add_argument("--step1-out", default=None,
                     help="optional path to also save the Step-1 table")
     ap.add_argument("--month", default=None)
@@ -473,6 +491,10 @@ def main():
     ap.add_argument("--tb-month", default=None)
     ap.add_argument("--tb-year", default=None)
     args = ap.parse_args()
+    try:
+        regions = load_regions(args.regions)
+    except (OSError, ValueError) as exc:
+        ap.error(str(exc))
 
     # ---- auto-fill dates from today's date when not given ----
     # Title (row 1)    -> previous month + CURRENT year (the reported period)
@@ -509,23 +531,23 @@ def main():
 
         print("Step 2: building per-region files")
         grand = 0
-        for stem, terms in REGIONS:
+        for stem, terms in regions:
             out_path = os.path.join(outdir, f"{stem}.xlsx")
             n_rows, n_grp = build_region_file(rows, out_path, terms, stem, opts)
             grand += n_rows
             print(f"  {stem}.xlsx: {n_rows} rows in {n_grp} companies "
                   f"(terms: {', '.join(terms)})")
-        unmatched = [r for r in rows if not matches_any_region(r)]
+        unmatched = [r for r in rows if not matches_any_region(r, regions)]
         out_path = os.path.join(outdir, "unmatched.xlsx")
         wb_unmatched = openpyxl.Workbook()
         n_rows, n_grp = build_unmatched_sheet(wb_unmatched.active, unmatched, opts)
         wb_unmatched.save(out_path)
         grand += n_rows
-        print(f"  unmatched.xlsx: {n_rows} rows in {n_grp} companies (not matched by 9 regions)")
+        print(f"  unmatched.xlsx: {n_rows} rows in {n_grp} companies (not matched by configured regions)")
         region_rows = grand - len(unmatched)
         coverage = (region_rows / len(rows) * 100) if rows else 0
         print(f"Summary: step1={len(rows)} region_rows={region_rows} unmatched={len(unmatched)} coverage={coverage:.2f}%")
-        print(f"Step 2 done: {grand} rows across {len(REGIONS) + 1} files")
+        print(f"Step 2 done: {grand} rows across {len(regions) + 1} files")
     else:
         out_path = args.output
         if out_path is None:
@@ -535,8 +557,8 @@ def main():
         if parent and not os.path.isdir(parent):
             os.makedirs(parent, exist_ok=True)
 
-        print("Step 2: building summary + 9 region sheets + unmatched")
-        counts = build_region_workbook(rows, out_path, opts)
+        print(f"Step 2: building summary + {len(regions)} region sheets + unmatched")
+        counts = build_region_workbook(rows, out_path, opts, regions)
         grand = 0
         for stem, terms, n_rows, n_grp in counts:
             grand += n_rows
@@ -549,7 +571,7 @@ def main():
         region_rows = grand - unmatched_rows
         coverage = (region_rows / len(rows) * 100) if rows else 0
         print(f"Summary: step1={len(rows)} region_rows={region_rows} unmatched={unmatched_rows} coverage={coverage:.2f}%")
-        print(f"Step 2 done: {grand} rows across {len(REGIONS) + 2} sheets -> {out_path}")
+        print(f"Step 2 done: {grand} rows across {len(regions) + 2} sheets -> {out_path}")
 
 
 if __name__ == "__main__":

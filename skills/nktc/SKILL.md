@@ -1,7 +1,7 @@
 ---
 name: nktc
-description: "Use when processing an NKTC customs-declaration Excel export (nhập khẩu tại chỗ). Filters Ma_LH in {E21, G13}, remaps columns, and builds one formatted .xlsx per province group (hp, Hn, PT, HY, BN, TH, TQ, QT, NB) with accent-insensitive address matching, grouped/merged company rows, Vietnamese header, Times New Roman formatting and borders."
-version: 2.0.0
+description: "Use when processing an NKTC customs-declaration Excel export (nhập khẩu tại chỗ). Filters Ma_LH in {E21, G13}, remaps columns, and builds one formatted .xlsx per configured province/city from regions.txt with accent-insensitive address matching, grouped/merged company rows, Vietnamese header, Times New Roman formatting and borders."
+version: 2.1.0
 author: Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -16,11 +16,12 @@ metadata:
 ## Overview
 
 Processes an NKTC (nhập khẩu tại chỗ / on-the-spot import) customs-declaration
-Excel export in two steps and produces **one formatted workbook with 11 sheets**
-(`summary`, 9 region sheets: hp, Hn, PT, HY, BN, TH, TQ, QT, NB; plus `unmatched` for rows not matching those regions) for the relevant enterprises. Legacy mode
-`--separate-files` still writes one .xlsx per province group. All logic is in
-`scripts/nktc_process.py` (uses `openpyxl`).
-
+Excel export in two steps and produces **one formatted workbook** with `summary`,
+one sheet per configured province/city, and `unmatched` for rows not matching a
+configured location. `regions.txt` controls the sheet list (currently hp, Hn,
+PT, HY, BN, TH, TQ, QT, NB, HCM). Legacy mode `--separate-files` still writes
+one .xlsx per configured group. All logic is in `scripts/nktc_process.py` (uses
+`openpyxl`).
 The source file is a wide export where the meaningful columns historically sat
 at fixed positions A, B, H, I, J, K, P. The script now first tries to detect the
 source columns from the header row (`So_to_khai`, `Ma_LH`, `Ma_DN_XNK`,
@@ -63,16 +64,16 @@ Don't use for: arbitrary Excel reshaping unrelated to this fixed column layout.
 4. Remap to A=J, B=I, C=H, D=A, E=K(−8 chars), F=P.
    Optionally dump this intermediate table with `--step1-out step1.xlsx`.
 
-**Step 2 – build one workbook with 9 province sheets + `unmatched`**
+**Step 2 – build one workbook with configured province/city sheets + `unmatched`**
 For each region below, keep Step-1 rows whose col A (address) matches the
 region's terms, then write a sheet named by region stem into the output workbook.
-Rows that passed the E21/G13 filter but do not match any of the 9 region term sets go into the `unmatched` sheet with source address and reason. A `summary` sheet is written first with Step-1 rows, region rows, unmatched rows, coverage, and per-sheet counts.
+Rows that passed the E21/G13 filter but do not match any configured location term set go into the `unmatched` sheet with source address and reason. A `summary` sheet is written first with Step-1 rows, region rows, unmatched rows, coverage, and per-sheet counts.
 Address
 matching is **accent-insensitive**: terms are stored unaccented, the address
 is de-accented before comparison (đ/Đ → d), so both "Hà Nội" and "Ha Noi"
 match. Matching is also case-insensitive and substring-based.
 
-| File      | Address contains (any of)        |
+| Sheet/file | Address contains (any of)        |
 |-----------|----------------------------------|
 | `hp`      | hai ph, hai phong, hp, hai duong |
 | `Hn.xlsx` | ha noi                           |
@@ -83,6 +84,7 @@ match. Matching is also case-insensitive and substring-based.
 | `TQ.xlsx` | tuyen quang                      |
 | `QT.xlsx` | quang tri                        |
 | `NB.xlsx` | nam dinh, ninh binh              |
+| `HCM.xlsx` | ho chi minh, tp hcm, tphcm       |
 
 Terms are stored unaccented because matching strips accents first, so accented
 forms are covered automatically: `hải phòng` → `hai phong`, `hà nội` →
@@ -90,6 +92,19 @@ forms are covered automatically: `hải phòng` → `hai phong`, `hà nội` →
 `hung yen`, `bắc ninh`/`bắc giang` → `bac ninh`/`bac giang`, `thanh hoá` →
 `thanh hoa`, `tuyên quang` → `tuyen quang`, `quảng trị` → `quang tri`,
 `nam định`/`ninh bình` → `nam dinh`/`ninh binh`.
+
+### Add or change a province/city
+
+Edit `regions.txt`; no Python change needed. One active line uses:
+
+```text
+sheet_name<TAB>address keyword | address keyword
+HCM<TAB>Ho Chi Minh | Thanh pho Ho Chi Minh | TP.HCM | TPHCM
+```
+
+Blank lines and lines beginning with `#` are ignored. Sheet names must be unique,
+valid Excel names, and at most 31 characters. Keywords are case/accent-insensitive.
+Use `--regions /path/to/regions.txt` to run a different reviewed location list.
 
 Each file uses the same layout and formatting:
 - Output columns: `A=STT | B=Tên DN XNK | C=Mã DN XNK | D=Số tờ khai |
@@ -119,7 +134,7 @@ Each file uses the same layout and formatting:
 ## Usage
 
 ```bash
-# Default: -o is one OUTPUT .xlsx workbook containing 9 region sheets
+# Default: -o is one OUTPUT .xlsx workbook containing configured region sheets
 python3 scripts/nktc_process.py INPUT.xlsx -o OUT.xlsx \
     --month 05 --year 2026 \
     --tb-no 123 --tb-day 29 --tb-month 5 --tb-year 2026
@@ -127,6 +142,9 @@ python3 scripts/nktc_process.py INPUT.xlsx -o OUT.xlsx \
 # Legacy: write 9 separate files into OUTDIR
 python3 scripts/nktc_process.py INPUT.xlsx -o OUTDIR --separate-files \
     --month 05 --year 2026
+
+# Use a separate reviewed province/city configuration
+python3 scripts/nktc_process.py INPUT.xlsx -o OUT.xlsx --regions ./regions.txt
 ```
 
 When the user attaches an NKTC source file and says "Try again", "làm lại", or otherwise asks to repeat the standard processing without extra details, run the standard workflow directly instead of asking what to do:
@@ -144,8 +162,9 @@ Common flags:
 - `--sheet NAME`     pick a specific source sheet (default: active sheet)
 - `--ma-lh E21,G13`  comma-separated loại hình filter values (default E21,G13)
 - `--header-rows 1`  number of header rows in the source before data starts
+- `--regions FILE`   UTF-8 `sheet<TAB>keyword | keyword` location config
 - `--step1-out step1.xlsx`  also save the intermediate Step-1 table
-- `-o OUTDIR`        output directory for the 9 region files (default: `.`,
+- `-o OUTDIR`        output directory for configured region files (default: `.`,
   created if missing)
 - `--month/--year`   fill the title `THÁNG MM/YYYY`. **Default: previous
   month + current year**, auto-filled from today's date.
@@ -194,25 +213,22 @@ fix is header-based column detection, not adding more `thanh hoa` spellings.
 6. **Mã DN XNK leading zeroes.** Keep company codes as text. The script uses
    `cell_to_text()` and preserves zero-padded numeric display formats such as
    `0000000000`; do not coerce output column C back to numeric.
-7. **Address matching is accent-insensitive and broad on purpose.** Terms in
-   `REGIONS` are unaccented; the address is de-accented before matching, so
-   "Hà Nội" and "Ha Noi" both hit. "hai ph" matches abbreviations by design —
-   this can theoretically false-match, so eyeball the address column if a
-   surprising company appears in a file.
-8. **In `--separate-files` mode, `-o` is a directory, not a filename.** Step 2 writes 9 files (`hp.xlsx`,
+7. **Location config.** Edit `regions.txt`, not Python, to add a reviewed
+   province/city. Keep terms specific enough to identify the locality; do not
+   use generic abbreviations such as `hp` or `q1`. A malformed config stops
+   before reading the Excel source and reports its exact line.
+8. **In `--separate-files` mode, `-o` is a directory, not a filename.** Step 2 writes configured files (`hp.xlsx`,
    `Hn.xlsx`, …) into the `-o` directory. Passing `-o hp.xlsx` would create a
    directory literally named `hp.xlsx`. Use `-o OUTDIR` (or omit for cwd).
 9. **A row can land in more than one sheet/file.** If an address contains terms for
    two regions (rare), it's written to both. Region terms are mutually
    exclusive in practice, but there's no dedupe across files.
-10. **Editing regions.** To add/rename a province group or change its match
-   terms, edit the `REGIONS` list at the top of the script. Keep terms
-   lowercase and unaccented.
+
 
 ## Verification Checklist
 
 - [ ] Step-1 row count matches expected number of E21 + G13 declarations after excluding rows whose fixed column L has blank rightmost 8 trimmed characters
-- [ ] Workbook contains `summary`, 9 region sheets, and `unmatched`; total data rows across non-summary sheets equals Step-1 row count
+- [ ] Workbook contains `summary`, every sheet named in `regions.txt`, and `unmatched`; total data rows across non-summary sheets equals Step-1 row count
 - [ ] Each file's merged ranges include A1:H1, A2:H2, and one A/B/C merge per
       multi-declaration company
 - [ ] STT increments per company group, not per row
