@@ -1,7 +1,7 @@
 ---
 name: nktc
 description: "Use when processing an NKTC customs-declaration Excel export (nhập khẩu tại chỗ). Filters Ma_LH in {E21, G13}, remaps columns, and builds one formatted .xlsx per configured province/city from regions.txt with accent-insensitive address matching, grouped/merged company rows, Vietnamese header, Times New Roman formatting and borders."
-version: 2.3.0
+version: 2.4.0
 author: Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -18,8 +18,9 @@ metadata:
 Processes an NKTC (nhập khẩu tại chỗ / on-the-spot import) customs-declaration
 Excel export in two steps and produces **one formatted workbook** with `summary`,
 one sheet per configured province/city, and `unmatched` for rows not matching a
-configured location. `regions.txt` controls the sheet list (all 34 current
-provincial-level units, with aliases for pre-merger addresses). Legacy mode
+configured location. `regions.txt` is the current 9-sheet operating list:
+hp, Hn, PT, HY, BN, TH, TQ, QT, NB. `regions-34-backup.txt` retains the full
+34-unit configuration for a later approved expansion. Legacy mode
 `--separate-files` still writes
 one .xlsx per configured group. All logic is in `scripts/nktc_process.py` (uses
 `openpyxl`).
@@ -142,16 +143,17 @@ Each file uses the same layout and formatting:
 Safari hoặc Firefox, chọn `.xlsx`, chỉnh vùng trong ô cấu hình rồi tải workbook
 kết quả. Toàn bộ dữ liệu xử lý ngay trên trình duyệt, không có upload/server.
 
-File này đã nhúng ExcelJS nên có dung lượng khoảng 1 MB. Khi sửa `regions.txt`
-hoặc giao diện, dựng lại bằng:
+File này đã nhúng ExcelJS nên có dung lượng khoảng 1 MB. Mặc định HTML hiển thị
+9 vùng vận hành. Khi cần 34 vùng, tải `regions-34-backup.txt` qua nút **Nhập
+TXT**; danh sách 34 không tự bật. Khi sửa `regions.txt` hoặc giao diện, dựng lại bằng:
 
 ```bash
 python3 scripts/build_html.py
 ```
 
-Nguồn HTML gồm `NKTC-xu-ly-excel.template.html`, `assets/exceljs.min.js`, và
-`regions.txt`. Không sửa trực tiếp bundle HTML trừ tình huống khẩn cấp; sửa
-template/TXT rồi build để các thay đổi có thể tái tạo.
+Nguồn HTML gồm `NKTC-xu-ly-excel.template.html`, `assets/exceljs.min.js`,
+`regions.txt`, và `regions-34-backup.txt`. Không sửa trực tiếp bundle HTML trừ
+tình huống khẩn cấp; sửa template/TXT rồi build để các thay đổi có thể tái tạo.
 
 HTML hỗ trợ tải lên/tải xuống `regions.txt`, khôi phục mặc định 34 vùng, và giữ
 quy tắc phân vùng như CLI: địa danh khớp ở cuối địa chỉ được ưu tiên, một dòng
@@ -171,6 +173,9 @@ python3 scripts/nktc_process.py INPUT.xlsx -o OUTDIR --separate-files \
 
 # Use a separate reviewed province/city configuration
 python3 scripts/nktc_process.py INPUT.xlsx -o OUT.xlsx --regions ./regions.txt
+
+# Chỉ khi nghiệp vụ cần mở rộng đủ 34 vùng
+python3 scripts/nktc_process.py INPUT.xlsx -o OUT.xlsx --regions ./regions-34-backup.txt
 ```
 
 When the user attaches an NKTC source file and says "Try again", "làm lại", or otherwise asks to repeat the standard processing without extra details, run the standard workflow directly instead of asking what to do:

@@ -12,16 +12,19 @@ from openpyxl import Workbook, load_workbook
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "nktc_process.py"
 REGIONS = ROOT / "regions.txt"
+REGIONS_34_BACKUP = ROOT / "regions-34-backup.txt"
 sys.path.insert(0, str(ROOT / "scripts"))
 from nktc_process import choose_region, load_regions
 
 
 class RegionConfigTest(unittest.TestCase):
-    def test_default_config_has_34_regions(self):
+    def test_default_config_has_nine_regions_and_backup_has_34(self):
         regions = load_regions(REGIONS)
-        self.assertEqual(len(regions), 34)
-        self.assertEqual(len({name.casefold() for name, _ in regions}), 34)
-        self.assertIn("HCM", [name for name, _ in regions])
+        backup = load_regions(REGIONS_34_BACKUP)
+        self.assertEqual(len(regions), 9)
+        self.assertEqual([name for name, _ in regions], ["hp", "Hn", "PT", "HY", "BN", "TH", "TQ", "QT", "NB"])
+        self.assertEqual(len(backup), 34)
+        self.assertIn("HCM", [name for name, _ in backup])
 
     def test_default_config_has_hcm_and_creates_sheet(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -37,7 +40,7 @@ class RegionConfigTest(unittest.TestCase):
             ws.append([123456789, "E21", "0312345678", "DN HCM", "TP.HCM", "12345678XK01", 100])
             wb.save(source)
             subprocess.run(
-                [sys.executable, str(SCRIPT), str(source), "-o", str(output), "--regions", str(REGIONS)],
+                [sys.executable, str(SCRIPT), str(source), "-o", str(output), "--regions", str(REGIONS_34_BACKUP)],
                 check=True, capture_output=True, text=True,
             )
             result = load_workbook(output, data_only=True)
