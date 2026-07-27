@@ -1,7 +1,7 @@
 ---
 name: nktc
 description: "Use when processing an NKTC customs-declaration Excel export (nhập khẩu tại chỗ). Filters Ma_LH in {E21, G13}, remaps columns, and builds one formatted .xlsx per configured province/city from regions.txt with accent-insensitive address matching, grouped/merged company rows, Vietnamese header, Times New Roman formatting and borders."
-version: 2.2.0
+version: 2.3.0
 author: Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -135,6 +135,29 @@ Each file uses the same layout and formatting:
 - `references/export-import.md` — portable archive/export workflow for copying this skill to another Hermes agent or profile, plus Drive upload/auth notes.
 
 ## Usage
+
+### HTML offline, không cần Python
+
+`NKTC-xu-ly-excel.html` là ứng dụng độc lập: mở trực tiếp bằng Chrome, Edge,
+Safari hoặc Firefox, chọn `.xlsx`, chỉnh vùng trong ô cấu hình rồi tải workbook
+kết quả. Toàn bộ dữ liệu xử lý ngay trên trình duyệt, không có upload/server.
+
+File này đã nhúng ExcelJS nên có dung lượng khoảng 1 MB. Khi sửa `regions.txt`
+hoặc giao diện, dựng lại bằng:
+
+```bash
+python3 scripts/build_html.py
+```
+
+Nguồn HTML gồm `NKTC-xu-ly-excel.template.html`, `assets/exceljs.min.js`, và
+`regions.txt`. Không sửa trực tiếp bundle HTML trừ tình huống khẩn cấp; sửa
+template/TXT rồi build để các thay đổi có thể tái tạo.
+
+HTML hỗ trợ tải lên/tải xuống `regions.txt`, khôi phục mặc định 34 vùng, và giữ
+quy tắc phân vùng như CLI: địa danh khớp ở cuối địa chỉ được ưu tiên, một dòng
+chỉ vào một sheet.
+
+### CLI
 
 ```bash
 # Default: -o is one OUTPUT .xlsx workbook containing configured region sheets
