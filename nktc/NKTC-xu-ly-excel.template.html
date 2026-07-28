@@ -69,13 +69,42 @@ summary { cursor:pointer; font-weight:700; color:var(--blue); } .note { font-siz
   const today = new Date(); const prev = new Date(today.getFullYear(), today.getMonth(), 0);
   $('month').value = String(prev.getMonth()+1).padStart(2,'0'); $('year').value = today.getFullYear();
   $('tbMonth').value = String(today.getMonth()+1).padStart(2,'0'); $('tbYear').value = today.getFullYear();
+  let unparseableAmounts = 0;
   const show = (kind, text) => { const el=$('status'); el.className=kind; el.textContent=text; };
   const deaccent = v => String(v ?? '').replace(/đ/g,'d').replace(/Đ/g,'D').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   const text = v => v == null ? '' : String(v).trim();
-  const num = v => typeof v === 'number' ? v : Number(String(v ?? '').replace(/,/g,'')) || 0;
+  // ponytail: UTF-16 code-unit order, not code-point order; only diverges from Python on supplementary-plane names
+  const codepointCompare = (a,b) => { const x=String(a ?? ''), y=String(b ?? ''); return x<y?-1:x>y?1:0; };
+  const nameCompare = (a,b) => codepointCompare(text(a).toLowerCase(),text(b).toLowerCase());
+  const num = v => {
+    if (typeof v === 'boolean') { unparseableAmounts++; return 0; }
+    if (typeof v === 'number') return v;
+    let s=String(v ?? '').trim(); if(!s) return 0;
+    if(s.includes('.')&&s.includes(',')) {
+      if(s.lastIndexOf(',')>s.lastIndexOf('.')) s=s.replace(/\./g,'').replace(/,/g,'.');
+      else s=s.replace(/,/g,'');
+    } else s=s.replace(/,/g,'');
+    if(!/^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?$/.test(s)){unparseableAmounts++;return 0;}
+    return Number(s);
+  };
   const strip8 = v => { const s=text(v); return s.length>8 ? s.slice(8) : ''; };
   const header = v => deaccent(v).trim().replace(/\s+/g,'_');
-  const cellValue = cell => cell && cell.value && typeof cell.value === 'object' && 'text' in cell.value ? cell.value.text : cell?.value;
+  const cellValue = cell => {
+    let value=cell?.value;
+    while(value&&typeof value==='object') {
+      if(('formula' in value||'sharedFormula' in value)&&'result' in value){value=value.result;continue;}
+      if('error' in value){value=value.error;continue;}
+      if(Array.isArray(value.richText))return value.richText.map(part=>part?.text??'').join('');
+      if('text' in value){value=value.text;continue;}
+      break;
+    }
+    return value;
+  };
+  const cellToText = cell => {
+    const value=cellValue(cell); if(value==null)return ''; if(typeof value==='string')return value.trim();
+    if(typeof value==='number'&&Number.isInteger(value)){const s=String(value),fmt=String(cell.numFmt||'');if(/^0+$/.test(fmt)&&fmt.length>s.length){const sign=s[0]==='-'?'-':'';return sign+s.slice(sign.length).padStart(fmt.length-sign.length,'0');}return s;}
+    return String(value).trim();
+  };
   function parseRegions(raw) {
     const seen=new Set(), regions=[];
     raw.split(/\r?\n/).forEach((rawLine, i) => {
@@ -104,10 +133,11 @@ summary { cursor:pointer; font-weight:700; color:var(--blue); } .note { font-siz
     ws.getRow(1).eachCell((cell,col)=>{ const key=map[header(cellValue(cell))]; if(key) out[key]=col; }); return out;
   }
   function extractRows(ws) {
-    const c=sourceColumns(ws), rows=[];
-    for(let r=2;r<=ws.rowCount;r++) { const row=ws.getRow(r); const type=text(cellValue(row.getCell(c.Ma_LH))).toUpperCase(); if(type!=='E21'&&type!=='G13') continue; const e=strip8(cellValue(row.getCell(c.So_quan_ly))); if(!e) continue; rows.push({A:cellValue(row.getCell(c.Ma_dia_chi)),B:cellValue(row.getCell(c.Ten_DN_XNK)),C:text(cellValue(row.getCell(c.Ma_DN_XNK))),D:cellValue(row.getCell(c.So_to_khai)),E:e,F:num(cellValue(row.getCell(c.Tong_tri_gia)))}); }
-    return rows.sort((a,b)=>text(a.B).localeCompare(text(b.B),'vi'));
+    const c=sourceColumns(ws), rows=[]; unparseableAmounts=0;
+    for(let r=2;r<=ws.rowCount;r++) { const row=ws.getRow(r); const type=text(cellValue(row.getCell(c.Ma_LH))).toUpperCase(); if(type!=='E21'&&type!=='G13') continue; const e=strip8(cellValue(row.getCell(c.So_quan_ly))); if(!e) continue; rows.push({A:cellValue(row.getCell(c.Ma_dia_chi)),B:cellValue(row.getCell(c.Ten_DN_XNK)),C:cellToText(row.getCell(c.Ma_DN_XNK)),D:cellValue(row.getCell(c.So_to_khai)),E:e,F:num(cellValue(row.getCell(c.Tong_tri_gia)))}); }
+    return rows.sort((a,b)=>nameCompare(a.B,b.B));
   }
+  function bucketRowsByCode(sorted) { const buckets=[],byCode=new Map(); for(const row of sorted){const code=text(row.C);let bucket;if(code){bucket=byCode.get(code);if(!bucket){bucket={code,rows:[]};byCode.set(code,bucket);buckets.push(bucket);}}else{bucket={code:'',rows:[]};buckets.push(bucket);}bucket.rows.push(row);}return buckets; }
   const center={horizontal:'center',vertical:'middle',wrapText:true}, leftTop={horizontal:'left',vertical:'top',wrapText:true}, centerTop={horizontal:'center',vertical:'top',wrapText:true}, right={horizontal:'right',vertical:'middle'};
   const thin={style:'thin',color:{argb:'FF000000'}}; const border={top:thin,left:thin,bottom:thin,right:thin};
   function setCell(cell, value, alignment=center) { cell.value=value; cell.font={name:TNR,size:11}; cell.border=border; cell.alignment=alignment; }
@@ -116,16 +146,16 @@ summary { cursor:pointer; font-weight:700; color:var(--blue); } .note { font-siz
     const ws=wb.addWorksheet(name), [title,sub]=reportTitle(); ws.mergeCells('A1:H1'); ws.mergeCells('A2:H2'); ws.getCell('A1').value=title; ws.getCell('A2').value=sub;
     for(const cell of [ws.getCell('A1'),ws.getCell('A2')]) { cell.font={name:TNR,size:14,bold:true}; cell.alignment=center; }
     OUT_HEADERS.forEach((v,i)=>setCell(ws.getCell(4,i+1),v,center)); WIDTHS.forEach((width,i)=>ws.getColumn(i+1).width=width);
-    const sorted=[...records].sort((a,b)=>(text(a.B).localeCompare(text(b.B),'vi')||text(a.C).localeCompare(text(b.C),'vi'))); let r=5, stt=0;
-    for(let i=0;i<sorted.length;) { let j=i+1; while(j<sorted.length&&text(sorted[j].B)===text(sorted[i].B)&&text(sorted[j].C)===text(sorted[i].C))j++; const start=r; stt++;
-      for(let k=i;k<j;k++,r++) { const x=sorted[k]; if(k===i){setCell(ws.getCell(r,1),stt);setCell(ws.getCell(r,2),x.B,leftTop);setCell(ws.getCell(r,3),x.C,centerTop);} setCell(ws.getCell(r,4),x.D);ws.getCell(r,4).numFmt='0';setCell(ws.getCell(r,5),x.E);setCell(ws.getCell(r,6),x.F,right);ws.getCell(r,6).numFmt='#,##0.00';setCell(ws.getCell(r,7),0);setCell(ws.getCell(r,8),r===5?name:''); }
-      if(r-1>start) for(const col of [1,2,3]) ws.mergeCells(start,col,r-1,col); i=j;
+    const sorted=[...records].sort((a,b)=>(nameCompare(a.B,b.B)||codepointCompare(text(a.C),text(b.C)))),groups=bucketRowsByCode(sorted); let r=5, stt=0;
+    for(const group of groups) { const start=r; stt++;
+      for(let k=0;k<group.rows.length;k++,r++) { const x=group.rows[k]; if(k===0){setCell(ws.getCell(r,1),stt);setCell(ws.getCell(r,2),x.B,leftTop);setCell(ws.getCell(r,3),group.code,centerTop);} setCell(ws.getCell(r,4),x.D);ws.getCell(r,4).numFmt='0';setCell(ws.getCell(r,5),x.E);setCell(ws.getCell(r,6),x.F,right);ws.getCell(r,6).numFmt='#,##0.00';setCell(ws.getCell(r,7),0);setCell(ws.getCell(r,8),r===5?name:''); }
+      if(r-1>start) for(const col of [1,2,3]) ws.mergeCells(start,col,r-1,col);
     }
     return {rows:records.length,companies:stt};
   }
   function buildUnmatched(wb, records) { const ws=wb.addWorksheet('unmatched'), [title]=reportTitle(); ws.mergeCells('A1:J1'); ws.getCell('A1').value=`DÒNG CHƯA KHỚP VÙNG SAU KHI LỌC E21/G13 - ${title.split('THÁNG ')[1]}`; ws.getCell('A1').font={name:TNR,size:14,bold:true}; ws.getCell('A1').alignment=center; const heads=[...OUT_HEADERS,'Địa chỉ nguồn','Lý do']; heads.forEach((v,i)=>setCell(ws.getCell(4,i+1),v)); [6,34,16,18,18,18,12,14,60,18].forEach((w,i)=>ws.getColumn(i+1).width=w); let r=5,stt=0; for(const x of records){stt++;setCell(ws.getCell(r,1),stt);setCell(ws.getCell(r,2),x.B,leftTop);setCell(ws.getCell(r,3),x.C,centerTop);setCell(ws.getCell(r,4),x.D);ws.getCell(r,4).numFmt='0';setCell(ws.getCell(r,5),x.E);setCell(ws.getCell(r,6),x.F,right);ws.getCell(r,6).numFmt='#,##0.00';setCell(ws.getCell(r,7),0);setCell(ws.getCell(r,8),'unmatched');setCell(ws.getCell(r,9),x.A,leftTop);setCell(ws.getCell(r,10),'no region match');r++;} return {rows:records.length,companies:stt}; }
   function buildSummary(ws,total,counts) { ws.getCell('A1').value='NKTC summary'; ws.getCell('A2').value='Step1 rows';ws.getCell('B2').value=total; const regionRows=counts.filter(x=>x.terms).reduce((s,x)=>s+x.rows,0), unmatched=counts.find(x=>!x.terms).rows; ws.getCell('A3').value='Region rows';ws.getCell('B3').value=regionRows;ws.getCell('A4').value='Unmatched rows';ws.getCell('B4').value=unmatched;ws.getCell('A5').value='Coverage';ws.getCell('B5').value=`${total?(regionRows/total*100).toFixed(2):'0.00'}%`; ['Sheet','Terms','Rows','Companies','Note'].forEach((x,i)=>setCell(ws.getCell(7,i+1),x)); counts.forEach((x,i)=>{const r=8+i; [x.name,x.terms?x.terms.join(', '):'',x.rows,x.companies,x.terms?'':'not matched by configured regions'].forEach((v,c)=>setCell(ws.getCell(r,c+1),v));}); [16,56,12,12,30].forEach((w,i)=>ws.getColumn(i+1).width=w); }
-  async function run() { const input=$('source').files[0]; if(!input) throw Error('Chọn file XLSX nguồn trước.'); if(!window.ExcelJS) throw Error('Không tải được thư viện Excel trong file HTML.'); const regions=parseRegions($('regions').value); show('info','Đang đọc file nguồn...'); const sourceWb=new ExcelJS.Workbook(); await sourceWb.xlsx.load(await input.arrayBuffer()); const rows=extractRows(sourceWb.worksheets[0]); const groups=Object.fromEntries(regions.map(r=>[r.name,[]])); const unmatched=[]; rows.forEach(row=>{const name=chooseRegion(row.A,regions); (name?groups[name]:unmatched).push(row);}); show('info',`Đang tạo ${regions.length} sheet từ ${rows.length.toLocaleString('vi-VN')} dòng...`); const out=new ExcelJS.Workbook(); out.creator='NKTC - HTML offline'; const summary=out.addWorksheet('summary'); const counts=[]; regions.forEach(region=>{const count=buildRegionSheet(out,region.name,groups[region.name]);counts.push({name:region.name,terms:region.terms,...count});}); counts.push({name:'unmatched',terms:null,...buildUnmatched(out,unmatched)}); buildSummary(summary,rows.length,counts); const data=await out.xlsx.writeBuffer(); const url=URL.createObjectURL(new Blob([data],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})); const a=document.createElement('a'); a.href=url; a.download=($('outName').value.trim()||'NKTC.xlsx').replace(/\.xlsx$/i,'')+'.xlsx'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); show('ok',`Đã xuất ${a.download}: ${rows.length.toLocaleString('vi-VN')} dòng, ${regions.length} vùng, chưa khớp ${unmatched.length}.`); }
+  async function run() { const input=$('source').files[0]; if(!input) throw Error('Chọn file XLSX nguồn trước.'); if(!window.ExcelJS) throw Error('Không tải được thư viện Excel trong file HTML.'); const regions=parseRegions($('regions').value); show('info','Đang đọc file nguồn...'); const sourceWb=new ExcelJS.Workbook(); await sourceWb.xlsx.load(await input.arrayBuffer()); const rows=extractRows(sourceWb.worksheets[0]); const groups=Object.fromEntries(regions.map(r=>[r.name,[]])); const unmatched=[]; rows.forEach(row=>{const name=chooseRegion(row.A,regions); (name?groups[name]:unmatched).push(row);}); show('info',`Đang tạo ${regions.length} sheet từ ${rows.length.toLocaleString('vi-VN')} dòng...`); const out=new ExcelJS.Workbook(); out.creator='NKTC - HTML offline'; const summary=out.addWorksheet('summary'); const counts=[]; regions.forEach(region=>{const count=buildRegionSheet(out,region.name,groups[region.name]);counts.push({name:region.name,terms:region.terms,...count});}); counts.push({name:'unmatched',terms:null,...buildUnmatched(out,unmatched)}); buildSummary(summary,rows.length,counts); const data=await out.xlsx.writeBuffer(); const url=URL.createObjectURL(new Blob([data],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})); const a=document.createElement('a'); a.href=url; a.download=($('outName').value.trim()||'NKTC.xlsx').replace(/\.xlsx$/i,'')+'.xlsx'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); const done=`Đã xuất ${a.download}: ${rows.length.toLocaleString('vi-VN')} dòng, ${regions.length} vùng, chưa khớp ${unmatched.length}.`; if(unparseableAmounts)show('error',`${done} CẢNH BÁO: ${unparseableAmounts} dòng có Trị giá không đọc được, đã ghi 0.00 - kiểm tra lại file nguồn.`);else show('ok',done); }
   $('run').addEventListener('click',async()=>{const b=$('run');try{b.disabled=true;await run();}catch(e){console.error(e);show('error',e.message||String(e));}finally{b.disabled=false;}});
   $('resetRegions').onclick=()=>{if(confirm('Khôi phục cấu hình 9 vùng mặc định? Các chỉnh sửa chưa tải TXT sẽ mất.')) $('regions').value=defaultRegions;};
   $('downloadRegions').onclick=()=>{const url=URL.createObjectURL(new Blob([$('regions').value],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='regions.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};

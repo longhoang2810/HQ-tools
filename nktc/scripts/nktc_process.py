@@ -128,15 +128,30 @@ def right8(v):
     return str(v).strip()[-8:]
 
 
-def to_float(v):
-    if v is None or v == "":
+def to_float(v, stats=None):
+    if v is None:
+        return 0.0
+    if isinstance(v, bool):
+        if stats is not None:
+            stats["unparseable_amounts"] = stats.get("unparseable_amounts", 0) + 1
         return 0.0
     if isinstance(v, (int, float)):
         return float(v)
-    try:
-        return float(str(v).replace(",", "").strip())
-    except ValueError:
+    s = str(v).strip()
+    if not s:
         return 0.0
+    if "." in s and "," in s:
+        if s.rfind(",") > s.rfind("."):
+            s = s.replace(".", "").replace(",", ".")
+        else:
+            s = s.replace(",", "")
+    else:
+        s = s.replace(",", "")
+    if not re.fullmatch(r"[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?", s):
+        if stats is not None:
+            stats["unparseable_amounts"] = stats.get("unparseable_amounts", 0) + 1
+        return 0.0
+    return float(s)
 
 
 def cell_to_text(cell):
@@ -222,7 +237,7 @@ def detect_src(ws, header_rows):
     return detected
 
 
-def step1(ws, ma_lh, header_rows):
+def step1(ws, ma_lh, header_rows, stats=None):
     """Filter by Ma_LH (one or more codes), remap columns, sort A->Z by name."""
     src = detect_src(ws, header_rows)
     rows = []
@@ -246,7 +261,7 @@ def step1(ws, ma_lh, header_rows):
             "C": cell_to_text(ws.cell(r, src["Ma_DN_XNK"])),
             "D": ws.cell(r, src["So_to_khai"]).value,
             "E": to_khai_xk,
-            "F": to_float(ws.cell(r, src["Tong_tri_gia"]).value),
+            "F": to_float(ws.cell(r, src["Tong_tri_gia"]).value, stats),
         })
     rows.sort(key=lambda x: (str(x["B"]) if x["B"] is not None else "").lower())
     return rows
@@ -263,11 +278,31 @@ def write_step1(rows, path):
     wb.save(path)
 
 
+def bucket_rows_by_code(rows):
+    """Bucket sorted rows by trimmed company code; blank codes stay separate."""
+    buckets = []
+    by_code = {}
+    for rec in rows:
+        code = str(rec["C"]).strip() if rec["C"] is not None else ""
+        if code:
+            group = by_code.get(code)
+            if group is None:
+                group = []
+                by_code[code] = group
+                buckets.append((code, group))
+        else:
+            group = []
+            buckets.append(("", group))
+        group.append(rec)
+    return buckets
+
+
 def build_region_sheet(ws, rows, terms, sheet_title, opts):
     hp = list(rows) if terms is None else [r for r in rows if match_terms(r["A"], terms)]
-    # stable group: sort by (name, code) -> keeps A->Z by name, clusters company
+    # Sort for display, then bucket by code without relying on adjacency.
     hp.sort(key=lambda x: ((str(x["B"]) if x["B"] is not None else "").lower(),
                            str(x["C"]) if x["C"] is not None else ""))
+    groups = bucket_rows_by_code(hp)
     ws.title = sheet_title
 
     # ---- styles ----
@@ -309,21 +344,14 @@ def build_region_sheet(ws, rows, terms, sheet_title, opts):
     # ---- data rows ----
     r = 5
     stt = 0
-    i = 0
-    n = len(hp)
-    while i < n:
-        key = (hp[i]["B"], hp[i]["C"])
-        j = i
-        while j < n and (hp[j]["B"], hp[j]["C"]) == key:
-            j += 1
-        group = hp[i:j]
+    for code, group in groups:
         stt += 1
         grp_start = r
         for gi, rec in enumerate(group):
             if gi == 0:
                 ws.cell(r, 1, stt)
                 ws.cell(r, 2, rec["B"])
-                ws.cell(r, 3, rec["C"])
+                ws.cell(r, 3, code)
             ws.cell(r, 4, rec["D"])
             ws.cell(r, 5, rec["E"])
             ws.cell(r, 6, rec["F"])
@@ -349,7 +377,6 @@ def build_region_sheet(ws, rows, terms, sheet_title, opts):
             for col in (1, 2, 3):
                 ws.merge_cells(start_row=grp_start, start_column=col,
                                end_row=grp_end, end_column=col)
-        i = j
 
     # ---- column widths ----
     widths = {"A": 6, "B": 34, "C": 16, "D": 18,
@@ -394,21 +421,17 @@ def build_unmatched_sheet(ws, rows, opts):
 
     data = sorted(rows, key=lambda x: ((str(x["B"]) if x["B"] is not None else "").lower(),
                                       str(x["C"]) if x["C"] is not None else ""))
+    groups = bucket_rows_by_code(data)
     stt = 0
     r = 5
-    i = 0
-    while i < len(data):
-        key = (data[i]["B"], data[i]["C"])
-        j = i
-        while j < len(data) and (data[j]["B"], data[j]["C"]) == key:
-            j += 1
+    for code, group in groups:
         stt += 1
         grp_start = r
-        for gi, rec in enumerate(data[i:j]):
+        for gi, rec in enumerate(group):
             if gi == 0:
                 ws.cell(r, 1, stt)
                 ws.cell(r, 2, rec["B"])
-                ws.cell(r, 3, rec["C"])
+                ws.cell(r, 3, code)
             ws.cell(r, 4, rec["D"])
             ws.cell(r, 5, rec["E"])
             ws.cell(r, 6, rec["F"])
@@ -438,7 +461,6 @@ def build_unmatched_sheet(ws, rows, opts):
             for col in (1, 2, 3):
                 ws.merge_cells(start_row=grp_start, start_column=col,
                                end_row=grp_end, end_column=col)
-        i = j
 
     widths = {"A": 6, "B": 34, "C": 16, "D": 18, "E": 18, "F": 18,
               "G": 12, "H": 14, "I": 60, "J": 18}
@@ -540,8 +562,15 @@ def main():
     wb = openpyxl.load_workbook(args.input, data_only=True)
     ws = wb[args.sheet] if args.sheet else wb.active
 
-    rows = step1(ws, args.ma_lh, args.header_rows)
+    stats = {}
+    rows = step1(ws, args.ma_lh, args.header_rows, stats)
     print(f"Step 1: {len(rows)} rows with Ma_LH in {args.ma_lh}")
+    unparseable_amounts = stats.get("unparseable_amounts", 0)
+    if unparseable_amounts:
+        print(
+            f"CẢNH BÁO: {unparseable_amounts} dòng có Trị giá không đọc được, "
+            "đã ghi 0.00 - kiểm tra lại file nguồn."
+        )
 
     if args.step1_out:
         write_step1(rows, args.step1_out)
