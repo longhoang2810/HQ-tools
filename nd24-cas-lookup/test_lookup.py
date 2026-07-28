@@ -58,8 +58,27 @@ def test_extract_cas_ascii_boundary_nhu_js():
     # trong khi \b của JS là ASCII nên match -> CLI sót CAS mà HTML thấy.
     # re.ASCII bắt hai bên hành xử y hệt trên chữ có dấu.
     assert extract_cas("ấ67-56-1") == ["67-56-1"]
-    # Chữ ASCII dính liền thì cả hai bên cùng KHÔNG match — giữ nguyên.
-    assert extract_cas("a67-56-1") == []
+
+
+def test_extract_cas_dinh_lien_chu_cas():
+    # DN gõ "CAS78-93-3" không dấu cách là chuyện thường trong tờ khai. \b ở đầu
+    # regex làm cả CLI lẫn HTML im lặng bỏ qua -> sót chất phải xin giấy phép.
+    assert extract_cas("CAS78-93-3") == ["78-93-3"]
+    assert extract_cas("Methyl Acetate CAS79-20-9)") == ["79-20-9"]
+    # Chữ số dính phía trước vẫn KHÔNG được cắt đuôi mã dài thành mã khác.
+    assert extract_cas("134237-51-7") == ["134237-51-7"]
+    # Ngày tháng vẫn không bị nhận nhầm (đuôi \b chặn "2026-07-2" trong "...-28").
+    assert extract_cas("2026-07-28") == []
+
+
+def test_extract_cas_to_khai_thuc_te():
+    # Mô tả thật: chỉ 2/5 mã ra vì 3 mã viết dính "CAS".
+    text = (
+        "NK38#&Chất xử lý da dầu 6811LS (71-75% Acetone CAS 67-64-1;11-15% MEK "
+        "CAS78-93-3;5-9% EAC CAS 141-78-6 ;3-7% Polyurethane CAS75790-80-6 ;"
+        "2-6% Methyl Acetate CAS79-20-9),HIỆU: HP,mới 100%"
+    )
+    assert extract_cas(text) == ["67-64-1", "78-93-3", "141-78-6", "75790-80-6", "79-20-9"]
 
 
 def test_khong_con_ten_rong_trong_data():

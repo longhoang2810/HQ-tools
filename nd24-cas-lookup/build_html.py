@@ -470,7 +470,9 @@ const PL3_HINT_PREFIX = __PL3_HINT_PREFIX_JSON__;
 const PL3_EXCLUDED = __PL3_EXCLUDED_JSON__;
 const PL3_EXCLUDED_NOTE = __PL3_EXCLUDED_NOTE_JSON__;
 
-const CAS_RE = /\\b\\d{2,7}-\\d{2}-\\d\\b/g;
+// Doi xung voi CAS_RE trong core.py — lookbehind thay \\b dau ma de bat "CAS78-93-3"
+// viet dinh lien. Lookbehind la ES2018, trang nay da dung matchAll (ES2020) roi.
+const CAS_RE = /(?<!\\d)\\d{2,7}-\\d{2}-\\d\\b/g;
 
 function rowsFor(cas) {
   return DATA.filter(r => r.cas === cas);

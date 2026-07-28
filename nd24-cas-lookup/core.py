@@ -23,10 +23,14 @@ PL3_NO_CAS = json.loads((Path(__file__).parent / "data" / "nd24_pl3_no_cas.json"
 # (nguyên văn Công ước CWC). extract.py KHÔNG đưa vào DATA; giữ ở đây để trả lời
 # được câu "sao mã này in trong bảng Phụ lục III mà tool bảo không phải PL III".
 PL3_EXCLUDED = json.loads((Path(__file__).parent / "data" / "nd24_pl3_ngoai_tru.json").read_text(encoding="utf-8"))
+# Đầu mã dùng (?<!\d) chứ KHÔNG dùng \b: tờ khai hay ghi dính "CAS78-93-3" (không
+# dấu cách), \b đòi ranh giới từ giữa "S" và "7" nên cả CLI lẫn HTML im lặng bỏ qua
+# — sót chất phải xin giấy phép. Chặn chữ số phía trước vẫn giữ, để "134237-51-7"
+# không bị cắt đuôi thành mã khác. Đuôi giữ \b để ngày "2026-07-28" không lọt.
 # re.ASCII: \b của Python mặc định là unicode nên "ấ67-56-1" KHÔNG match (coi "ấ"
 # là word char), trong khi \b của JS (build_html.py) là ASCII nên match — CLI từng
 # sót CAS dính chữ có dấu mà trang HTML lại thấy. ASCII làm hai bên hành xử y hệt.
-CAS_RE = re.compile(r"\b\d{2,7}-\d{2}-\d\b", re.ASCII)
+CAS_RE = re.compile(r"(?<!\d)\d{2,7}-\d{2}-\d\b", re.ASCII)
 
 # ponytail: tóm tắt yêu cầu giấy tờ, không thay thế văn bản gốc — luôn đọc kèm
 # Điều được dẫn chiếu trước khi làm hồ sơ thật.
