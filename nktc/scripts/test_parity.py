@@ -8,6 +8,7 @@ import textwrap
 import unittest
 import xml.etree.ElementTree as ET
 import zipfile
+from html import escape
 from pathlib import Path
 
 from openpyxl import Workbook, load_workbook
@@ -16,7 +17,9 @@ from openpyxl import Workbook, load_workbook
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "nktc_process.py"
 TEMPLATE = ROOT / "NKTC-xu-ly-excel.template.html"
+BUNDLE = ROOT / "NKTC-xu-ly-excel.html"
 EXCELJS = ROOT / "assets" / "exceljs.min.js"
+REGIONS = ROOT / "regions.txt"
 NODE = shutil.which("node")
 
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -53,7 +56,16 @@ AMOUNT_CASES = [
 
 UNPARSEABLE_VALUES = ["12 345", "#N/A", "abc", "1234 USD"]
 
-STRICT_GRAMMAR_REJECTED = ["0x10", "1_000", "Infinity", "NaN", "abc", "12 345"]
+STRICT_GRAMMAR_REJECTED = [
+    "0x10",
+    "1_000",
+    "Infinity",
+    "NaN",
+    "abc",
+    "12 345",
+    "٣",
+    "１２３４",
+]
 
 
 NODE_HARNESS = r"""
@@ -195,6 +207,27 @@ def inject_cached_formula_results(path, cached_results):
     shutil.move(patched, path)
 
 
+def delete_cached_formula_results(path, coordinates):
+    namespace = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+    ET.register_namespace("", namespace)
+    patched = path.with_name(f"{path.stem}-patched.xlsx")
+    with zipfile.ZipFile(path, "r") as source_zip, zipfile.ZipFile(patched, "w") as target_zip:
+        for info in source_zip.infolist():
+            data = source_zip.read(info.filename)
+            if info.filename == "xl/worksheets/sheet1.xml":
+                root = ET.fromstring(data)
+                for coordinate in coordinates:
+                    cell = root.find(f".//{{{namespace}}}c[@r='{coordinate}']")
+                    if cell is None:
+                        raise AssertionError(f"Missing formula cell {coordinate}")
+                    cached = cell.find(f"{{{namespace}}}v")
+                    if cached is not None:
+                        cell.remove(cached)
+                data = ET.tostring(root, encoding="utf-8", xml_declaration=False)
+            target_zip.writestr(info, data)
+    shutil.move(patched, path)
+
+
 def write_regions(path):
     path.write_text("Test\tHa Noi\n", encoding="utf-8")
 
@@ -224,7 +257,10 @@ def region_snapshot(path):
     ws = load_workbook(path, data_only=True)["Test"]
     rows = []
     for row in range(5, ws.max_row + 1):
-        rows.append(tuple(ws.cell(row, col).value for col in range(1, 7)))
+        rows.append(tuple(
+            "" if ws.cell(row, col).value is None else ws.cell(row, col).value
+            for col in range(1, 9)
+        ))
     return rows, {str(rng) for rng in ws.merged_cells.ranges}
 
 
@@ -362,6 +398,29 @@ class WorkbookParityTest(unittest.TestCase):
         return self.run_both_from_source(tmp_path, source)
 
     @unittest.skipUnless(NODE, "node is required for browser-JS parity tests")
+    def test_default_source_sheet_is_first_even_when_another_sheet_is_active(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            source = tmp_path / "source.xlsx"
+            wb = Workbook()
+            first = wb.active
+            first.title = "First"
+            first.append(HEADERS)
+            first.append(source_row("First Sheet Company", "0001", declaration=100000001))
+            active = wb.create_sheet("Active")
+            active.append(HEADERS)
+            active.append(source_row("Active Sheet Company", "0002", declaration=200000001))
+            wb.active = 1
+            wb.save(source)
+
+            python_output, js_output, _ = self.run_both_from_source(tmp_path, source)
+            python_rows, _ = region_snapshot(python_output)
+            js_rows, _ = region_snapshot(js_output)
+
+        self.assertEqual(python_rows, js_rows)
+        self.assertEqual(python_rows[0][1], "First Sheet Company")
+
+    @unittest.skipUnless(NODE, "node is required for browser-JS parity tests")
     def test_zero_padded_company_code_is_preserved_in_both(self):
         with tempfile.TemporaryDirectory() as tmp:
             python_output, js_output, _ = self.run_both(
@@ -401,6 +460,28 @@ class WorkbookParityTest(unittest.TestCase):
         self.assertEqual(js_count["companies"], 2)
         self.assertEqual([row[2] for row in python_rows], ["34", "12"])
         self.assertEqual([row[5] for row in python_rows], [4, 3])
+        self.assertEqual(js_rows, python_rows)
+
+    @unittest.skipUnless(NODE, "node is required for browser-JS parity tests")
+    def test_formulas_without_cached_results_keep_distinct_companies(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            source = tmp_path / "source.xlsx"
+            write_source(
+                source,
+                [
+                    source_row("Company A", "=17+17", "=2+2", 100000001),
+                    source_row("Company B", "=6+6", "=1+2", 100000002),
+                ],
+            )
+            delete_cached_formula_results(source, {"C2", "G2", "C3", "G3"})
+            python_output, js_output, js_count = self.run_both_from_source(tmp_path, source)
+            python_rows, _ = region_snapshot(python_output)
+            js_rows, _ = region_snapshot(js_output)
+        self.assertEqual(js_count["companies"], 2)
+        self.assertEqual([row[2] for row in python_rows], ["", ""])
+        self.assertEqual([row[5] for row in python_rows], [0, 0])
+        self.assertEqual([row[1] for row in python_rows], ["Company A", "Company B"])
         self.assertEqual(js_rows, python_rows)
 
     @unittest.skipUnless(NODE, "node is required for browser-JS parity tests")
@@ -448,7 +529,7 @@ class WorkbookParityTest(unittest.TestCase):
             for output in (python_output, js_output):
                 with self.subTest(output=output.name):
                     snapshot, merges = region_snapshot(output)
-                    self.assertEqual([row[0] for row in snapshot], [1, None])
+                    self.assertEqual([row[0] for row in snapshot], [1, ""])
                     self.assertEqual(snapshot[0][1], "CONG TY A")
                     self.assertEqual(snapshot[0][2], "0001")
                     self.assertTrue({"A5:A6", "B5:B6", "C5:C6"}.issubset(merges))
@@ -468,8 +549,8 @@ class WorkbookParityTest(unittest.TestCase):
             for output in (python_output, js_output):
                 with self.subTest(output=output.name):
                     snapshot, merges = region_snapshot(output)
-                    self.assertEqual([row[0] for row in snapshot], [1, None, 2])
-                    self.assertEqual([row[1] for row in snapshot], ["Alpha Company", None, "Middle Company"])
+                    self.assertEqual([row[0] for row in snapshot], [1, "", 2])
+                    self.assertEqual([row[1] for row in snapshot], ["Alpha Company", "", "Middle Company"])
                     self.assertTrue({"A5:A6", "B5:B6", "C5:C6"}.issubset(merges))
 
     @unittest.skipUnless(NODE, "node is required for browser-JS parity tests")
@@ -514,6 +595,68 @@ class WorkbookParityTest(unittest.TestCase):
             [(row[0], row[1]) for row in js_rows],
             [(row[0], row[1]) for row in python_rows],
         )
+
+    @unittest.skipUnless(NODE, "node is required for browser-JS parity tests")
+    def test_company_name_whitespace_matches_order_stt_and_bucket_display_name(self):
+        rows = [
+            source_row("Zulu Company  ", "0001", declaration=100000001),
+            source_row("Beta Company", "0002", declaration=100000002),
+            source_row("  Zulu Company", "0001", declaration=100000003),
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            python_output, js_output, js_count = self.run_both(Path(tmp), rows)
+            python_rows, _ = region_snapshot(python_output)
+            js_rows, _ = region_snapshot(js_output)
+        self.assertEqual(js_count["companies"], 2)
+        self.assertEqual([row[0] for row in python_rows], [1, 2, ""])
+        self.assertEqual(
+            [row[1] for row in python_rows],
+            ["Beta Company", "Zulu Company  ", ""],
+        )
+        self.assertEqual(js_rows, python_rows)
+
+    @unittest.skipUnless(NODE, "node is required for browser-JS parity tests")
+    def test_header_whitespace_runs_select_amount_column_in_both(self):
+        headers = list(HEADERS)
+        headers[-1] = "Tong  tri gia  tinh thue"
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            source = tmp_path / "source.xlsx"
+            wb = Workbook()
+            ws = wb.active
+            ws.append(headers)
+            ws.append(source_row("Company", "0001", amount=321.5))
+            wb.save(source)
+            python_output, js_output, _ = self.run_both_from_source(tmp_path, source)
+            python_rows, _ = region_snapshot(python_output)
+            js_rows, _ = region_snapshot(js_output)
+        self.assertEqual(python_rows[0][5], 321.5)
+        self.assertEqual(js_rows, python_rows)
+
+    @unittest.skipUnless(NODE, "node is required for browser-JS parity tests")
+    def test_boolean_company_code_is_lowercase_text_in_both(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            python_output, js_output, _ = self.run_both(
+                Path(tmp),
+                [source_row("Company", True)],
+            )
+            python_rows, _ = region_snapshot(python_output)
+            js_rows, _ = region_snapshot(js_output)
+        self.assertEqual(python_rows[0][2], "true")
+        self.assertEqual(js_rows, python_rows)
+
+
+class BundleSyncTest(unittest.TestCase):
+    def test_shipped_html_matches_template_and_vendored_inputs(self):
+        template = TEMPLATE.read_text(encoding="utf-8")
+        self.assertEqual(template.count("__REGIONS__"), 1)
+        self.assertEqual(template.count("/* EXCELJS_BUNDLE */"), 1)
+        expected = (
+            template
+            .replace("__REGIONS__", escape(REGIONS.read_text(encoding="utf-8")))
+            .replace("/* EXCELJS_BUNDLE */", EXCELJS.read_text(encoding="utf-8"))
+        )
+        self.assertEqual(BUNDLE.read_text(encoding="utf-8"), expected)
 
 
 if __name__ == "__main__":

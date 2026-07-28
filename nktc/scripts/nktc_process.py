@@ -147,7 +147,7 @@ def to_float(v, stats=None):
             s = s.replace(",", "")
     else:
         s = s.replace(",", "")
-    if not re.fullmatch(r"[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?", s):
+    if not re.fullmatch(r"[+-]?([0-9]+(\.[0-9]*)?|\.[0-9]+)([eE][+-]?[0-9]+)?", s):
         if stats is not None:
             stats["unparseable_amounts"] = stats.get("unparseable_amounts", 0) + 1
         return 0.0
@@ -159,6 +159,8 @@ def cell_to_text(cell):
     v = cell.value
     if v is None:
         return ""
+    if isinstance(v, bool):
+        return str(v).lower()
     if isinstance(v, str):
         return v.strip()
     if isinstance(v, (int, float)) and float(v).is_integer():
@@ -212,7 +214,7 @@ def split_regions(rows, regions):
 
 def norm_header(v):
     """Normalize header text for robust exact matching."""
-    return deaccent(v).strip().replace(" ", "_")
+    return re.sub(r"\s+", "_", deaccent(v).strip())
 
 
 def detect_src(ws, header_rows):
@@ -263,7 +265,7 @@ def step1(ws, ma_lh, header_rows, stats=None):
             "E": to_khai_xk,
             "F": to_float(ws.cell(r, src["Tong_tri_gia"]).value, stats),
         })
-    rows.sort(key=lambda x: (str(x["B"]) if x["B"] is not None else "").lower())
+    rows.sort(key=lambda x: (str(x["B"]) if x["B"] is not None else "").strip().lower())
     return rows
 
 
@@ -300,8 +302,8 @@ def bucket_rows_by_code(rows):
 def build_region_sheet(ws, rows, terms, sheet_title, opts):
     hp = list(rows) if terms is None else [r for r in rows if match_terms(r["A"], terms)]
     # Sort for display, then bucket by code without relying on adjacency.
-    hp.sort(key=lambda x: ((str(x["B"]) if x["B"] is not None else "").lower(),
-                           str(x["C"]) if x["C"] is not None else ""))
+    hp.sort(key=lambda x: ((str(x["B"]) if x["B"] is not None else "").strip().lower(),
+                           (str(x["C"]) if x["C"] is not None else "").strip()))
     groups = bucket_rows_by_code(hp)
     ws.title = sheet_title
 
@@ -419,8 +421,8 @@ def build_unmatched_sheet(ws, rows, opts):
         c.alignment = a_hdr
         c.border = border
 
-    data = sorted(rows, key=lambda x: ((str(x["B"]) if x["B"] is not None else "").lower(),
-                                      str(x["C"]) if x["C"] is not None else ""))
+    data = sorted(rows, key=lambda x: ((str(x["B"]) if x["B"] is not None else "").strip().lower(),
+                                      (str(x["C"]) if x["C"] is not None else "").strip()))
     groups = bucket_rows_by_code(data)
     stt = 0
     r = 5
@@ -524,7 +526,8 @@ def main():
                          "With --separate-files, this is the output directory.")
     ap.add_argument("--separate-files", action="store_true",
                     help="legacy mode: write 9 separate .xlsx files into output directory")
-    ap.add_argument("--sheet", default=None, help="source sheet name")
+    ap.add_argument("--sheet", default=None,
+                    help="source sheet name (default: first sheet)")
     ap.add_argument("--ma-lh", default="E21,G13",
                     help="comma-separated Ma_LH codes to keep")
     ap.add_argument("--header-rows", type=int, default=1)
@@ -560,7 +563,9 @@ def main():
         args.tb_year = str(today.year)
 
     wb = openpyxl.load_workbook(args.input, data_only=True)
-    ws = wb[args.sheet] if args.sheet else wb.active
+    if not wb.worksheets:
+        ap.error("source workbook has no worksheets")
+    ws = wb[args.sheet] if args.sheet else wb.worksheets[0]
 
     stats = {}
     rows = step1(ws, args.ma_lh, args.header_rows, stats)

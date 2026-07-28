@@ -153,7 +153,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   const cellValue = cell => {
     let value=cell?.value;
     while(value&&typeof value==='object') {
-      if(('formula' in value||'sharedFormula' in value)&&'result' in value){value=value.result;continue;}
+      if('formula' in value||'sharedFormula' in value){value=value.result;continue;}
       if('error' in value){value=value.error;continue;}
       if(Array.isArray(value.richText))return value.richText.map(part=>part?.text??'').join('');
       if('text' in value){value=value.text;continue;}
