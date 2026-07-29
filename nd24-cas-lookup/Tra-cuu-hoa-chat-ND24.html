@@ -121,17 +121,22 @@
      Mo ta cuon xuong duoi khong loi qua. */
   th.match, td.match { position: sticky; left: 0; z-index: 1; box-shadow: 6px 0 7px -6px rgba(16,32,54,.3); }
   thead th.match { z-index: 2; }
-  /* Ghim ma CAS lam o Ket luan chui XUONG DUOI cot ghim khi cuon het co, va pill
-     bi cat mat may chu DAU. Verdict phu dinh chi khac verdict khang dinh o dung
-     chu dau -> cat dau la doc luot ra NGUOC nghia. Chan bang be ngang: bop bang
-     lai de (cot ghim + cot Ket luan) <= be ngang khung, luc do cuon het co thi
-     Ket luan van nam tron ben phai cot ghim. Do o 320/375/414px: du 20px dem. */
+  .match-inline { display: none; }
+  /* Man hep: bang 4 cot khong vua dien thoai. Do o 375px, luc moi mo bang chi
+     thay 25% cot Ket luan (34/137px) — dung cot chu cai dung — phai cuon ngang
+     107px moi doc duoc thu quan trong nhat. Ghim cot ma chi cuu duoc "ma nao ung
+     voi ket luan nao", khong cuu duoc chuyen do. Nen duoi 700px bo han cot ma
+     rieng va in ma ngay dau o Ket luan: con 3 cot, bang co vua khung (min-width
+     0 -> het cuon ngang), ma van dinh lien ket luan. */
   @media (max-width: 700px) {
-    table { min-width: 400px; }
-    td.mota { min-width: 110px; }
-    /* min-width:0 -> cot Ket luan co lai thay vi nuot phan du cua bang; padding
-       trai rong lam vung dem, lech vai px thi an vao dem chu khong cat chu. */
-    td:last-child { min-width: 0; padding-left: 20px; }
+    table { min-width: 0; }
+    /* Chia lai cho hep: Ket luan la thu can doc nen uu tien be ngang cho no,
+       Mo ta chi de doi chieu (van con nguyen trong o nhap). */
+    th, td { padding: 11px 8px; }
+    td.mota { min-width: 0; }
+    td:last-child { min-width: 0; width: 52%; }
+    th.match, td.match { display: none; }
+    .match-inline { display: block; margin-bottom: 5px; }
   }
   .cas { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--navy-deep); }
   .pill { display: inline-block; margin: 1px 0; padding: 4px 11px; border-radius: var(--r-tag); font-size: 0.8rem; font-weight: 700; line-height: 1.35; }
@@ -1279,9 +1284,12 @@ function runLines(text, resultsEl, mode) {
     const sub = matches.length
       ? matches.map(c => {
           const s = casStatus(c);
+          const label = byName ? esc((rowsFor(c)[0] || {}).name_vn || c) : esc(c);
+          // Ban thu hai cua nhan, an tren desktop, hien khi man hep an cot rieng.
           return {
-            match: byName ? esc((rowsFor(c)[0] || {}).name_vn || c) : esc(c),
-            concl: `<span class="pill ${s.badge}">${esc(s.text)}</span>${hintHtml(c)}`,
+            match: label,
+            concl: `<span class="match-inline${byName ? "" : " cas"}">${label}</span>`
+              + `<span class="pill ${s.badge}">${esc(s.text)}</span>${hintHtml(c)}`,
           };
         })
       : [{ match: "—", concl: `<span class="pill ${status.badge}">${esc(status.text)}</span>` }];
