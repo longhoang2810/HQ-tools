@@ -143,6 +143,13 @@
   .pill.warn { background: var(--red); color: #fff; }
   .pill.ok { background: var(--green); color: #fff; }
   .pill.unknown { background: var(--amber); color: #fff; }
+  /* Muc chu "\203A" xoay 90 do khi mo — cung ngon ngu voi details.fold o duoi
+     trang, de cho nao thu gon duoc cung nhin ra ngay. */
+  details.note-fold > summary { cursor: pointer; list-style: none; display: flex; gap: 7px; align-items: baseline; }
+  details.note-fold > summary::-webkit-details-marker { display: none; }
+  details.note-fold > summary::before { content: "\203A"; font-size: 1.25em; line-height: 1; transition: transform .15s; }
+  details.note-fold[open] > summary::before { transform: rotate(90deg); }
+  .fold-body { margin-top: 7px; }
 
   .exempt h2 { font-size: 1.18rem; margin: 0 0 6px; letter-spacing: -0.01em; }
   .exempt h3 { font-size: 0.96rem; margin: 18px 0 6px; color: var(--navy-deep); }
@@ -1126,16 +1133,31 @@ function pl3FamilyHints(cas) {
   return PL3_NO_CAS.filter(e => (PL3_FAMILY_HINTS[e.stt] || []).some(k => name.includes(k)));
 }
 
+// Ghi chu dai 200-300 chu; tren dien thoai o Ket luan chi ~150px nen no thanh
+// khoi cao ~370px, keo ca dong hang dai ngoang. Thu gon bang <details> native:
+// man rong mo san, man hep dong san. Tin hieu CO ghi chu gi phai nam trong
+// <summary> — chi giau phan dien giai, khong bao gio giau canh bao.
+function foldNote(cls, summary, body) {
+  // typeof: test chay ban JS nay bang node, o do khong co matchMedia -> mo san.
+  const narrow = typeof matchMedia === "function" && matchMedia("(max-width: 700px)").matches;
+  const open = narrow ? "" : " open";
+  return `<details class="${cls} note-fold"${open}><summary>${summary}</summary>${body}</details>`;
+}
+
 function hintHtml(cas) {
   let out = "";
   // Doi xung voi pl3_excluded() trong core.py.
   for (const e of PL3_EXCLUDED.filter(x => x.cas === cas)) {
-    out += `<div class="excl-note">${esc(PL3_EXCLUDED_NOTE.replace("{stt}", e.ngoai_tru_khoi.replace(/\.$/, "")))}</div>`;
+    const stt = e.ngoai_tru_khoi.replace(/\.$/, "");
+    // Summary la NHAN thuan (so muc), khong dien giai lai noi dung phap ly ->
+    // khong the lech voi PL3_EXCLUDED_NOTE ben core.py.
+    out += foldNote("excl-note", `ⓘ Ghi chú "Ngoại trừ" — mục ${esc(stt)}`,
+      `<div class="fold-body">${esc(PL3_EXCLUDED_NOTE.replace("{stt}", stt))}</div>`);
   }
   const hints = pl3FamilyHints(cas);
   if (hints.length) {
     const items = hints.map(e => `<li><b><a href="#nd24-pl-iii" title="Mở nguyên văn Phụ lục III của NĐ 24">${esc(e.stt)}</a></b> ${esc(e.ten)} <span class="cite">(${esc(e.category)})</span></li>`).join("");
-    out += `<div class="fam-hint"><b>${esc(PL3_HINT_PREFIX)}</b><ul>${items}</ul></div>`;
+    out += foldNote("fam-hint", `<b>${esc(PL3_HINT_PREFIX)}</b>`, `<ul>${items}</ul>`);
   }
   return out;
 }
@@ -1217,13 +1239,16 @@ function lineNameHint(entry) {
   const named = scanNames(entry.mota).filter(cas => !entry.cas.includes(cas));
   if (!named.length) return "";
   const names = [...new Set(named.map(cas => rowsFor(cas)[0].name_vn))].slice(0, 5);
-  return `<div class="fam-hint">⚠ Mô tả có nhắc tên hóa chất trong dữ liệu nhưng KHÔNG kèm mã CAS: ${esc(names.join(", "))}. Kết luận trên chỉ tính theo mã CAS — chuyển sang <b>Tìm theo tên chất</b> để tra riêng.</div>`;
+  // Canh bao ("co ten nhung khong co ma") o summary, huong dan xu ly o body.
+  return foldNote("fam-hint", `⚠ Mô tả có nhắc tên hóa chất trong dữ liệu nhưng KHÔNG kèm mã CAS: ${esc(names.join(", "))}`,
+    `<div class="fold-body">Kết luận trên chỉ tính theo mã CAS — chuyển sang <b>Tìm theo tên chất</b> để tra riêng.</div>`);
 }
 
 // Mode ten: dong co ma CAS thi che do nay bo qua (tra theo ten) -> nhac chuyen mode.
 function lineCasHint(entry) {
   if (!entry.cas.length) return "";
-  return `<div class="fam-hint">⚠ Dòng có mã CAS (${esc(entry.cas.join(", "))}) — chế độ tra theo tên bỏ qua. Chuyển sang <b>Tìm theo mã CAS</b> để tra theo mã.</div>`;
+  return foldNote("fam-hint", `⚠ Dòng có mã CAS (${esc(entry.cas.join(", "))}) — chế độ tra theo tên bỏ qua`,
+    `<div class="fold-body">Chuyển sang <b>Tìm theo mã CAS</b> để tra theo mã.</div>`);
 }
 
 function runLines(text, resultsEl, mode) {
@@ -1435,6 +1460,11 @@ function openHash() {
 }
 addEventListener("hashchange", openHash);
 openHash();
+
+// Ban in la thu ket vao ho so: ghi chu dang thu gon KHONG duoc mat khi in.
+addEventListener("beforeprint", () => {
+  document.querySelectorAll("details.note-fold").forEach(d => { d.open = true; });
+});
 
 // Nut noi: thu gon toan van + len dau trang.
 const docsEls = [...document.querySelectorAll("details.doc")];
