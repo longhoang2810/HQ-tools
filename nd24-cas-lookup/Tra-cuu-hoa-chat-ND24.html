@@ -114,6 +114,25 @@
   tr.warn td.stt { box-shadow: inset 3px 0 0 var(--red); }
   tr.ok td.stt { box-shadow: inset 3px 0 0 var(--green); }
   tr.unknown td.stt { box-shadow: inset 3px 0 0 var(--amber); }
+  /* Tren dien thoai bang (min-width 620px) phai cuon ngang moi doc duoc cot Ket
+     luan, luc do cot ma CAS troi han khoi man hinh -> khong biet ket luan nao la
+     cua ma nao. Ghim cot ma: left:0 chi bat khi o sap troi qua mep trai, con o
+     man hinh rong thi van nam dung cho cu. Nen o duc (hex, khong alpha) nen cot
+     Mo ta cuon xuong duoi khong loi qua. */
+  th.match, td.match { position: sticky; left: 0; z-index: 1; box-shadow: 6px 0 7px -6px rgba(16,32,54,.3); }
+  thead th.match { z-index: 2; }
+  /* Ghim ma CAS lam o Ket luan chui XUONG DUOI cot ghim khi cuon het co, va pill
+     bi cat mat may chu DAU. Verdict phu dinh chi khac verdict khang dinh o dung
+     chu dau -> cat dau la doc luot ra NGUOC nghia. Chan bang be ngang: bop bang
+     lai de (cot ghim + cot Ket luan) <= be ngang khung, luc do cuon het co thi
+     Ket luan van nam tron ben phai cot ghim. Do o 320/375/414px: du 20px dem. */
+  @media (max-width: 700px) {
+    table { min-width: 400px; }
+    td.mota { min-width: 110px; }
+    /* min-width:0 -> cot Ket luan co lai thay vi nuot phan du cua bang; padding
+       trai rong lam vung dem, lech vai px thi an vao dem chu khong cat chu. */
+    td:last-child { min-width: 0; padding-left: 20px; }
+  }
   .cas { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--navy-deep); }
   .pill { display: inline-block; margin: 1px 0; padding: 4px 11px; border-radius: var(--r-tag); font-size: 0.8rem; font-weight: 700; line-height: 1.35; }
   .pill.warn { background: var(--red); color: #fff; }
@@ -195,7 +214,7 @@
     .card, details.doc { box-shadow: none; border-color: #999; break-inside: avoid; }
     header { border-color: #000; }
     .table-wrap { max-height: none; overflow: visible; }
-    thead th { position: static; box-shadow: none; }
+    thead th, th.match, td.match { position: static; box-shadow: none; }
     tr.warn td.stt, tr.ok td.stt, tr.unknown td.stt { box-shadow: none; }
     .pill { border: 1px solid #666; color: #000 !important; background: #fff !important; }
   }
@@ -1250,7 +1269,7 @@ function runLines(text, resultsEl, mode) {
     ${nameNote}
     ${sttNote}
     ${stats}
-    <div class="table-wrap"><table><thead><tr><th>STT</th><th>Mô tả</th><th>${matchHead}</th><th>Kết luận</th></tr></thead><tbody>`;
+    <div class="table-wrap"><table><thead><tr><th>STT</th><th>Mô tả</th><th class="match">${matchHead}</th><th>Kết luận</th></tr></thead><tbody>`;
   per.forEach((p, i) => {
     const { l, matches, status } = p;
     const short = l.mota.length > 90 ? l.mota.slice(0, 90) + "…" : l.mota;
@@ -1274,7 +1293,7 @@ function runLines(text, resultsEl, mode) {
             ? `<td class="stt" rowspan="${sub.length}">${l.stt === null ? i + 1 : l.stt}</td>`
               + `<td class="mota" rowspan="${sub.length}" title="${esc(l.mota)}">${esc(short)}</td>`
             : "")
-        + `<td${byName ? "" : ' class="cas"'}>${s.match}</td>`
+        + `<td class="match${byName ? "" : " cas"}">${s.match}</td>`
         + `<td>${s.concl}</td></tr>`;
     });
   });
