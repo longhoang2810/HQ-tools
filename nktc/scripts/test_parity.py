@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import base64
 import json
 import shutil
 import subprocess
@@ -20,6 +21,7 @@ TEMPLATE = ROOT / "NKTC-xu-ly-excel.template.html"
 BUNDLE = ROOT / "NKTC-xu-ly-excel.html"
 EXCELJS = ROOT / "assets" / "exceljs.min.js"
 REGIONS = ROOT / "regions.txt"
+CVNK_TEMPLATE = ROOT / "assets" / "CVNK_Gui_thue_template.docx"
 NODE = shutil.which("node")
 
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -651,10 +653,12 @@ class BundleSyncTest(unittest.TestCase):
         template = TEMPLATE.read_text(encoding="utf-8")
         self.assertEqual(template.count("__REGIONS__"), 1)
         self.assertEqual(template.count("/* EXCELJS_BUNDLE */"), 1)
+        self.assertEqual(template.count("__CVNK_TEMPLATE_B64__"), 1)
         expected = (
             template
             .replace("__REGIONS__", escape(REGIONS.read_text(encoding="utf-8")))
             .replace("/* EXCELJS_BUNDLE */", EXCELJS.read_text(encoding="utf-8"))
+            .replace("__CVNK_TEMPLATE_B64__", base64.b64encode(CVNK_TEMPLATE.read_bytes()).decode("ascii"))
         )
         self.assertEqual(BUNDLE.read_text(encoding="utf-8"), expected)
 

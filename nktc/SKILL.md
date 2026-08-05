@@ -1,14 +1,14 @@
 ---
 name: nktc
 description: "Use when processing an NKTC customs-declaration Excel export (nhập khẩu tại chỗ). Filters Ma_LH in {E21, G13}, remaps columns, and builds one formatted .xlsx per configured province/city from regions.txt with accent-insensitive address matching, grouped/merged company rows, Vietnamese header, Times New Roman formatting and borders."
-version: 2.4.0
+version: 2.5.0
 author: Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
   hermes:
-    tags: [excel, openpyxl, vietnamese, customs, nktc, hai-phong, reporting]
-    related_skills: [powerpoint]
+    tags: [excel, openpyxl, vietnamese, customs, nktc, hai-phong, reporting, docx, cvnk]
+    related_skills: [powerpoint, cvnk]
 ---
 
 # NKTC – Excel Customs Declaration Processor
@@ -158,6 +158,48 @@ tình huống khẩn cấp; sửa template/TXT rồi build để các thay đổ
 HTML hỗ trợ tải lên/tải xuống `regions.txt`, khôi phục mặc định 34 vùng, và giữ
 quy tắc phân vùng như CLI: địa danh khớp ở cuối địa chỉ được ưu tiên, một dòng
 chỉ vào một sheet.
+
+### Tạo công văn (nút "Tạo công văn")
+
+Sau khi bấm **Xuất Excel NKTC**, nút **Tạo công văn** tạo file `.docx` "Thông báo
+V/v làm thủ tục xuất khẩu, nhập khẩu tại chỗ" (mẫu gửi thuế 9 tỉnh/thành) từ cùng
+dữ liệu vừa xử lý — không chạy lại file nguồn, không cần bấm Xuất Excel lại nếu
+chỉ muốn tạo lại công văn với dữ liệu cũ.
+
+- Chỉ tạo thư cho vùng **có ít nhất 1 dòng khớp** tháng đó; vùng không có dữ liệu
+  bị bỏ qua, không tạo thư trống.
+- Chỉ hoạt động với đúng 9 khoá vùng cố định trong mẫu công văn: `hp, Hn, PT, HY,
+  BN, TH, TQ, QT, NB`. Nếu đổi `regions.txt` sang cấu hình 34 tỉnh/thành hoặc đổi
+  tên sheet, công văn sẽ không có thư cho vùng đã đổi tên (không báo lỗi, chỉ
+  im lặng bỏ qua vùng đó — kiểm tra số thư trong thông báo "Đã tạo công văn: X/9
+  vùng" sau khi bấm).
+- Ngày ký (`ngày ___ tháng MM năm YYYY`) lấy từ ô **Tháng thông báo/Năm thông báo**,
+  luôn để trống ngày (điền tay khi có số công văn chính thức). Kỳ báo cáo (`từ
+  ngày...đến ngày...`) lấy từ ô **Tháng báo cáo/Năm báo cáo** (không phải ngày
+  hệ thống) — cho phép tạo công văn cho tháng cũ nếu cần.
+- Mẫu gốc có placeholder ở `assets/CVNK_Gui_thue_template.docx` (`{{DOC_MONTH}}`,
+  `{{DOC_YEAR}}`, `{{FROM_DATE}}`, `{{TO_DATE}}`), vendor tương tự exceljs — sửa
+  mẫu này rồi build lại, không sửa tay `NKTC-xu-ly-excel.html`.
+- Cắt/ghép docx bằng cắt chuỗi trực tiếp trên `word/document.xml` (không dùng
+  serializer XML tổng quát, giống lý do cvnk tránh serializer để không bị Word
+  báo "unreadable content"), nén/giải nén bằng `CompressionStream`/
+  `DecompressionStream('deflate-raw')` có sẵn trong trình duyệt — không thêm thư
+  viện zip/docx nào. Cần Chrome/Edge/Firefox bản mới; nếu trình duyệt không hỗ
+  trợ, nút báo lỗi rõ ràng, Excel vẫn xuất bình thường.
+- **Mỗi thư cắt từ `<w:tbl>` header tới `<w:tbl>` footer của chính nó, KHÔNG lấy
+  phần trước header.** Giữa 2 thư trong mẫu gốc có sẵn 6-7 đoạn `<w:p>` rỗng —
+  tác giả cũ chèn tay để đẩy thư sau sang trang mới khi in liên tục. Các đoạn
+  này không có `<w:spacing>` riêng nên ăn theo mặc định lỏng của tài liệu
+  (~29pt/đoạn), cộng dồn thành ~3in khoảng trắng đầu trang khi ghép với ngắt
+  trang thật (`<w:br w:type="page"/>`) do code tự chèn. Phát hiện bằng cách mở
+  file thật trong Microsoft Word (bật formatting marks) — kiểm zip/XML/
+  python-docx không lộ ra vì các đoạn rỗng đó vẫn hợp lệ về mặt cấu trúc.
+- **Thứ tự 9 lá thư trong mẫu KHÁC thứ tự trong `regions.txt`**: mẫu là Hà Nội,
+  Hải Phòng, Phú Thọ, Hưng Yên, Bắc Ninh, Thanh Hóa, Tuyên Quang, Quảng Trị, Ninh
+  Bình (Hà Nội đứng trước Hải Phòng); `regions.txt` là hp, Hn, PT... (Hải Phòng
+  trước Hà Nội). Mapping đúng nằm ở hằng số `CVNK_LETTER_KEYS` trong
+  `NKTC-xu-ly-excel.template.html` — đã xác minh bằng cách đếm vị trí bảng thật
+  trong file mẫu, đừng suy luận lại từ thứ tự `regions.txt`.
 
 ### CLI
 

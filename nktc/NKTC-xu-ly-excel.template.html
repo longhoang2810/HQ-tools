@@ -51,8 +51,9 @@ summary { cursor:pointer; font-weight:700; color:var(--blue); } .note { font-siz
 </section>
 <section>
 <h2>3. Xuất workbook</h2>
-<div class="actions"><button id="run" type="button">Xuất Excel NKTC</button><span id="status" role="status"></span></div>
+<div class="actions"><button id="run" type="button">Xuất Excel NKTC</button><button class="secondary" id="cvnk" type="button">Tạo công văn</button><span id="status" role="status"></span></div>
 <details><summary>Workbook xuất gồm gì?</summary><p class="note">1 sheet summary, 1 sheet cho mỗi dòng vùng, và unmatched. Mỗi sheet có tiêu đề, font Times New Roman, viền, STT theo DN, merge A/B/C cho nhiều tờ khai cùng DN, trị giá định dạng số.</p></details>
+<p class="note">"Tạo công văn" dùng dữ liệu của lần "Xuất Excel NKTC" gần nhất — chạy Xuất Excel trước. Chỉ tạo thư cho vùng có dữ liệu tháng đó, trong 9 vùng cố định của mẫu công văn (bỏ qua nếu đổi sang cấu hình 34 tỉnh/thành hoặc đổi tên sheet).</p>
 </section>
 </main>
 <script>
@@ -61,6 +62,8 @@ summary { cursor:pointer; font-weight:700; color:var(--blue); } .note { font-siz
 <script>
 (() => {
   'use strict';
+  const CVNK_TEMPLATE_B64 = '__CVNK_TEMPLATE_B64__';
+  const CVNK_LETTER_KEYS = ['Hn','hp','PT','HY','BN','TH','TQ','QT','NB']; // document order in the template, NOT regions.txt order
   const $ = id => document.getElementById(id);
   const defaultRegions = $('regions').value;
   const TNR = 'Times New Roman';
@@ -155,8 +158,115 @@ summary { cursor:pointer; font-weight:700; color:var(--blue); } .note { font-siz
   }
   function buildUnmatched(wb, records) { const ws=wb.addWorksheet('unmatched'), [title]=reportTitle(); ws.mergeCells('A1:J1'); ws.getCell('A1').value=`DÒNG CHƯA KHỚP VÙNG SAU KHI LỌC E21/G13 - ${title.split('THÁNG ')[1]}`; ws.getCell('A1').font={name:TNR,size:14,bold:true}; ws.getCell('A1').alignment=center; const heads=[...OUT_HEADERS,'Địa chỉ nguồn','Lý do']; heads.forEach((v,i)=>setCell(ws.getCell(4,i+1),v)); [6,34,16,18,18,18,12,14,60,18].forEach((w,i)=>ws.getColumn(i+1).width=w); let r=5,stt=0; for(const x of records){stt++;setCell(ws.getCell(r,1),stt);setCell(ws.getCell(r,2),x.B,leftTop);setCell(ws.getCell(r,3),x.C,centerTop);setCell(ws.getCell(r,4),x.D);ws.getCell(r,4).numFmt='0';setCell(ws.getCell(r,5),x.E);setCell(ws.getCell(r,6),x.F,right);ws.getCell(r,6).numFmt='#,##0.00';setCell(ws.getCell(r,7),0);setCell(ws.getCell(r,8),'unmatched');setCell(ws.getCell(r,9),x.A,leftTop);setCell(ws.getCell(r,10),'no region match');r++;} return {rows:records.length,companies:stt}; }
   function buildSummary(ws,total,counts) { ws.getCell('A1').value='NKTC summary'; ws.getCell('A2').value='Step1 rows';ws.getCell('B2').value=total; const regionRows=counts.filter(x=>x.terms).reduce((s,x)=>s+x.rows,0), unmatched=counts.find(x=>!x.terms).rows; ws.getCell('A3').value='Region rows';ws.getCell('B3').value=regionRows;ws.getCell('A4').value='Unmatched rows';ws.getCell('B4').value=unmatched;ws.getCell('A5').value='Coverage';ws.getCell('B5').value=`${total?(regionRows/total*100).toFixed(2):'0.00'}%`; ['Sheet','Terms','Rows','Companies','Note'].forEach((x,i)=>setCell(ws.getCell(7,i+1),x)); counts.forEach((x,i)=>{const r=8+i; [x.name,x.terms?x.terms.join(', '):'',x.rows,x.companies,x.terms?'':'not matched by configured regions'].forEach((v,c)=>setCell(ws.getCell(r,c+1),v));}); [16,56,12,12,30].forEach((w,i)=>ws.getColumn(i+1).width=w); }
-  async function run() { const input=$('source').files[0]; if(!input) throw Error('Chọn file XLSX nguồn trước.'); if(!window.ExcelJS) throw Error('Không tải được thư viện Excel trong file HTML.'); const regions=parseRegions($('regions').value); show('info','Đang đọc file nguồn...'); const sourceWb=new ExcelJS.Workbook(); await sourceWb.xlsx.load(await input.arrayBuffer()); const rows=extractRows(sourceWb.worksheets[0]); const groups=Object.fromEntries(regions.map(r=>[r.name,[]])); const unmatched=[]; rows.forEach(row=>{const name=chooseRegion(row.A,regions); (name?groups[name]:unmatched).push(row);}); show('info',`Đang tạo ${regions.length} sheet từ ${rows.length.toLocaleString('vi-VN')} dòng...`); const out=new ExcelJS.Workbook(); out.creator='NKTC - HTML offline'; const summary=out.addWorksheet('summary'); const counts=[]; regions.forEach(region=>{const count=buildRegionSheet(out,region.name,groups[region.name]);counts.push({name:region.name,terms:region.terms,...count});}); counts.push({name:'unmatched',terms:null,...buildUnmatched(out,unmatched)}); buildSummary(summary,rows.length,counts); const data=await out.xlsx.writeBuffer(); const url=URL.createObjectURL(new Blob([data],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})); const a=document.createElement('a'); a.href=url; a.download=($('outName').value.trim()||'NKTC.xlsx').replace(/\.xlsx$/i,'')+'.xlsx'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); const done=`Đã xuất ${a.download}: ${rows.length.toLocaleString('vi-VN')} dòng, ${regions.length} vùng, chưa khớp ${unmatched.length}.`; if(unparseableAmounts)show('error',`${done} CẢNH BÁO: ${unparseableAmounts} dòng có Trị giá không đọc được, đã ghi 0.00 - kiểm tra lại file nguồn.`);else show('ok',done); }
+  // --- công văn (CVNK) docx generation: minimal ZIP read/write + letter-block surgery on word/document.xml. ---
+  // ponytail: no zip/docx library added — DecompressionStream/CompressionStream('deflate-raw') are native
+  // and every non-edited zip entry (images, styles, fonts) is copied byte-for-byte, never re-encoded.
+  const CRC_TABLE = (() => { const t=new Uint32Array(256); for(let n=0;n<256;n++){let c=n; for(let k=0;k<8;k++) c=(c&1)?(0xedb88320^(c>>>1)):(c>>>1); t[n]=c>>>0;} return t; })();
+  function crc32(bytes) { let c=0xffffffff; for(let i=0;i<bytes.length;i++) c=CRC_TABLE[(c^bytes[i])&0xff]^(c>>>8); return (c^0xffffffff)>>>0; }
+  async function streamAll(readable) { const reader=readable.getReader(); const chunks=[]; let total=0; while(true){const {done,value}=await reader.read(); if(done)break; chunks.push(value); total+=value.length;} const out=new Uint8Array(total); let off=0; for(const c of chunks){out.set(c,off);off+=c.length;} return out; }
+  async function inflateRaw(bytes) { const ds=new DecompressionStream('deflate-raw'); const w=ds.writable.getWriter(); w.write(bytes); w.close(); return streamAll(ds.readable); }
+  async function deflateRaw(bytes) { const cs=new CompressionStream('deflate-raw'); const w=cs.writable.getWriter(); w.write(bytes); w.close(); return streamAll(cs.readable); }
+  function base64ToBytes(b64) { const bin=atob(b64); const bytes=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i); return bytes; }
+  function readZipEntries(bytes) {
+    const dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+    let eocd=-1; const minOff=Math.max(0,bytes.length-65557);
+    for(let i=bytes.length-22;i>=minOff;i--) if(dv.getUint32(i,true)===0x06054b50){eocd=i;break;}
+    if(eocd<0) throw Error('EOCD not found - invalid zip');
+    const cdCount=dv.getUint16(eocd+10,true), cdOffset=dv.getUint32(eocd+16,true);
+    const entries=[]; let p=cdOffset; const dec=new TextDecoder('utf-8');
+    for(let i=0;i<cdCount;i++) {
+      if(dv.getUint32(p,true)!==0x02014b50) throw Error('bad central directory signature');
+      const method=dv.getUint16(p+10,true), crc=dv.getUint32(p+16,true), compSize=dv.getUint32(p+20,true), uncompSize=dv.getUint32(p+24,true);
+      const nameLen=dv.getUint16(p+28,true), extraLen=dv.getUint16(p+30,true), commentLen=dv.getUint16(p+32,true), localOffset=dv.getUint32(p+42,true);
+      const name=dec.decode(bytes.subarray(p+46,p+46+nameLen));
+      if(dv.getUint32(localOffset,true)!==0x04034b50) throw Error('bad local header signature for '+name);
+      const localNameLen=dv.getUint16(localOffset+26,true), localExtraLen=dv.getUint16(localOffset+28,true);
+      const dataStart=localOffset+30+localNameLen+localExtraLen;
+      entries.push({name,method,crc,compSize,uncompSize,data:bytes.subarray(dataStart,dataStart+compSize)});
+      p+=46+nameLen+extraLen+commentLen;
+    }
+    return entries;
+  }
+  function writeZip(entries) {
+    const enc=new TextEncoder(), localParts=[], centralParts=[], localOffsets=[]; let offset=0;
+    for(const e of entries) {
+      const nameBytes=enc.encode(e.name), h=new DataView(new ArrayBuffer(30));
+      h.setUint32(0,0x04034b50,true); h.setUint16(4,20,true); h.setUint16(6,0,true); h.setUint16(8,e.method,true);
+      h.setUint16(10,0,true); h.setUint16(12,0x21,true); h.setUint32(14,e.crc,true); h.setUint32(18,e.compSize,true);
+      h.setUint32(22,e.uncompSize,true); h.setUint16(26,nameBytes.length,true); h.setUint16(28,0,true);
+      localOffsets.push(offset); localParts.push(new Uint8Array(h.buffer),nameBytes,e.data); offset+=30+nameBytes.length+e.data.length;
+    }
+    const cdStart=offset;
+    entries.forEach((e,i) => {
+      const nameBytes=enc.encode(e.name), h=new DataView(new ArrayBuffer(46));
+      h.setUint32(0,0x02014b50,true); h.setUint16(4,20,true); h.setUint16(6,20,true); h.setUint16(8,0,true); h.setUint16(10,e.method,true);
+      h.setUint16(12,0,true); h.setUint16(14,0x21,true); h.setUint32(16,e.crc,true); h.setUint32(20,e.compSize,true);
+      h.setUint32(24,e.uncompSize,true); h.setUint16(28,nameBytes.length,true); h.setUint16(30,0,true); h.setUint16(32,0,true);
+      h.setUint16(34,0,true); h.setUint16(36,0,true); h.setUint32(38,0,true); h.setUint32(42,localOffsets[i],true);
+      centralParts.push(new Uint8Array(h.buffer),nameBytes); offset+=46+nameBytes.length;
+    });
+    const cdSize=offset-cdStart, eocd=new DataView(new ArrayBuffer(22));
+    eocd.setUint32(0,0x06054b50,true); eocd.setUint16(4,0,true); eocd.setUint16(6,0,true); eocd.setUint16(8,entries.length,true);
+    eocd.setUint16(10,entries.length,true); eocd.setUint32(12,cdSize,true); eocd.setUint32(16,cdStart,true); eocd.setUint16(20,0,true);
+    const parts=[...localParts,...centralParts,new Uint8Array(eocd.buffer)], total=parts.reduce((s,x)=>s+x.length,0);
+    const out=new Uint8Array(total); let pos=0; for(const part of parts){out.set(part,pos);pos+=part.length;} return out;
+  }
+  function sliceLetters(xml, keepFlags) {
+    const bodyOpen=xml.indexOf('<w:body>'); if(bodyOpen<0) throw Error('không tìm thấy <w:body> trong mẫu công văn');
+    const bodyOpenEnd=bodyOpen+'<w:body>'.length;
+    const tblOpens=[], tblCloses=[]; const openRe=/<w:tbl>/g, closeRe=/<\/w:tbl>/g; let m;
+    while((m=openRe.exec(xml))) tblOpens.push(m.index);
+    while((m=closeRe.exec(xml))) tblCloses.push(m.index+'</w:tbl>'.length);
+    if(tblOpens.length!==tblCloses.length) throw Error('mẫu công văn có cấu trúc bảng không cân đối');
+    const letterCount=tblOpens.length/2;
+    if(!Number.isInteger(letterCount)) throw Error('mẫu công văn không đúng 2 bảng/thư như kỳ vọng');
+    if(keepFlags.length!==letterCount) throw Error(`keepFlags length ${keepFlags.length} != letter count ${letterCount}`);
+    // slice from each letter's OWN header <w:tbl>, not from the previous letter's end: the gap between
+    // letters in the template is the original author's manual "push to next page" filler (runs of several
+    // empty paragraphs inheriting the doc's loose default spacing) - harmless when letters flowed
+    // continuously, but stacks into a large top-of-page gap once we force a real page break between letters.
+    const parts=[]; let prevEnd=bodyOpenEnd;
+    for(let k=0;k<letterCount;k++) { const headerOpen=tblOpens[2*k], footerClose=tblCloses[2*k+1]; if(keepFlags[k]) parts.push(xml.slice(headerOpen,footerClose)); prevEnd=footerClose; }
+    // spacing matches every other paragraph in the template (after=0/before=0/line=240) - the doc's own
+    // docDefaults is loose (after=200, line=276) and leaks into any paragraph without an explicit override
+    const PAGE_BREAK='<w:p><w:pPr><w:spacing w:after="0" w:before="0" w:line="240" w:lineRule="auto"/></w:pPr><w:r><w:br w:type="page"/></w:r></w:p>'; // one page per letter in the output, regardless of which letters were skipped
+    return xml.slice(0,bodyOpenEnd) + parts.join(PAGE_BREAK) + xml.slice(prevEnd);
+  }
+  function fillPlaceholders(xml, {docMonth,docYear,fromDate,toDate}) {
+    return xml.split('{{DOC_MONTH}}').join(docMonth).split('{{DOC_YEAR}}').join(docYear).split('{{FROM_DATE}}').join(fromDate).split('{{TO_DATE}}').join(toDate);
+  }
+  async function buildCvnkDocx(templateBytes, opts) {
+    const entries=readZipEntries(templateBytes), outEntries=[];
+    for(const e of entries) {
+      if(e.name!=='word/document.xml') { outEntries.push(e); continue; }
+      const uncompressed=e.method===0?e.data:await inflateRaw(e.data);
+      let xml=new TextDecoder('utf-8').decode(uncompressed);
+      xml=sliceLetters(xml,opts.keepFlags); xml=fillPlaceholders(xml,opts);
+      const newUncompressed=new TextEncoder().encode(xml), newCompressed=await deflateRaw(newUncompressed);
+      outEntries.push({name:e.name,method:8,crc:crc32(newUncompressed),compSize:newCompressed.length,uncompSize:newUncompressed.length,data:newCompressed});
+    }
+    return writeZip(outEntries);
+  }
+  function lastDayOfMonth(mm,yyyy) { return new Date(yyyy,mm,0).getDate(); }
+  async function cvnkGenerate() {
+    if(typeof CompressionStream==='undefined'||typeof DecompressionStream==='undefined') throw Error('Trình duyệt này không hỗ trợ tạo công văn (cần Chrome/Edge/Firefox bản mới). Excel vẫn xuất bình thường.');
+    if(!lastRun) throw Error('Chưa có dữ liệu - bấm "Xuất Excel NKTC" trước.');
+    const keepFlags=CVNK_LETTER_KEYS.map(key => !!(lastRun.groups[key] && lastRun.groups[key].length>0));
+    if(!keepFlags.some(Boolean)) throw Error('Không có vùng nào (trong 9 vùng của mẫu công văn) có dữ liệu tháng này.');
+    const mm=parseInt(lastRun.month,10), yyyy=parseInt(lastRun.year,10);
+    const fromDate=`01/${String(mm).padStart(2,'0')}/${yyyy}`, toDate=`${String(lastDayOfMonth(mm,yyyy)).padStart(2,'0')}/${String(mm).padStart(2,'0')}/${yyyy}`;
+    const docMonth=String(lastRun.tbMonth).padStart(2,'0'), docYear=String(lastRun.tbYear);
+    const templateBytes=base64ToBytes(CVNK_TEMPLATE_B64);
+    const out=await buildCvnkDocx(templateBytes,{keepFlags,docMonth,docYear,fromDate,toDate});
+    const url=URL.createObjectURL(new Blob([out],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}));
+    const a=document.createElement('a'); a.href=url; a.download=`Gui thue T${docMonth}_${docYear}.docx`; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    show('ok',`Đã tạo công văn: ${keepFlags.filter(Boolean).length}/${keepFlags.length} vùng có dữ liệu.`);
+  }
+  let lastRun = null;
+  async function run() { const input=$('source').files[0]; if(!input) throw Error('Chọn file XLSX nguồn trước.'); if(!window.ExcelJS) throw Error('Không tải được thư viện Excel trong file HTML.'); const regions=parseRegions($('regions').value); show('info','Đang đọc file nguồn...'); const sourceWb=new ExcelJS.Workbook(); await sourceWb.xlsx.load(await input.arrayBuffer()); const rows=extractRows(sourceWb.worksheets[0]); const groups=Object.fromEntries(regions.map(r=>[r.name,[]])); const unmatched=[]; rows.forEach(row=>{const name=chooseRegion(row.A,regions); (name?groups[name]:unmatched).push(row);}); lastRun={groups,month:$('month').value,year:$('year').value,tbMonth:$('tbMonth').value,tbYear:$('tbYear').value}; show('info',`Đang tạo ${regions.length} sheet từ ${rows.length.toLocaleString('vi-VN')} dòng...`); const out=new ExcelJS.Workbook(); out.creator='NKTC - HTML offline'; const summary=out.addWorksheet('summary'); const counts=[]; regions.forEach(region=>{const count=buildRegionSheet(out,region.name,groups[region.name]);counts.push({name:region.name,terms:region.terms,...count});}); counts.push({name:'unmatched',terms:null,...buildUnmatched(out,unmatched)}); buildSummary(summary,rows.length,counts); const data=await out.xlsx.writeBuffer(); const url=URL.createObjectURL(new Blob([data],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})); const a=document.createElement('a'); a.href=url; a.download=($('outName').value.trim()||'NKTC.xlsx').replace(/\.xlsx$/i,'')+'.xlsx'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); const done=`Đã xuất ${a.download}: ${rows.length.toLocaleString('vi-VN')} dòng, ${regions.length} vùng, chưa khớp ${unmatched.length}.`; if(unparseableAmounts)show('error',`${done} CẢNH BÁO: ${unparseableAmounts} dòng có Trị giá không đọc được, đã ghi 0.00 - kiểm tra lại file nguồn.`);else show('ok',done); }
   $('run').addEventListener('click',async()=>{const b=$('run');try{b.disabled=true;await run();}catch(e){console.error(e);show('error',e.message||String(e));}finally{b.disabled=false;}});
+  $('cvnk').addEventListener('click',async()=>{const b=$('cvnk');try{b.disabled=true;await cvnkGenerate();}catch(e){console.error(e);show('error',e.message||String(e));}finally{b.disabled=false;}});
   $('resetRegions').onclick=()=>{if(confirm('Khôi phục cấu hình 9 vùng mặc định? Các chỉnh sửa chưa tải TXT sẽ mất.')) $('regions').value=defaultRegions;};
   $('downloadRegions').onclick=()=>{const url=URL.createObjectURL(new Blob([$('regions').value],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='regions.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
   $('uploadRegions').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const raw=await f.text();parseRegions(raw);$('regions').value=raw;show('ok','Đã nạp cấu hình vùng.');}catch(err){show('error',err.message||String(err));}e.target.value='';};
