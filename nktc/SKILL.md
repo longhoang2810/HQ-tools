@@ -180,6 +180,15 @@ chỉ muốn tạo lại công văn với dữ liệu cũ.
 - Mẫu gốc có placeholder ở `assets/CVNK_Gui_thue_template.docx` (`{{DOC_MONTH}}`,
   `{{DOC_YEAR}}`, `{{FROM_DATE}}`, `{{TO_DATE}}`), vendor tương tự exceljs — sửa
   mẫu này rồi build lại, không sửa tay `NKTC-xu-ly-excel.html`.
+- **Ba đường kẻ ngang thể thức (dưới tên cơ quan, dưới tiêu ngữ, dưới trích yếu)
+  là `w:pBdr` bottom của một đoạn rỗng cỡ chữ 1pt đặt ngay sau dòng chữ**, không
+  phải shape. Bản mẫu cũ vẽ chúng bằng 36 `straightConnector1` neo toạ độ tuyệt
+  đối (`positionH relativeFrom="column"`) — đổi khổ giấy/lề/bề rộng bảng là lệch
+  ngay, đã bỏ hết. Nếu sửa lại bề rộng cột header thì phải chỉnh `w:ind` của ba
+  đoạn kẻ đó cho khớp, nếu không đường kẻ sẽ không còn cân giữa dòng chữ.
+- **Bảng header chia cứng 4100/5255 twip, `tblCellMar` = 0.** Quốc hiệu 12pt đậm
+  rộng 5006tw; để lề trong ô mặc định (108tw/bên) hoặc thu ô phải xuống dưới
+  5222tw là "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM" xuống dòng.
 - Cắt/ghép docx bằng cắt chuỗi trực tiếp trên `word/document.xml` (không dùng
   serializer XML tổng quát, giống lý do cvnk tránh serializer để không bị Word
   báo "unreadable content"), nén/giải nén bằng `CompressionStream`/
@@ -187,13 +196,13 @@ chỉ muốn tạo lại công văn với dữ liệu cũ.
   viện zip/docx nào. Cần Chrome/Edge/Firefox bản mới; nếu trình duyệt không hỗ
   trợ, nút báo lỗi rõ ràng, Excel vẫn xuất bình thường.
 - **Mỗi thư cắt từ `<w:tbl>` header tới `<w:tbl>` footer của chính nó, KHÔNG lấy
-  phần trước header.** Giữa 2 thư trong mẫu gốc có sẵn 6-7 đoạn `<w:p>` rỗng —
-  tác giả cũ chèn tay để đẩy thư sau sang trang mới khi in liên tục. Các đoạn
-  này không có `<w:spacing>` riêng nên ăn theo mặc định lỏng của tài liệu
-  (~29pt/đoạn), cộng dồn thành ~3in khoảng trắng đầu trang khi ghép với ngắt
-  trang thật (`<w:br w:type="page"/>`) do code tự chèn. Phát hiện bằng cách mở
-  file thật trong Microsoft Word (bật formatting marks) — kiểm zip/XML/
-  python-docx không lộ ra vì các đoạn rỗng đó vẫn hợp lệ về mặt cấu trúc.
+  phần trước header.** Vùng giữa 2 thư trong mẫu không bao giờ được đọc.
+  Mẫu cũ nhét 6-7 đoạn `<w:p>` rỗng vào đó (tác giả chèn tay để đẩy thư sau sang
+  trang mới khi in liên tục); các đoạn này không có `<w:spacing>` riêng nên ăn
+  theo `docDefaults`, cộng dồn thành ~3in khoảng trắng đầu trang khi ghép với
+  ngắt trang thật do code tự chèn — và co lại mất tác dụng ngay khi siết
+  `docDefaults`. **Nay đã thay bằng đúng 1 `<w:br w:type="page"/>` mỗi chỗ nối**
+  (8 cái), nên mở mẫu trực tiếp cũng ra 1 trang/thư. Đừng nhét lại đoạn rỗng.
 - **Thứ tự 9 lá thư trong mẫu KHÁC thứ tự trong `regions.txt`**: mẫu là Hà Nội,
   Hải Phòng, Phú Thọ, Hưng Yên, Bắc Ninh, Thanh Hóa, Tuyên Quang, Quảng Trị, Ninh
   Bình (Hà Nội đứng trước Hải Phòng); `regions.txt` là hp, Hn, PT... (Hải Phòng
