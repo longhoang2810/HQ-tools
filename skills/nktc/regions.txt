@@ -1,0 +1,17 @@
+# NKTC default region configuration — 9 sheet vận hành hiện tại.
+# One active line: sheet_name<TAB>address keyword | address keyword
+# - Lines beginning with # and blank lines are ignored.
+# - Address matching ignores case and Vietnamese accents.
+# - sheet_name is the Excel sheet name and --separate-files filename stem.
+# - Full 34 tỉnh/thành backup: regions-34-backup.txt. Copy its content here
+#   only when nghiệp vụ cần mở rộng vùng xuất sheet.
+
+hp	Hai Phong | TP Hai Phong | Thanh pho Hai Phong | Hai Duong | Tinh Hai Duong
+Hn	Ha Noi | TP Ha Noi | Thanh pho Ha Noi
+PT	Phu Tho | Tinh Phu Tho | Vinh Phuc | Tinh Vinh Phuc
+HY	Hung Yen | Tinh Hung Yen
+BN	Bac Ninh | Tinh Bac Ninh | Bac Giang | Tinh Bac Giang
+TH	Thanh Hoa | Tinh Thanh Hoa
+TQ	Tuyen Quang | Tinh Tuyen Quang
+QT	Quang Tri | Tinh Quang Tri
+NB	Nam Dinh | Tinh Nam Dinh | Ninh Binh | Tinh Ninh Binh
