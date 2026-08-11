@@ -118,7 +118,7 @@ const match = template.match(/<script>\s*(\(\(\) => \{[\s\S]*?\}\)\(\);)\s*<\/sc
 if (!match) throw new Error('Could not extract inline NKTC application JS');
 const app = match[1].replace(
   /\}\)\(\);\s*$/,
-  "globalThis.__NKTC_TEST__={num,extractRows,chooseRegion,buildRegionSheet,run,getUnparseableAmounts:()=>unparseableAmounts};})();"
+  "globalThis.__NKTC_TEST__={num,extractRows,chooseRegion,buildRegionSheet,run,sourceColumns,getUnparseableAmounts:()=>unparseableAmounts,getBlankAmounts:()=>blankAmounts,getHeaderFallback:()=>headerFallback};})();"
 );
 vm.runInThisContext(app, {filename: request.template});
 const api = global.__NKTC_TEST__;
@@ -130,7 +130,17 @@ const api = global.__NKTC_TEST__;
   }
   if (request.action === 'amounts_with_count') {
     const values = request.values.map(value => api.num(value));
-    process.stdout.write(JSON.stringify({values, unparseableAmounts: api.getUnparseableAmounts()}));
+    process.stdout.write(JSON.stringify({values, unparseableAmounts: api.getUnparseableAmounts(), blankAmounts: api.getBlankAmounts()}));
+    return;
+  }
+  if (request.action === 'columns') {
+    const source = new ExcelJS.Workbook();
+    await source.xlsx.load(fs.readFileSync(request.source));
+    api.extractRows(source.worksheets[0]);
+    process.stdout.write(JSON.stringify({
+      cols: api.sourceColumns(source.worksheets[0]),
+      headerFallback: api.getHeaderFallback(),
+    }));
     return;
   }
   if (request.action === 'status') {
@@ -172,10 +182,10 @@ def source_row(name, code, amount=100, declaration=100000001, address="Ha Noi"):
     ]
 
 
-def write_source(path, rows, code_format=None):
+def write_source(path, rows, code_format=None, headers=None):
     wb = Workbook()
     ws = wb.active
-    ws.append(HEADERS)
+    ws.append(HEADERS if headers is None else headers)
     for row in rows:
         ws.append(row)
     if code_format:
@@ -285,6 +295,71 @@ def run_js(temp_dir, request):
     return json.loads(result.stdout)
 
 
+class HeaderDetectionParityTest(unittest.TestCase):
+    """Nhận diện cột phải ALL-OR-NOTHING ở CẢ HAI bản.
+
+    Ca hỏng thật: file xuất tháng chèn thêm một cột (mọi cột dịch phải) VÀ cột địa
+    chỉ bị đổi tên. Bản cũ trộn hai kiểu — Ten_DN_XNK dò được ra cột 10, còn
+    Ma_dia_chi không dò được nên giữ vị trí cố định cũ cũng là 10 -> ô địa chỉ đọc
+    TÊN DOANH NGHIỆP, im lặng, cả bảng chia tỉnh sai. Đây đúng là thứ mà bước nhận
+    diện header sinh ra để chặn.
+    """
+
+    SHIFTED = ["NEW", *HEADERS]
+    RENAMED = ["NEW", *(h if h != "Ma_dia_chi_DN_XNK" else "Dia_chi_DN_XNK" for h in HEADERS)]
+
+    def _ws(self, headers):
+        wb = Workbook()
+        ws = wb.active
+        ws.append(headers)
+        return ws
+
+    def test_python_partial_headers_fall_back_wholesale_and_warn(self):
+        from nktc_process import SRC, detect_src
+        stats = {}
+        src = detect_src(self._ws(self.RENAMED), 1, stats)
+        self.assertNotEqual(src["Ten_DN_XNK"], src["Ma_dia_chi"],
+                            "cột tên DN và cột địa chỉ trỏ cùng một chỗ")
+        self.assertEqual(src, SRC, "dò được một phần thì phải về TRỌN layout cũ")
+        self.assertIn("header_fallback", stats, "phải cảnh báo, không im lặng")
+        # Cảnh báo phải GỌI TÊN cột bị thiếu, không chỉ nói "có gì đó sai".
+        self.assertIn("ma_dia_chi_dn_xnk", stats["header_fallback"])
+
+    def test_python_full_headers_still_detected(self):
+        from nktc_process import detect_src
+        stats = {}
+        src = detect_src(self._ws(self.SHIFTED), 1, stats)
+        self.assertEqual(src["Ma_dia_chi"], self.SHIFTED.index("Ma_dia_chi_DN_XNK") + 1)
+        self.assertNotIn("header_fallback", stats)
+
+    def test_python_no_headers_uses_legacy_without_warning(self):
+        from nktc_process import SRC, detect_src
+        stats = {}
+        self.assertEqual(detect_src(self._ws(["x"] * 16), 1, stats), SRC)
+        self.assertNotIn("header_fallback", stats)
+
+    @unittest.skipUnless(NODE, "node is required for browser-JS parity tests")
+    def test_javascript_partial_headers_fall_back_wholesale_and_warn(self):
+        from nktc_process import SRC
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source.xlsx"
+            write_source(source, [source_row("Co", "1")], headers=self.RENAMED)
+            got = run_js(tmp, {"action": "columns", "source": str(source)})
+        self.assertNotEqual(got["cols"]["Ten_DN_XNK"], got["cols"]["Ma_dia_chi"])
+        self.assertEqual(got["cols"], {k: SRC[k] for k in got["cols"]},
+                         "JS dò được một phần thì cũng phải về TRỌN layout cũ")
+        self.assertTrue(got["headerFallback"], "JS phải cảnh báo, không im lặng")
+
+    @unittest.skipUnless(NODE, "node is required for browser-JS parity tests")
+    def test_javascript_full_headers_still_detected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source.xlsx"
+            write_source(source, [source_row("Co", "1")], headers=self.SHIFTED)
+            got = run_js(tmp, {"action": "columns", "source": str(source)})
+        self.assertEqual(got["cols"]["Ma_dia_chi"], self.SHIFTED.index("Ma_dia_chi_DN_XNK") + 1)
+        self.assertFalse(got["headerFallback"])
+
+
 class AmountParsingParityTest(unittest.TestCase):
     def test_python_amount_behaviour_table(self):
         for value, expected in AMOUNT_CASES:
@@ -296,6 +371,34 @@ class AmountParsingParityTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             actual = run_js(tmp, {"action": "amounts", "values": [v for v, _ in AMOUNT_CASES]})
         self.assertEqual(actual, [expected for _, expected in AMOUNT_CASES])
+
+    def test_python_counts_blank_amounts_separately_from_unparseable(self):
+        # Ô trống KHÔNG gộp vào "không đọc được": file nguồn hỏng và DN không khai
+        # là hai chuyện khác nhau, tuy cùng ghi 0.00. Đếm riêng, báo riêng.
+        values = [0, "", None, "   ", *UNPARSEABLE_VALUES]
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            source, output = tmp_path / "source.xlsx", tmp_path / "python.xlsx"
+            regions = tmp_path / "regions.txt"
+            write_source(
+                source,
+                [source_row(f"Company {i}", str(i), value, 100000000 + i)
+                 for i, value in enumerate(values, start=1)],
+            )
+            write_regions(regions)
+            result = run_python(source, output, regions)
+        self.assertIn(
+            "CẢNH BÁO: 3 dòng có Trị giá ĐỂ TRỐNG, đã ghi 0.00 - kiểm tra lại file nguồn.",
+            result.stdout,
+        )
+
+    @unittest.skipUnless(NODE, "node is required for browser-JS parity tests")
+    def test_javascript_blank_amount_count_matches_python(self):
+        values = [0, "", None, "   ", *UNPARSEABLE_VALUES]
+        with tempfile.TemporaryDirectory() as tmp:
+            actual = run_js(tmp, {"action": "amounts_with_count", "values": values})
+        self.assertEqual(actual["blankAmounts"], 3)
+        self.assertEqual(actual["unparseableAmounts"], len(UNPARSEABLE_VALUES))
 
     def test_python_warning_counts_only_nonblank_unparseable_amounts(self):
         values = [0, "", None, "   ", *UNPARSEABLE_VALUES]
@@ -374,7 +477,7 @@ class AmountParsingParityTest(unittest.TestCase):
                 tmp,
                 {"action": "amounts_with_count", "values": [True]},
             )
-        self.assertEqual(actual, {"values": [0.0], "unparseableAmounts": 1})
+        self.assertEqual(actual, {"values": [0.0], "unparseableAmounts": 1, "blankAmounts": 0})
 
 
 class WorkbookParityTest(unittest.TestCase):

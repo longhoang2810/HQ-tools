@@ -28,8 +28,13 @@ The source file is a wide export where the meaningful columns historically sat
 at fixed positions A, B, H, I, J, K, P. The script now first tries to detect the
 source columns from the header row (`So_to_khai`, `Ma_LH`, `Ma_DN_XNK`,
 `Ten_DN_XNK`, `Ma_dia_chi_DN_XNK`, `So_quan_ly_cua_noi_bo_doanh_nghiep`,
-`Tong_tri_gia_tinh_thue`) and falls back to the legacy fixed positions only when
-headers are missing. This prevents shifted monthly exports from silently using
+`Tong_tri_gia_tinh_thue`). Detection is **all-or-nothing**: if only SOME of the
+seven headers are recognised it does NOT mix detected positions with legacy ones
+(that mix is what silently made the address column read the company-name column) —
+it falls back to the legacy layout wholesale and prints a warning naming the
+missing headers. When NO recognised header is present at all it uses the legacy
+fixed positions with **no** warning — that is the normal path for older exports,
+not an error. This prevents shifted monthly exports from silently using
 the company-name column as the address column.
 
 ## When to Use
@@ -114,7 +119,9 @@ Each file uses the same layout and formatting:
 - Output columns: `A=STT | B=Tên DN XNK | C=Mã DN XNK | D=Số tờ khai |
   E=Tờ khai XK | F=Trị giá tính thuế (USD) | G=Thuế NK | H=Ghi chú`.
 - E = source K with first 8 chars stripped; G = 0 everywhere; H (`Ghi chú`) has the region/file title (`hp`, `Hn`, etc.) on the first data row only and is blank on the remaining rows.
-- Group rows with same B+C (Tên DN + Mã DN): **merge cells in A, B, C**;
+- Group rows with the same **Mã DN (C)** — not name+code; two rows sharing a code
+  are one company even if the names differ, and blank codes never merge. **Merge
+  cells in A, B, C**;
   keep each row's own D and E. STT is numbered per company group. (Because
   E21 and G13 declarations for the same company group together, a company can
   span several D/E rows under one merged STT.)
@@ -286,7 +293,9 @@ fix is header-based column detection, not adding more `thanh hoa` spellings.
    with `--step1-out` and inspect the row count.
 3. **Stripping fewer/more than 8 chars on col E.** The spec is exactly 8 — if
    the internal management number prefix length changes, update `strip8`.
-4. **Grouping key.** Rows group by B+C (name AND code). Two branches with the
+4. **Grouping key.** Rows group by **Mã DN (C) alone**, not name+code (see
+   `bucket_rows_by_code`; locked by `test_same_code_nonadjacent_names_form_one_merged_company`).
+   Two branches with the
    same name but different Mã DN stay separate — that's intended. E21 and G13
    declarations for the same B+C group under one STT, so a company may show
    several D/E rows.

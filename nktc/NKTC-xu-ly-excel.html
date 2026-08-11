@@ -40,7 +40,7 @@ summary { cursor:pointer; font-weight:700; color:var(--blue); } .note { font-siz
 <label>Năm thông báo<input id="tbYear" inputmode="numeric" maxlength="4"></label>
 <label>Tên file kết quả<input id="outName" value="NKTC.xlsx"></label>
 </div>
-<p class="note">Lọc Ma_LH: E21, G13. Script tự nhận diện tên cột chuẩn; nếu không có header chuẩn, dùng layout cũ A/B/H/I/J/K/P.</p>
+<p class="note">Lọc Ma_LH: E21, G13. Script tự nhận diện tên cột chuẩn. Không có header chuẩn nào thì dùng layout cũ A/B/H/I/J/K/P (bình thường, không cảnh báo). Nhận diện được MỘT PHẦN thì KHÔNG trộn hai kiểu — cũng về TRỌN layout cũ và BÁO CẢNH BÁO kèm tên cột thiếu.</p>
 </section>
 <section>
 <h2>2. Danh sách tỉnh/thành và từ khóa địa chỉ</h2>
@@ -134,6 +134,11 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   $('month').value = String(prev.getMonth()+1).padStart(2,'0'); $('year').value = today.getFullYear();
   $('tbMonth').value = String(today.getMonth()+1).padStart(2,'0'); $('tbYear').value = today.getFullYear();
   let unparseableAmounts = 0;
+  // O TRONG dem RIENG, khong gop vao unparseable: "doc khong ra" la file nguon
+  // hong, "de trong" la DN khong khai — deu ghi 0.00 nen deu phai noi, nhung gop
+  // mot so thi mat phan biet. Doi xung voi stats["blank_amounts"] ben Python.
+  let blankAmounts = 0;
+  let headerFallback = '';
   const show = (kind, text) => { const el=$('status'); el.className=kind; el.textContent=text; };
   const deaccent = v => String(v ?? '').replace(/đ/g,'d').replace(/Đ/g,'D').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   const text = v => v == null ? '' : String(v).trim();
@@ -143,7 +148,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   const num = v => {
     if (typeof v === 'boolean') { unparseableAmounts++; return 0; }
     if (typeof v === 'number') return v;
-    let s=String(v ?? '').trim(); if(!s) return 0;
+    let s=String(v ?? '').trim(); if(!s) { blankAmounts++; return 0; }
     if(s.includes('.')&&s.includes(',')) {
       if(s.lastIndexOf(',')>s.lastIndexOf('.')) s=s.replace(/\./g,'').replace(/,/g,'.');
       else s=s.replace(/,/g,'');
@@ -191,13 +196,28 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     }
     return best<0 || winners.length!==1 ? null : winners[0];
   }
+  // ALL-OR-NOTHING, doi xung voi detect_src() trong nktc_process.py: nhan dien
+  // duoc MOT PHAN header thi KHONG tron vi tri do duoc voi vi tri co dinh cu.
+  // Tron chinh la ca hong ma buoc nhan dien sinh ra de chan: file xuat thang chen
+  // them mot cot, cot dia chi lai bi doi ten nen roi ve J co dinh, trong khi
+  // Ten_DN_XNK do duoc cung ra J -> o dia chi doc TEN DOANH NGHIEP, im lang.
   function sourceColumns(ws) {
     const out={So_to_khai:1,Ma_LH:2,Ma_DN_XNK:8,Ten_DN_XNK:9,Ma_dia_chi:10,So_quan_ly:11,Tong_tri_gia:16};
     const map={so_to_khai:'So_to_khai',ma_lh:'Ma_LH',ma_dn_xnk:'Ma_DN_XNK',ten_dn_xnk:'Ten_DN_XNK',ma_dia_chi_dn_xnk:'Ma_dia_chi',so_quan_ly_cua_noi_bo_doanh_nghiep:'So_quan_ly',tong_tri_gia_tinh_thue:'Tong_tri_gia'};
-    ws.getRow(1).eachCell((cell,col)=>{ const key=map[header(cellValue(cell))]; if(key) out[key]=col; }); return out;
+    const found={}, missing=[];
+    ws.getRow(1).eachCell((cell,col)=>{ const key=map[header(cellValue(cell))]; if(key) found[key]=col; });
+    for(const k of Object.keys(map)) if(!(map[k] in found)) missing.push(k);
+    const n=Object.keys(found).length, total=Object.keys(map).length;
+    if(n===0) return out;                       // khong co header chuan nao -> layout cu
+    if(n<total) {                               // do duoc mot phan -> ve TRON layout cu
+      headerFallback=`CẢNH BÁO: chỉ nhận diện được ${n}/${total} cột theo header, thiếu: ${missing.join(', ')}. KHÔNG trộn hai kiểu - dùng trọn layout cũ A/B/H/I/J/K/P. Nếu file nguồn đã đổi cột, sửa lại tên header cho khớp rồi chạy lại, đừng dùng kết quả này.`;
+      return out;
+    }
+    return Object.assign(out, found);
   }
   function extractRows(ws) {
-    const c=sourceColumns(ws), rows=[]; unparseableAmounts=0;
+    unparseableAmounts=0; blankAmounts=0; headerFallback='';  // reset TRUOC sourceColumns, no la cho dat headerFallback
+    const c=sourceColumns(ws), rows=[];
     for(let r=2;r<=ws.rowCount;r++) { const row=ws.getRow(r); const type=text(cellValue(row.getCell(c.Ma_LH))).toUpperCase(); if(type!=='E21'&&type!=='G13') continue; const e=strip8(cellValue(row.getCell(c.So_quan_ly))); if(!e) continue; rows.push({A:cellValue(row.getCell(c.Ma_dia_chi)),B:cellValue(row.getCell(c.Ten_DN_XNK)),C:cellToText(row.getCell(c.Ma_DN_XNK)),D:cellValue(row.getCell(c.So_to_khai)),E:e,F:num(cellValue(row.getCell(c.Tong_tri_gia)))}); }
     return rows.sort((a,b)=>nameCompare(a.B,b.B));
   }
@@ -325,7 +345,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     show('ok',`Đã tạo công văn: ${keepFlags.filter(Boolean).length}/${keepFlags.length} vùng có dữ liệu.`);
   }
   let lastRun = null;
-  async function run() { const input=$('source').files[0]; if(!input) throw Error('Chọn file XLSX nguồn trước.'); if(!window.ExcelJS) throw Error('Không tải được thư viện Excel trong file HTML.'); const regions=parseRegions($('regions').value); show('info','Đang đọc file nguồn...'); const sourceWb=new ExcelJS.Workbook(); await sourceWb.xlsx.load(await input.arrayBuffer()); const rows=extractRows(sourceWb.worksheets[0]); const groups=Object.fromEntries(regions.map(r=>[r.name,[]])); const unmatched=[]; rows.forEach(row=>{const name=chooseRegion(row.A,regions); (name?groups[name]:unmatched).push(row);}); lastRun={groups,month:$('month').value,year:$('year').value,tbMonth:$('tbMonth').value,tbYear:$('tbYear').value}; show('info',`Đang tạo ${regions.length} sheet từ ${rows.length.toLocaleString('vi-VN')} dòng...`); const out=new ExcelJS.Workbook(); out.creator='NKTC - HTML offline'; const summary=out.addWorksheet('summary'); const counts=[]; regions.forEach(region=>{const count=buildRegionSheet(out,region.name,groups[region.name]);counts.push({name:region.name,terms:region.terms,...count});}); counts.push({name:'unmatched',terms:null,...buildUnmatched(out,unmatched)}); buildSummary(summary,rows.length,counts); const data=await out.xlsx.writeBuffer(); const url=URL.createObjectURL(new Blob([data],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})); const a=document.createElement('a'); a.href=url; a.download=($('outName').value.trim()||'NKTC.xlsx').replace(/\.xlsx$/i,'')+'.xlsx'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); const done=`Đã xuất ${a.download}: ${rows.length.toLocaleString('vi-VN')} dòng, ${regions.length} vùng, chưa khớp ${unmatched.length}.`; if(unparseableAmounts)show('error',`${done} CẢNH BÁO: ${unparseableAmounts} dòng có Trị giá không đọc được, đã ghi 0.00 - kiểm tra lại file nguồn.`);else show('ok',done); }
+  async function run() { const input=$('source').files[0]; if(!input) throw Error('Chọn file XLSX nguồn trước.'); if(!window.ExcelJS) throw Error('Không tải được thư viện Excel trong file HTML.'); const regions=parseRegions($('regions').value); show('info','Đang đọc file nguồn...'); const sourceWb=new ExcelJS.Workbook(); await sourceWb.xlsx.load(await input.arrayBuffer()); const rows=extractRows(sourceWb.worksheets[0]); const groups=Object.fromEntries(regions.map(r=>[r.name,[]])); const unmatched=[]; rows.forEach(row=>{const name=chooseRegion(row.A,regions); (name?groups[name]:unmatched).push(row);}); lastRun={groups,month:$('month').value,year:$('year').value,tbMonth:$('tbMonth').value,tbYear:$('tbYear').value}; show('info',`Đang tạo ${regions.length} sheet từ ${rows.length.toLocaleString('vi-VN')} dòng...`); const out=new ExcelJS.Workbook(); out.creator='NKTC - HTML offline'; const summary=out.addWorksheet('summary'); const counts=[]; regions.forEach(region=>{const count=buildRegionSheet(out,region.name,groups[region.name]);counts.push({name:region.name,terms:region.terms,...count});}); counts.push({name:'unmatched',terms:null,...buildUnmatched(out,unmatched)}); buildSummary(summary,rows.length,counts); const data=await out.xlsx.writeBuffer(); const url=URL.createObjectURL(new Blob([data],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})); const a=document.createElement('a'); a.href=url; a.download=($('outName').value.trim()||'NKTC.xlsx').replace(/\.xlsx$/i,'')+'.xlsx'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); const done=`Đã xuất ${a.download}: ${rows.length.toLocaleString('vi-VN')} dòng, ${regions.length} vùng, chưa khớp ${unmatched.length}.`; const warns=[]; if(headerFallback)warns.push(headerFallback); if(unparseableAmounts)warns.push(`CẢNH BÁO: ${unparseableAmounts} dòng có Trị giá không đọc được, đã ghi 0.00 - kiểm tra lại file nguồn.`); if(blankAmounts)warns.push(`CẢNH BÁO: ${blankAmounts} dòng có Trị giá ĐỂ TRỐNG, đã ghi 0.00 - kiểm tra lại file nguồn.`); if(warns.length)show('error',`${done} ${warns.join(' ')}`);else show('ok',done); }
   $('run').addEventListener('click',async()=>{const b=$('run');try{b.disabled=true;await run();}catch(e){console.error(e);show('error',e.message||String(e));}finally{b.disabled=false;}});
   $('cvnk').addEventListener('click',async()=>{const b=$('cvnk');try{b.disabled=true;await cvnkGenerate();}catch(e){console.error(e);show('error',e.message||String(e));}finally{b.disabled=false;}});
   $('resetRegions').onclick=()=>{if(confirm('Khôi phục cấu hình 9 vùng mặc định? Các chỉnh sửa chưa tải TXT sẽ mất.')) $('regions').value=defaultRegions;};

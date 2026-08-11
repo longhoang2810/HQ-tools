@@ -18,7 +18,8 @@ Step 2 - Build one workbook with one sheet per region plus unmatched (10 sheets 
   region, keep Step-1 rows whose column A (address) matches that region's
   terms. Matching is accent-insensitive: both accented ("Hà Nội") and
   unaccented ("Ha Noi") forms match, and "đ" is treated as "d". Each sheet/file
-  is grouped by company (B+C) with merged STT/name/code cells, formatted header,
+  is grouped by company CODE (column C; blank codes stay separate) with merged
+  STT/name/code cells, formatted header,
   borders and Times New Roman throughout. Regions (sheet/file <- address
   contains):
         hp <- hai ph, hai phong
@@ -61,7 +62,6 @@ SRC = {
     "Ma_dia_chi":  10,   # J
     "So_quan_ly":  11,   # K
     "Tong_tri_gia":16,   # P
-    "Exclude_L":    12,   # L - skip rows where rightmost 8 chars are blank
 }
 
 OUT_HEADERS = [
@@ -114,22 +114,31 @@ def load_regions(path):
 
 
 def strip8(v):
-    """Drop the first 8 characters of a value (returns '' if shorter)."""
+    """Drop the first 8 characters of a value (returns '' if shorter).
+
+    NOTE: step1 drops a row when this returns '' — i.e. when So_quan_ly (col K)
+    is at most 8 characters. That IS the row-exclusion rule; there is no separate
+    column-L check (an "Exclude_L" entry and a right8() helper used to be declared
+    here describing a "rightmost 8 chars blank" rule that no code ever ran — both
+    removed, they only misled).
+    """
     if v is None:
         return ""
     s = str(v)
     return s[8:] if len(s) > 8 else ""
 
 
-def right8(v):
-    """Return the rightmost 8 characters after trimming whitespace."""
-    if v is None:
-        return ""
-    return str(v).strip()[-8:]
+def _bump(stats, key):
+    if stats is not None:
+        stats[key] = stats.get(key, 0) + 1
 
 
 def to_float(v, stats=None):
+    # Ô TRỐNG đếm riêng, KHÔNG gộp vào unparseable: hai chuyện khác nhau với cán
+    # bộ — "đọc không ra" là file nguồn hỏng, "để trống" là DN không khai. Cả hai
+    # đều ghi 0.00 nên phải nói ra, nhưng gộp một số thì mất mất phân biệt đó.
     if v is None:
+        _bump(stats, "blank_amounts")
         return 0.0
     if isinstance(v, bool):
         if stats is not None:
@@ -139,6 +148,7 @@ def to_float(v, stats=None):
         return float(v)
     s = str(v).strip()
     if not s:
+        _bump(stats, "blank_amounts")
         return 0.0
     if "." in s and "," in s:
         if s.rfind(",") > s.rfind("."):
@@ -217,8 +227,15 @@ def norm_header(v):
     return re.sub(r"\s+", "_", deaccent(v).strip())
 
 
-def detect_src(ws, header_rows):
-    """Use header names when present; fall back to legacy fixed positions."""
+def detect_src(ws, header_rows, stats=None):
+    """Use header names when present; fall back to legacy fixed positions.
+
+    ALL-OR-NOTHING. Nhận diện được MỘT PHẦN header thì KHÔNG trộn vị trí dò được
+    với vị trí cố định cũ — trộn chính là ca hỏng mà detect_src sinh ra để chặn:
+    file xuất tháng chèn thêm một cột, cột địa chỉ lại bị đổi tên nên rơi về J cố
+    định, trong khi Ten_DN_XNK dò được cũng ra J -> ô địa chỉ đọc TÊN DOANH
+    NGHIỆP, im lặng, cả bảng chia tỉnh sai. Thà quay về TRỌN layout cũ và kêu to.
+    """
     detected = SRC.copy()
     header_row = max(1, header_rows)
     headers = {norm_header(ws.cell(header_row, c).value): c
@@ -233,15 +250,28 @@ def detect_src(ws, header_rows):
         "So_quan_ly": "so_quan_ly_cua_noi_bo_doanh_nghiep",
         "Tong_tri_gia": "tong_tri_gia_tinh_thue",
     }
-    for key, header in wanted.items():
-        if header in headers:
-            detected[key] = headers[header]
+    found = {key: headers[h] for key, h in wanted.items() if h in headers}
+    if not found:
+        return detected  # không có header chuẩn nào -> layout cũ, như trước nay
+    missing = [h for h in wanted.values() if h not in headers]
+    if missing:
+        msg = (
+            f"CẢNH BÁO: chỉ nhận diện được {len(found)}/{len(wanted)} cột theo "
+            f"header, thiếu: {', '.join(missing)}. KHÔNG trộn hai kiểu — dùng "
+            f"trọn layout cũ A/B/H/I/J/K/P. Nếu file nguồn đã đổi cột, sửa lại "
+            f"tên header cho khớp rồi chạy lại, đừng dùng kết quả này."
+        )
+        print(msg, file=sys.stderr)
+        if stats is not None:
+            stats["header_fallback"] = msg
+        return detected
+    detected.update(found)
     return detected
 
 
 def step1(ws, ma_lh, header_rows, stats=None):
     """Filter by Ma_LH (one or more codes), remap columns, sort A->Z by name."""
-    src = detect_src(ws, header_rows)
+    src = detect_src(ws, header_rows, stats)
     rows = []
     if isinstance(ma_lh, str):
         targets = {x.strip().upper() for x in ma_lh.split(",") if x.strip()}
@@ -575,6 +605,12 @@ def main():
         print(
             f"CẢNH BÁO: {unparseable_amounts} dòng có Trị giá không đọc được, "
             "đã ghi 0.00 - kiểm tra lại file nguồn."
+        )
+    blank_amounts = stats.get("blank_amounts", 0)
+    if blank_amounts:
+        print(
+            f"CẢNH BÁO: {blank_amounts} dòng có Trị giá ĐỂ TRỐNG, đã ghi 0.00 - "
+            "kiểm tra lại file nguồn."
         )
 
     if args.step1_out:
