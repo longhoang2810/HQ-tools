@@ -268,14 +268,38 @@ summary { cursor:pointer; font-weight:700; color:var(--blue); } .note { font-siz
     return writeZip(outEntries);
   }
   function lastDayOfMonth(mm,yyyy) { return new Date(yyyy,mm,0).getDate(); }
+  // Chan tai cho: cong van gui co quan thue, khong duoc phep ra "ngay 01/NaN/2024"
+  // hay "thang 13". parseInt() nuot rac ("2x" -> 2, "ab" -> NaN) nen phai kiem
+  // NGUYEN chuoi truoc. Tu choi han, khong doan bua — sai ngay tren cong van da gui
+  // thi khong rut lai duoc.
+  // ponytail: chan tai day nen moi thu vao word/document.xml deu la SO nguyen ->
+  // khong can escape XML. Neu sau nay nhet chuoi tu do (ten DN, so thong bao) vao
+  // mau thi PHAI escape & < > o fillPlaceholders, khong dua vao rang buoc nay nua.
+  function requireInt(id,label,min,max) {
+    const raw=String($(id).value ?? '').trim();
+    if(!/^\d+$/.test(raw)) throw Error(`Ô "${label}" phải là số, hiện là "${raw}". Sửa lại rồi bấm Tạo công văn.`);
+    const n=parseInt(raw,10);
+    if(n<min||n>max) throw Error(`Ô "${label}" phải trong khoảng ${min}-${max}, hiện là ${n}.`);
+    return n;
+  }
   async function cvnkGenerate() {
     if(typeof CompressionStream==='undefined'||typeof DecompressionStream==='undefined') throw Error('Trình duyệt này không hỗ trợ tạo công văn (cần Chrome/Edge/Firefox bản mới). Excel vẫn xuất bình thường.');
+    // Mo nham .template.html (ban chua build) thi CVNK_TEMPLATE_B64 van la chuoi
+    // danh dau, atob() nem "Invalid character" — loi vo nghia voi nguoi dung. Bang
+    // base64 khong co dau gach duoi nen tien to '__' la dau hieu chac chan.
+    if(CVNK_TEMPLATE_B64.startsWith('__')) throw Error('Đang mở bản mẫu chưa build (.template.html) nên chưa có mẫu công văn nhúng sẵn. Mở file NKTC-xu-ly-excel.html, hoặc chạy: python3 scripts/build_html.py');
     if(!lastRun) throw Error('Chưa có dữ liệu - bấm "Xuất Excel NKTC" trước.');
     const keepFlags=CVNK_LETTER_KEYS.map(key => !!(lastRun.groups[key] && lastRun.groups[key].length>0));
     if(!keepFlags.some(Boolean)) throw Error('Không có vùng nào (trong 9 vùng của mẫu công văn) có dữ liệu tháng này.');
-    const mm=parseInt(lastRun.month,10), yyyy=parseInt(lastRun.year,10);
+    // Doc THANG/NAM SONG tu form ngay luc bam, KHONG lay snapshot cua lan Xuat
+    // Excel: reportTitle() ben Excel doc song, nen neu day lay snapshot thi can bo
+    // sua thang sau khi Xuat Excel se ra cong van mot dang, file Excel mot neo —
+    // im lang, khong ai bao. Chi `groups` con lay tu lastRun vi no that su can
+    // mot lan chay Excel moi co.
+    const mm=requireInt('month','Tháng báo cáo',1,12), yyyy=requireInt('year','Năm báo cáo',1900,2999);
+    const tbm=requireInt('tbMonth','Tháng thông báo',1,12), tby=requireInt('tbYear','Năm thông báo',1900,2999);
     const fromDate=`01/${String(mm).padStart(2,'0')}/${yyyy}`, toDate=`${String(lastDayOfMonth(mm,yyyy)).padStart(2,'0')}/${String(mm).padStart(2,'0')}/${yyyy}`;
-    const docMonth=String(lastRun.tbMonth).padStart(2,'0'), docYear=String(lastRun.tbYear);
+    const docMonth=String(tbm).padStart(2,'0'), docYear=String(tby);
     const templateBytes=base64ToBytes(CVNK_TEMPLATE_B64);
     const out=await buildCvnkDocx(templateBytes,{keepFlags,docMonth,docYear,fromDate,toDate});
     const url=URL.createObjectURL(new Blob([out],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}));
@@ -284,7 +308,7 @@ summary { cursor:pointer; font-weight:700; color:var(--blue); } .note { font-siz
     show('ok',`Đã tạo công văn: ${keepFlags.filter(Boolean).length}/${keepFlags.length} vùng có dữ liệu.`);
   }
   let lastRun = null;
-  async function run() { const input=$('source').files[0]; if(!input) throw Error('Chọn file XLSX nguồn trước.'); if(!window.ExcelJS) throw Error('Không tải được thư viện Excel trong file HTML.'); const regions=parseRegions($('regions').value); show('info','Đang đọc file nguồn...'); const sourceWb=new ExcelJS.Workbook(); await sourceWb.xlsx.load(await input.arrayBuffer()); const rows=extractRows(sourceWb.worksheets[0]); const groups=Object.fromEntries(regions.map(r=>[r.name,[]])); const unmatched=[]; rows.forEach(row=>{const name=chooseRegion(row.A,regions); (name?groups[name]:unmatched).push(row);}); lastRun={groups,month:$('month').value,year:$('year').value,tbMonth:$('tbMonth').value,tbYear:$('tbYear').value}; show('info',`Đang tạo ${regions.length} sheet từ ${rows.length.toLocaleString('vi-VN')} dòng...`); const out=new ExcelJS.Workbook(); out.creator='NKTC - HTML offline'; const summary=out.addWorksheet('summary'); const counts=[]; regions.forEach(region=>{const count=buildRegionSheet(out,region.name,groups[region.name]);counts.push({name:region.name,terms:region.terms,...count});}); counts.push({name:'unmatched',terms:null,...buildUnmatched(out,unmatched)}); buildSummary(summary,rows.length,counts); const data=await out.xlsx.writeBuffer(); const url=URL.createObjectURL(new Blob([data],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})); const a=document.createElement('a'); a.href=url; a.download=($('outName').value.trim()||'NKTC.xlsx').replace(/\.xlsx$/i,'')+'.xlsx'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); const done=`Đã xuất ${a.download}: ${rows.length.toLocaleString('vi-VN')} dòng, ${regions.length} vùng, chưa khớp ${unmatched.length}.`; const warns=[]; if(headerFallback)warns.push(headerFallback); if(unparseableAmounts)warns.push(`CẢNH BÁO: ${unparseableAmounts} dòng có Trị giá không đọc được, đã ghi 0.00 - kiểm tra lại file nguồn.`); if(blankAmounts)warns.push(`CẢNH BÁO: ${blankAmounts} dòng có Trị giá ĐỂ TRỐNG, đã ghi 0.00 - kiểm tra lại file nguồn.`); if(warns.length)show('error',`${done} ${warns.join(' ')}`);else show('ok',done); }
+  async function run() { const input=$('source').files[0]; if(!input) throw Error('Chọn file XLSX nguồn trước.'); if(!window.ExcelJS) throw Error('Không tải được thư viện Excel trong file HTML.'); const regions=parseRegions($('regions').value); show('info','Đang đọc file nguồn...'); const sourceWb=new ExcelJS.Workbook(); await sourceWb.xlsx.load(await input.arrayBuffer()); const rows=extractRows(sourceWb.worksheets[0]); const groups=Object.fromEntries(regions.map(r=>[r.name,[]])); const unmatched=[]; rows.forEach(row=>{const name=chooseRegion(row.A,regions); (name?groups[name]:unmatched).push(row);}); lastRun={groups}; /* CHI groups: thang/nam doc song luc tao cong van, snapshot lai la nguon lech im lang. Comment PHAI la block — run() nam tren MOT dong, dung // la nuot sach phan con lai. */ show('info',`Đang tạo ${regions.length} sheet từ ${rows.length.toLocaleString('vi-VN')} dòng...`); const out=new ExcelJS.Workbook(); out.creator='NKTC - HTML offline'; const summary=out.addWorksheet('summary'); const counts=[]; regions.forEach(region=>{const count=buildRegionSheet(out,region.name,groups[region.name]);counts.push({name:region.name,terms:region.terms,...count});}); counts.push({name:'unmatched',terms:null,...buildUnmatched(out,unmatched)}); buildSummary(summary,rows.length,counts); const data=await out.xlsx.writeBuffer(); const url=URL.createObjectURL(new Blob([data],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})); const a=document.createElement('a'); a.href=url; a.download=($('outName').value.trim()||'NKTC.xlsx').replace(/\.xlsx$/i,'')+'.xlsx'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); const done=`Đã xuất ${a.download}: ${rows.length.toLocaleString('vi-VN')} dòng, ${regions.length} vùng, chưa khớp ${unmatched.length}.`; const warns=[]; if(headerFallback)warns.push(headerFallback); if(unparseableAmounts)warns.push(`CẢNH BÁO: ${unparseableAmounts} dòng có Trị giá không đọc được, đã ghi 0.00 - kiểm tra lại file nguồn.`); if(blankAmounts)warns.push(`CẢNH BÁO: ${blankAmounts} dòng có Trị giá ĐỂ TRỐNG, đã ghi 0.00 - kiểm tra lại file nguồn.`); if(warns.length)show('error',`${done} ${warns.join(' ')}`);else show('ok',done); }
   $('run').addEventListener('click',async()=>{const b=$('run');try{b.disabled=true;await run();}catch(e){console.error(e);show('error',e.message||String(e));}finally{b.disabled=false;}});
   $('cvnk').addEventListener('click',async()=>{const b=$('cvnk');try{b.disabled=true;await cvnkGenerate();}catch(e){console.error(e);show('error',e.message||String(e));}finally{b.disabled=false;}});
   $('resetRegions').onclick=()=>{if(confirm('Khôi phục cấu hình 9 vùng mặc định? Các chỉnh sửa chưa tải TXT sẽ mất.')) $('regions').value=defaultRegions;};

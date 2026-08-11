@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import base64
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -98,7 +99,8 @@ global.document = {
 };
 global.window = global;
 global.confirm = () => true;
-global.URL = {createObjectURL: () => 'blob:test', revokeObjectURL() {}};
+global.__lastBlob = null;
+global.URL = {createObjectURL: b => { global.__lastBlob = b; return 'blob:test'; }, revokeObjectURL() {}};
 global.setTimeout = fn => { fn(); return 0; };
 
 element('regions').value = request.regions || 'Test\tHa Noi';
@@ -118,7 +120,7 @@ const match = template.match(/<script>\s*(\(\(\) => \{[\s\S]*?\}\)\(\);)\s*<\/sc
 if (!match) throw new Error('Could not extract inline NKTC application JS');
 const app = match[1].replace(
   /\}\)\(\);\s*$/,
-  "globalThis.__NKTC_TEST__={num,extractRows,chooseRegion,buildRegionSheet,run,sourceColumns,getUnparseableAmounts:()=>unparseableAmounts,getBlankAmounts:()=>blankAmounts,getHeaderFallback:()=>headerFallback};})();"
+  "globalThis.__NKTC_TEST__={num,extractRows,chooseRegion,buildRegionSheet,run,sourceColumns,cvnkGenerate,setLastRun:g=>{lastRun={groups:g};},getUnparseableAmounts:()=>unparseableAmounts,getBlankAmounts:()=>blankAmounts,getHeaderFallback:()=>headerFallback};})();"
 );
 vm.runInThisContext(app, {filename: request.template});
 const api = global.__NKTC_TEST__;
@@ -141,6 +143,16 @@ const api = global.__NKTC_TEST__;
       cols: api.sourceColumns(source.worksheets[0]),
       headerFallback: api.getHeaderFallback(),
     }));
+    return;
+  }
+  if (request.action === 'cvnk') {
+    for (const k of ['month','year','tbMonth','tbYear']) element(k).value = request[k];
+    api.setLastRun(request.groups);
+    try { await api.cvnkGenerate(); }
+    catch (e) { process.stdout.write(JSON.stringify({error: e.message})); return; }
+    const buf = Buffer.from(await global.__lastBlob.arrayBuffer());
+    fs.writeFileSync(request.output, buf);
+    process.stdout.write(JSON.stringify({ok: true, bytes: buf.length}));
     return;
   }
   if (request.action === 'status') {
@@ -293,6 +305,81 @@ def run_js(temp_dir, request):
         text=True,
     )
     return json.loads(result.stdout)
+
+
+@unittest.skipUnless(NODE, "node is required for browser-JS tests")
+class CvnkLetterTest(unittest.TestCase):
+    """Công văn (.docx) gửi cơ quan thuế — trước đây KHÔNG có test nào.
+
+    Hai thứ được chốt ở đây: ngày tháng lấy SỐNG từ form (snapshot của lần Xuất
+    Excel từng làm công văn một đằng, file Excel một nẻo, im lặng), và ô tháng/năm
+    hỏng thì TỪ CHỐI hẳn thay vì đẻ ra "ngày 01/NaN/2024" trên văn bản đã gửi đi.
+    """
+
+    GROUPS = {"Hn": [{"A": "Ha Noi"}]}
+
+    def _gen(self, tmp, **over):
+        # Chạy trên BUNDLE, không phải template: mẫu .docx chỉ được nhúng base64
+        # lúc build, trong template nó vẫn là chuỗi __CVNK_TEMPLATE_B64__ nên atob
+        # ném "Invalid character". Bundle cũng đúng là thứ cán bộ mở.
+        req = {"action": "cvnk", "template": str(BUNDLE),
+               "month": "09", "year": "2026", "tbMonth": "10",
+               "tbYear": "2026", "groups": self.GROUPS,
+               "output": str(Path(tmp) / "cv.docx")}
+        req.update(over)
+        return run_js(tmp, req), Path(tmp) / "cv.docx"
+
+    def _doc_text(self, path):
+        with zipfile.ZipFile(path) as z:
+            xml = z.read("word/document.xml").decode("utf-8")
+        return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", xml))
+
+    def test_dates_come_from_the_form_at_click_time(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            got, out = self._gen(tmp)
+            self.assertTrue(got.get("ok"), got)
+            text = self._doc_text(out)
+        self.assertIn("01/09/2026", text)          # FROM_DATE
+        self.assertIn("30/09/2026", text)          # TO_DATE — tháng 9 có 30 ngày
+        self.assertIn("tháng 10 năm 2026", text)   # DOC_MONTH/DOC_YEAR
+        self.assertNotIn("{{", text)               # không còn placeholder nào
+
+    def test_generated_docx_is_a_valid_readable_zip(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            got, out = self._gen(tmp)
+            self.assertTrue(got.get("ok"), got)
+            with zipfile.ZipFile(out) as z:
+                self.assertIsNone(z.testzip(), "CRC hỏng trong .docx sinh ra")
+                ET.fromstring(z.read("word/document.xml"))
+
+    def test_unbuilt_template_says_so_instead_of_atob_invalid_character(self):
+        # Mở .template.html (chưa build) thì CVNK_TEMPLATE_B64 vẫn là chuỗi đánh
+        # dấu -> atob ném "Invalid character", người dùng không hiểu gì. Phải nói
+        # thẳng là chưa build và chỉ ra file/lệnh đúng.
+        with tempfile.TemporaryDirectory() as tmp:
+            got, out = self._gen(tmp, template=str(TEMPLATE))
+        self.assertIn("error", got)
+        self.assertNotIn("Invalid character", got["error"])
+        self.assertIn("build_html.py", got["error"])
+        self.assertFalse(out.exists())
+
+    def test_bad_month_or_year_is_refused_not_guessed(self):
+        # parseInt() nuốt rác: "ab"->NaN, "2x"->2, "13" lọt. Cả ba phải bị CHẶN.
+        cases = [
+            ({"month": "ab"}, "Tháng báo cáo"),
+            ({"month": "13"}, "Tháng báo cáo"),
+            ({"month": "2x"}, "Tháng báo cáo"),
+            ({"month": ""}, "Tháng báo cáo"),
+            ({"tbMonth": "&"}, "Tháng thông báo"),
+            ({"year": "20x6"}, "Năm báo cáo"),
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            for over, field in cases:
+                with self.subTest(**over):
+                    got, out = self._gen(tmp, **over)
+                    self.assertIn("error", got, f"{over} phải bị từ chối")
+                    self.assertIn(field, got["error"])
+                    self.assertFalse(out.exists(), "không được ghi file khi input hỏng")
 
 
 class HeaderDetectionParityTest(unittest.TestCase):
