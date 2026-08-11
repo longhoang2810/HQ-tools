@@ -766,9 +766,12 @@ function heaviestStatus(casList, emptyStatus) {
 }
 
 // Chat lay ra de tra moi dong, theo truc dang chon.
+// TRA VE DU, KHONG cat o day: verdict cua dong phai tinh tren TOAN BO chat khop
+// duoc. Cat TRUOC khi tinh thi mot dong 16 ma CAS ma chat Phu luc III nam thu 16
+// se ra XANH va chat do khong hien luon — dung cai ma trang nay sinh ra de chan.
+// LINE_MATCH_CAP chi con la gioi han HIEN THI, xem cho dung no ben runLines.
 function lineMatches(entry, byName) {
-  const all = byName ? searchByName(entry.mota) : entry.cas;
-  return all.slice(0, LINE_MATCH_CAP);
+  return byName ? searchByName(entry.mota) : entry.cas;
 }
 
 // Mode CAS: ten chat doc duoc trong dong nhung KHONG kem ma CAS -> co vang, KHONG
@@ -798,8 +801,9 @@ function runLines(text, resultsEl, mode) {
   }
   const emptyStatus = byName ? NO_NAME_STATUS : NO_CAS_STATUS;
   const per = lines.map(l => {
-    const matches = lineMatches(l, byName);
-    return { l, matches, status: heaviestStatus(matches, emptyStatus) };
+    // status tinh tren `all` (toan bo), `matches` chi de HIEN THI.
+    const all = lineMatches(l, byName);
+    return { l, all, matches: all.slice(0, LINE_MATCH_CAP), status: heaviestStatus(all, emptyStatus) };
   });
   const counts = { warn: 0, unknown: 0, ok: 0 };
   per.forEach(p => counts[p.status.badge]++);
@@ -839,7 +843,7 @@ function runLines(text, resultsEl, mode) {
     ${stats}
     <div class="table-wrap"><table><thead><tr><th>STT</th><th>Mô tả</th><th class="match">${matchHead}</th><th>Kết luận</th></tr></thead><tbody>`;
   per.forEach((p, i) => {
-    const { l, matches, status } = p;
+    const { l, all, matches, status } = p;
     const short = l.mota.length > 90 ? l.mota.slice(0, 90) + "…" : l.mota;
     // Moi ma CAS mot <tr> rieng, STT/Mo ta rowspan -> ma va ket luan cua no LUON
     // cung hang ngang. Truoc day noi bang <br>: khoi ghi chu (excl-note/fam-hint)
@@ -857,6 +861,11 @@ function runLines(text, resultsEl, mode) {
         })
       : [{ match: "—", concl: `<span class="pill ${status.badge}">${esc(status.text)}</span>` }];
     // Ghi chu cap dong hang (khong thuoc ma nao) -> gan o hang cuoi cua nhom.
+    // Cat bot chat de hien -> phai NOI RA. Khong dung foldNote: day la canh bao
+    // bang dang thieu chat, gap lai la quay ve dung kieu im lang vua sua.
+    if (all.length > matches.length) {
+      sub[sub.length - 1].concl += `<div class="fam-hint">⚠ Dòng khớp ${all.length} chất, bảng chỉ hiện ${matches.length}. Kết luận của dòng ĐÃ tính cả ${all.length - matches.length} chất không hiện — tách dòng hàng ra để xem đủ.</div>`;
+    }
     sub[sub.length - 1].concl += byName ? lineCasHint(l) : lineNameHint(l);
     sub.forEach((s, j) => {
       table += `<tr class="${status.badge}">`

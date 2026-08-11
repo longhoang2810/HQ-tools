@@ -332,6 +332,41 @@ def test_gach_en_em_html_khop_core():
     )
 
 
+def test_cap_hien_thi_khong_duoc_ha_verdict_ca_dong():
+    # Dòng hàng liệt kê nhiều chất (mô tả "Hỗn hợp gồm ...") có thể vượt
+    # LINE_MATCH_CAP. Nếu cắt TRƯỚC khi tính verdict thì chất Phụ lục III nằm sau
+    # vị trí cắt biến mất VÀ cả dòng ra XANH — đúng ca nguy hiểm nhất trang này
+    # sinh ra để chặn. Cap chỉ được phép là giới hạn HIỂN THỊ.
+    got = _run_js("""
+      const els = {};
+      globalThis.__el = id => els[id] || (els[id] = { value: "", innerHTML: "", placeholder: "",
+        classList: { toggle() {} }, setAttribute() {}, addEventListener() {}, focus() {}, scrollIntoView() {} });
+      document.getElementById = globalThis.__el;
+      const green = [...new Set(DATA.filter(r => casStatus(r.cas).badge === "ok").map(r => r.cas))]
+        .slice(0, LINE_MATCH_CAP);
+      const controlled = DATA.find(r => casStatus(r.cas).badge === "warn").cas;
+      const mota = "Hỗn hợp gồm " + green.join(", ") + ", " + controlled;
+      // Đếm từ extractCas THÔ, không qua lineMatches: nếu lấy qua lineMatches thì
+      // bản hỏng (cắt sẵn) làm chính tiền đề của test biến mất, test đỏ vì lý do
+      // vô nghĩa thay vì vì verdict sai.
+      const raw = parseLines(mota)[0].cas;
+      __el("input").value = mota; MODE = "cas"; run();
+      const html = __el("results").innerHTML;
+      console.log(JSON.stringify({
+        n: raw.length, cap: LINE_MATCH_CAP,
+        controlled_last: raw[raw.length - 1] === controlled,
+        row_warn: /<tr class="warn"/.test(html),
+        bao_cat_bot: html.includes("bảng chỉ hiện"),
+      }));
+    """)
+    if got is None:
+        return
+    assert got["n"] > got["cap"], "ca thử phải vượt cap mới có ý nghĩa"
+    assert got["controlled_last"], "chất PL III phải nằm sau vị trí cắt"
+    assert got["row_warn"], "cắt bớt để hiển thị đã hạ verdict cả dòng xuống xanh"
+    assert got["bao_cat_bot"], "cắt bớt chất mà không báo — lại giấu im lặng"
+
+
 def test_che_do_cas_khong_de_ten_lot_vao_bang():
     # Ranh giới giữa hai chế độ. Dò tên có thể khớp thừa ("natri clorua" -> chất
     # "Natri"), nên chế độ CAS phải KHÔNG BAO GIỜ đưa chất khớp theo tên vào bảng
