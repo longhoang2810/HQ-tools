@@ -109,7 +109,8 @@ python3 lookup.py 107-13-1
 
 `data/nd24_chemicals.json` được sinh từ `extract.py`, parse trực tiếp
 Phụ lục I–IV của **bản chính thức NĐ 24/2026/NĐ-CP** (`nd24.md`, các Phụ lục ở
-dạng bảng markdown, 1360 dòng CAS). Để tạo lại:
+dạng bảng markdown, 1359 dòng CAS sau khi vá 2 mã sai định dạng — xem cảnh báo
+dưới đây). Để tạo lại:
 
 ```
 python3 extract.py            # đọc nd24.md -> data/nd24_chemicals.json
@@ -124,6 +125,16 @@ python3 extract.py            # đọc nd24.md -> data/nd24_chemicals.json
 mã CAS duy nhất **1257 = 1257**, không sót cũng không thừa mã nào; cấu trúc khối
 `Ngoại trừ` của Phụ lục III cũng khớp. Hai mục ghi cụt (45 "Biphenyl (PCB)", 81
 "Polychlorinated") là **văn bản gốc ghi vậy**, không phải lỗi chuyển đổi.
+
+> ⚠ **Giới hạn của chính phép đối chiếu đó** (phát hiện 11/8/2026): nó đếm mã CAS
+> ở CẢ HAI VẾ bằng chính `CAS_RE`. Mã nào nghị định gõ SAI ĐỊNH DẠNG thì regex
+> không nhận, nên nó biến mất khỏi cả hai vế và hai con số vẫn khớp hoàn hảo —
+> "1257 = 1257" không hề chứng minh là không sót. Thực tế sót **2 mã**:
+> `2524-04-01` (đúng `2524-04-1`, PL II mục 268) và `50-00-00` (đúng `50-00-0`,
+> PL IV mục 112). Nay vá bằng `SOURCE_TYPO` trong `extract.py`, và mọi ô mã CAS
+> còn token hình dạng CAS mà `CAS_RE` từ chối sẽ làm `extract.py` **dừng hẳn**
+> thay vì nuốt im lặng (`test_ma_cas_sai_dinh_dang_trong_nghi_dinh_khong_bi_nuot_im_lang`).
+> Bài học chung: **đừng kiểm dữ liệu đã trích bằng chính regex đã trích nó.**
 
 Phần **yêu cầu nhập khẩu / miễn trừ** (`IMPORT_RULES`, `EXEMPTIONS` trong
 `core.py`) là bản tóm tắt từ **NĐ 26/2026/NĐ-CP** (ngưỡng miễn trừ cập nhật theo
@@ -197,7 +208,7 @@ trả lời "cần giấy gì". Đó là việc của cơ quan cấp phép, khô
      gợi ý có thể thuộc mục … — tự đối chiếu", kèm một chip riêng trong thống kê.
      Cần tầng này vì khối cảnh báo cuối trang không cứu được ca xanh: cán bộ đọc
      dòng xanh là xong, không cuộn xuống. Hiện bắt đúng 7 chất, không báo thừa chất
-     nào trên cả 1360 dòng.
+     nào trên cả 1359 dòng.
 
   Cờ là **heuristic theo tên, không phải hóa học** — trần của nó: sót chất mang tên
   không có tên nguyên tố (Calomel = Hg₂Cl₂), và không phân biệt Cr³⁺ với Cr⁶⁺ nếu

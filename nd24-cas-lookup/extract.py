@@ -46,6 +46,23 @@ ERRATA = {
     "7746-08-4": "7446-08-4",
 }
 
+# Lỗi đánh máy trong CHÍNH ô mã CAS của nghị định: token sai ĐỊNH DẠNG nên CAS_RE
+# không khớp nổi -> dòng biến mất khỏi dữ liệu mà không ai biết.
+# KHÁC ERRATA: ERRATA sửa mã ĐÃ khớp regex (sai check-digit nhưng đúng dạng), nên
+# vá bằng ERRATA ở đây là vô hiệu — regex có bao giờ trả về token này đâu mà sửa.
+# Phải thay TRƯỚC khi dò.
+#   NĐ ghi 2524-04-01 -> đúng 2524-04-1 (Dietyl thiophotphoryl clo, PL II mục 268)
+#   NĐ ghi 50-00-00   -> đúng 50-00-0   (Formaldehit, PL IV mục 112)
+SOURCE_TYPO = {
+    "2524-04-01": "2524-04-1",
+    "50-00-00": "50-00-0",
+}
+# Token HÌNH DẠNG mã CAS nhưng CAS_RE từ chối. Bản nghị định sau lại có lỗi đánh
+# máy kiểu khác thì phải DỪNG mà báo, không nuốt im lặng như hai ca trên — đây
+# đúng là kiểu lỗi mà mọi phép đếm "khớp 1257 = 1257" không thấy được, vì cả hai
+# vế đều đếm bằng chính CAS_RE.
+NEAR_CAS_RE = re.compile(r"\b\d{1,9}-\d{1,3}-\d{1,3}\b")
+
 CAT_I = "Phụ lục I – Hóa chất cơ bản thuộc lĩnh vực công nghiệp hóa chất trọng điểm"
 CAT_II = "Phụ lục II › Mục 1 – Chất sản xuất, kinh doanh có điều kiện"
 CAT_IV = "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất"
@@ -75,6 +92,36 @@ def split_row(line):
 
 def is_separator(cells):
     return all(set(c) <= set("-: ") and c for c in cells) if cells else False
+
+
+def cas_in_cell(cell):
+    """Mã CAS trong một ô, đã vá lỗi đánh máy định dạng của nguyên văn nghị định.
+
+    Mọi chỗ đọc ô mã CAS đều đi qua đây — hai nơi (khối 'Ngoại trừ' và dòng dữ
+    liệu) dùng chung một cửa thì không nơi nào sót phép vá lẫn phép canh.
+    """
+    # Vá theo TỪNG TOKEN TRỌN VẸN, không .replace() trên cả chuỗi: replace không
+    # neo biên nên ô "150-00-00" (lỗi kiểu KHÁC) sẽ bị cắt thành "150-00-0" —
+    # một mã CAS hợp lệ nhưng SAI. Bịa ra mã sai còn tệ hơn bỏ sót mã đúng.
+    cell = NEAR_CAS_RE.sub(lambda m: SOURCE_TYPO.get(m.group(0), m.group(0)), cell)
+    found = CAS_RE.findall(cell)
+    # So theo VỊ TRÍ, không theo chuỗi con: "123-45-6; 3-45-6" thì token hỏng
+    # "3-45-6" là chuỗi con của token hợp lệ "123-45-6" nên phép so chuỗi con
+    # tưởng nó đã được nhận -> chuông không kêu.
+    ok_spans = [m.span() for m in CAS_RE.finditer(cell)]
+    unknown = [
+        m.group(0)
+        for m in NEAR_CAS_RE.finditer(cell)
+        if not any(s <= m.start() and m.end() <= e for s, e in ok_spans)
+    ]
+    if unknown:
+        raise SystemExit(
+            f"nd24.md: ô mã CAS {cell!r} chứa token hình dạng CAS mà CAS_RE không "
+            f"nhận: {unknown}. Nếu là lỗi đánh máy của nghị định, thêm vào "
+            f"SOURCE_TYPO; nếu là mã hợp lệ dạng khác, nới CAS_RE. KHÔNG bỏ qua — "
+            f"bỏ qua là mất im lặng cả dòng hóa chất."
+        )
+    return found
 
 
 def _co_dau(s):
@@ -174,8 +221,9 @@ def parse():
             if EXEMPT_RE.search(" ".join(cells[1:3])):
                 exempt_of = last_stt
                 continue
-            if exempt_of and CAS_RE.search(cells[3] if len(cells) > 3 else ""):
-                for cas in CAS_RE.findall(cells[3]):
+            exempt_cas = cas_in_cell(cells[3]) if exempt_of and len(cells) > 3 else []
+            if exempt_cas:
+                for cas in exempt_cas:
                     excluded.append(
                         {
                             "cas": ERRATA.get(cas, cas),
@@ -189,7 +237,7 @@ def parse():
         # Dòng dữ liệu: STT(0) EN(1) VN(2) CAS(3) Công thức(4) [Ngưỡng(5)]
         if len(cells) < 4:
             continue
-        cas_list = CAS_RE.findall(cells[3])
+        cas_list = cas_in_cell(cells[3])
         if not cas_list:
             # Ô CAS ghi '---': mục là HỌ chất/nhóm chất, nghị định không cho một
             # mã CAS đơn. Chỉ giữ dòng có STT (mục thật, không phải dòng tiếp diễn

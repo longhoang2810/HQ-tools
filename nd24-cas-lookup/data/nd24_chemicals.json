@@ -2128,6 +2128,13 @@
   "category": "Phụ lục II › Mục 1 – Chất sản xuất, kinh doanh có điều kiện"
  },
  {
+  "cas": "2524-04-1",
+  "name_en": "Diethylthiophosphoryl chloride",
+  "name_vn": "Dietyl thiophotphoryl clo",
+  "annex": "II",
+  "category": "Phụ lục II › Mục 1 – Chất sản xuất, kinh doanh có điều kiện"
+ },
+ {
   "cas": "557-20-0",
   "name_en": "Diethylzinc",
   "name_vn": "Dietyl kẽm",
@@ -8534,6 +8541,14 @@
   "cas": "4301-50-2",
   "name_en": "Fluenetil",
   "name_vn": "Fluenetil (2-floetyl 4 -Biphenylaxetat)",
+  "annex": "IV",
+  "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất",
+  "threshold_kg": "5.000"
+ },
+ {
+  "cas": "50-00-0",
+  "name_en": "Formaldehyde (Conc. > 90%)",
+  "name_vn": "Formaldehit (Nồng độ ≥ 90%)",
   "annex": "IV",
   "category": "Phụ lục IV › Bảng A – Phải xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất",
   "threshold_kg": "5.000"

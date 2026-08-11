@@ -32,6 +32,14 @@ PL3_EXCLUDED = json.loads((Path(__file__).parent / "data" / "nd24_pl3_ngoai_tru.
 # sót CAS dính chữ có dấu mà trang HTML lại thấy. ASCII làm hai bên hành xử y hệt.
 CAS_RE = re.compile(r"(?<!\d)\d{2,7}-\d{2}-\d\b", re.ASCII)
 
+# Tờ khai copy từ Word/PDF hay biến gạch nối thành gạch en/em (– —), và DN hay gõ
+# thưa "CAS 103 - 79 - 7". Cả hai dạng trước đây KHÔNG khớp -> sót im lặng chất
+# Phụ lục III. KHÔNG nới CAS_RE (nới là khớp thừa ở mọi nơi khác); chỉ kéo về
+# dạng chuẩn TRƯỚC khi dò, và chỉ khi gạch nằm GIỮA HAI CHỮ SỐ — nên "Metanol -
+# dung môi" không bị dính lại. Trần đã biết: dãy số kiểu "lô 12 - 34 - 5" sẽ
+# thành "12-34-5" và ra "Không rõ" — sai về phía an toàn (vàng, không phải xanh).
+CAS_DASH_RE = re.compile(r"(?<=\d)\s*[-‐-―−]\s*(?=\d)")
+
 # ponytail: tóm tắt yêu cầu giấy tờ, không thay thế văn bản gốc — luôn đọc kèm
 # Điều được dẫn chiếu trước khi làm hồ sơ thật.
 #
@@ -326,7 +334,7 @@ def rows_for(cas):
 def extract_cas(text):
     """Trả về danh sách mã CAS duy nhất xuất hiện trong text, theo thứ tự gặp."""
     seen, out = set(), []
-    for m in CAS_RE.findall(text):
+    for m in CAS_RE.findall(CAS_DASH_RE.sub("-", text)):
         if m not in seen:
             seen.add(m)
             out.append(m)

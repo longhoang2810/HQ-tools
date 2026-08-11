@@ -53,6 +53,58 @@ def test_extract_cas_from_free_text():
     assert extract_cas(text) == ["67-56-1", "75-07-0", "103-79-7"]
 
 
+def test_ma_cas_sai_dinh_dang_trong_nghi_dinh_khong_bi_nuot_im_lang():
+    # NĐ 24 gõ sai ĐỊNH DẠNG 2 ô mã CAS ("2524-04-01", "50-00-00"). CAS_RE không
+    # khớp nổi -> trước đây cả dòng biến mất khỏi dữ liệu, im lặng. Không phép
+    # đếm nào bắt được vì cả hai vế đều đếm bằng chính CAS_RE.
+    assert annexes_for("2524-04-1") == {"II"}    # Dietyl thiophotphoryl clo
+    assert "IV" in annexes_for("50-00-0")        # Formaldehit, PL IV mục 112
+    # ...và ô CAS nào còn token hình dạng CAS mà CAS_RE từ chối thì extract.py
+    # phải DỪNG, không parse tiếp. Chốt cái chuông, không chỉ chốt hai ca đã biết.
+    import extract
+    # Chuông phải kêu — kể cả ba ca đã từng lọt qua bản vá đầu:
+    #  "150-00-00"        vá theo chuỗi (không neo biên) sẽ cắt thành "150-00-0",
+    #                     tức BỊA ra một mã hợp lệ nhưng sai — tệ hơn bỏ sót.
+    #  "12524-04-01"      cùng kiểu, với token còn lại.
+    #  "123-45-6; 3-45-6" token hỏng là chuỗi con của token hợp lệ -> phép so
+    #                     chuỗi con tưởng đã nhận rồi. Phải so theo VỊ TRÍ.
+    for cell in ("1234-5-678", "150-00-00", "12524-04-01", "123-45-6; 3-45-6"):
+        try:
+            extract.cas_in_cell(cell)
+        except SystemExit as e:
+            assert "SOURCE_TYPO" in str(e)
+        else:
+            raise AssertionError(f"ô CAS hỏng {cell!r} phải làm extract.py dừng")
+    # ...nhưng KHÔNG kêu oan trên ô bình thường và trên chính hai ca đã vá.
+    assert extract.cas_in_cell("2524-04-01") == ["2524-04-1"]
+    assert extract.cas_in_cell("50-00-00") == ["50-00-0"]
+    assert extract.cas_in_cell("78-93-3, 2524-04-01") == ["78-93-3", "2524-04-1"]
+
+
+def test_esc_js_escape_ca_dau_nhay_vi_dung_trong_attribute():
+    # esc() của JS dùng cho CẢ text node LẪN attribute (<td title="${esc(mota)}">).
+    # Mô tả DN dán vào có dấu " mà không escape thì đóng luôn attribute và gắn
+    # thêm thuộc tính vào thẻ <td> — đổi được chữ trên trang đang hiện kết luận.
+    html = Path(__file__).with_name("Tra-cuu-hoa-chat-ND24.html").read_text(encoding="utf-8")
+    body = re.search(r"function esc\(s\) \{(.+?)\n\}", html, re.S).group(1)
+    for ch, ent in (("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"),
+                    ('"', "&quot;"), ("'", "&#39;")):
+        assert ent in body, f"esc() không escape {ch!r} -> {ent}"
+
+
+def test_extract_cas_gach_en_em_va_gach_thua():
+    # Mô tả copy từ Word/PDF hay bị đổi gạch nối thành gạch en/em, hoặc gõ thưa.
+    # Trước đây cả hai dạng đều KHÔNG khớp -> sót im lặng chất Phụ lục III.
+    assert extract_cas("CAS 103 - 79 - 7") == ["103-79-7"]
+    assert extract_cas("CAS 103–79–7") == ["103-79-7"]       # en dash
+    assert extract_cas("CAS 103—79—7") == ["103-79-7"]       # em dash
+    assert extract_cas("CAS 103‑79‑7") == ["103-79-7"]  # non-breaking hyphen
+    # ...nhưng gạch KHÔNG nằm giữa hai chữ số thì không được dính lại.
+    assert extract_cas("Metanol - dung môi 67-56-1") == ["67-56-1"]
+    # Ngày tháng vẫn không được lọt (đuôi \b của CAS_RE vẫn giữ nguyên).
+    assert extract_cas("2026 - 07 - 28") == []
+
+
 def test_extract_cas_ascii_boundary_nhu_js():
     # \b Python mặc định là unicode: "ấ67-56-1" KHÔNG match vì "ấ" là word char,
     # trong khi \b của JS là ASCII nên match -> CLI sót CAS mà HTML thấy.
@@ -158,7 +210,7 @@ def test_html_khong_lech_khoi_core():
         assert text not in src, f"verdict '{key}' viết tay trong build_html.py, phải lấy từ core.VERDICT"
     # Kể cả TRÍCH DẪN verdict trong chữ tĩnh của trang cũng phải qua placeholder —
     # nếu không nó sẽ mốc lại y như lần "Cần Giấy phép" cũ nằm ở dòng trợ giúp.
-    assert "Cần Giấy phép" not in src, "chữ verdict viết tay trong build_html.py — dùng __VERDICT_PL3__"
+    assert "Cần Giấy phép" not in src, "chữ verdict viết tay trong build_html.py — lấy từ core.VERDICT qua VERDICT_JSON"
     assert "__VERDICT_JSON__" in src and "VERDICT.pl3" in src
     # Chi tiết "yêu cầu nhập khẩu" (detailFor + IMPORT_RULES/IMPORT_ANNEXES/ANNEX_ORDER
     # nhúng qua JS) đã bỏ khỏi kết quả — trang chỉ còn pill verdict. Chốt là đừng
@@ -260,6 +312,23 @@ def test_do_ten_hoa_chat_trong_mo_ta_khong_co_ma_cas():
     assert got["rong"] == [], f"bịa ra chất từ đoạn không có hóa chất: {got['rong']}"
     assert got["dau_cau"] == ["108-01-0"], (
         f"tên khai thiếu đuôi qualifier ra sai chất: {got['dau_cau']} (64-17-5 = Etanol)"
+    )
+
+
+def test_gach_en_em_html_khop_core():
+    # Chuẩn hóa gạch tồn tại ở CẢ HAI nơi (CAS_DASH_RE trong core.py và trong JS).
+    # Lệch một bên là CLI với trang HTML kết luận khác nhau về cùng một tờ khai —
+    # đúng cái lỗi mà repo này đã dính một lần với \b của CAS_RE.
+    cases = ["CAS 103 - 79 - 7", "CAS 103–79–7", "CAS 103—79—7",
+             "CAS 103‑79‑7", "Metanol - dung moi 67-56-1", "2026 - 07 - 28"]
+    got = _run_js(
+        "console.log(JSON.stringify(%s.map(c => extractCas(c))));" % json.dumps(cases)
+    )
+    if got is None:
+        return
+    assert got == [extract_cas(c) for c in cases], (
+        f"JS và Python chuẩn hóa gạch khác nhau: JS={got} "
+        f"PY={[extract_cas(c) for c in cases]}"
     )
 
 

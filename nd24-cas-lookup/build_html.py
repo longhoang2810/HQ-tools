@@ -507,6 +507,10 @@ const PL3_EXCLUDED_NOTE = __PL3_EXCLUDED_NOTE_JSON__;
 // Doi xung voi CAS_RE trong core.py — lookbehind thay \\b dau ma de bat "CAS78-93-3"
 // viet dinh lien. Lookbehind la ES2018, trang nay da dung matchAll (ES2020) roi.
 const CAS_RE = /(?<!\\d)\\d{2,7}-\\d{2}-\\d\\b/g;
+// Doi xung voi CAS_DASH_RE trong core.py — to khai copy tu Word/PDF hay co gach
+// en/em va khoang trang quanh gach ("CAS 103 - 79 - 7"). Chi noi khi gach nam
+// GIUA HAI CHU SO, khong noi CAS_RE.
+const CAS_DASH_RE = /(?<=\\d)\\s*[-\\u2010-\\u2015\\u2212]\\s*(?=\\d)/g;
 
 function rowsFor(cas) {
   return DATA.filter(r => r.cas === cas);
@@ -515,7 +519,7 @@ function rowsFor(cas) {
 // Doi xung voi extract_cas() trong core.py.
 function extractCas(text) {
   const seen = new Set(), out = [];
-  for (const m of text.matchAll(CAS_RE)) {
+  for (const m of text.replace(CAS_DASH_RE, "-").matchAll(CAS_RE)) {
     if (!seen.has(m[0])) { seen.add(m[0]); out.push(m[0]); }
   }
   return out;
@@ -646,8 +650,15 @@ function casStatus(cas) {
   return { badge: "ok", text: VERDICT.none };
 }
 
+// Escape ca dau nhay, khong chi & < >: esc() dung cho CA text node LAN attribute
+// (o bang ket qua co <td title="${esc(l.mota)}">, ma l.mota la mo ta DN nguoi
+// dung dan vao — thuong copy tu tai lieu ben thu ba). Thieu &quot; thi mot dau "
+// trong mo ta dong lai attribute title roi gan them thuoc tinh vao chinh the
+// <td> do; "<" da bi escape nen khong mo duoc the moi, nhung gan duoc handler
+// la du de doi CHU tren mot trang dang hien ket luan cap phep.
 function esc(s) {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
 // Doi xung voi pl3_family_hints() trong core.py — du lieu (PL3_NO_CAS,
@@ -1033,7 +1044,6 @@ out = (
     .replace("__PL3_HINT_PREFIX_JSON__", PL3_HINT_PREFIX_JSON)
     .replace("__PL3_EXCLUDED_JSON__", PL3_EXCLUDED_JSON)
     .replace("__PL3_EXCLUDED_NOTE_JSON__", PL3_EXCLUDED_NOTE_JSON)
-    .replace("__VERDICT_PL3__", core.VERDICT["pl3"])
 )
 Path(__file__).parent.joinpath("Tra-cuu-hoa-chat-ND24.html").write_text(out, encoding="utf-8")
 print("Tra-cuu-hoa-chat-ND24.html written —", len(out), "bytes")
