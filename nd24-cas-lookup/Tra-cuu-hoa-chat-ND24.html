@@ -1160,10 +1160,17 @@ function hintHtml(cas) {
   // Doi xung voi pl3_excluded() trong core.py.
   for (const e of PL3_EXCLUDED.filter(x => x.cas === cas)) {
     const stt = e.ngoai_tru_khoi.replace(/\.$/, "");
-    // Summary la NHAN thuan (so muc), khong dien giai lai noi dung phap ly ->
-    // khong the lech voi PL3_EXCLUDED_NOTE ben core.py.
-    out += foldNote("excl-note", `ⓘ Ghi chú "Ngoại trừ" — mục ${esc(stt)}`,
-      `<div class="fold-body">${esc(PL3_EXCLUDED_NOTE.replace("{stt}", stt))}</div>`);
+    // Summary phai TU NOI DUOC dieu quan trong (ma nay CO in trong bang PL III
+    // nhung nghi dinh LOAI TRU no), khong duoc la cai nhan tron kieu "Ghi chu
+    // Ngoai tru — muc 26": man hep gap san, doc cai nhan thi khong biet gi ca.
+    // Van KHONG go tay chu nao — cat ngay tu PL3_EXCLUDED_NOTE cua core.py o cau
+    // dau, nen hai noi khong the lech nhau (ly do cua ban cu van duoc giu).
+    const note = PL3_EXCLUDED_NOTE.replace("{stt}", stt);
+    const cut = note.indexOf(". ");
+    const head = cut < 0 ? note : note.slice(0, cut + 1);
+    const rest = cut < 0 ? "" : note.slice(cut + 2);
+    out += foldNote("excl-note", esc(head),
+      rest ? `<div class="fold-body">${esc(rest)}</div>` : "");
   }
   const hints = pl3FamilyHints(cas);
   if (hints.length) {

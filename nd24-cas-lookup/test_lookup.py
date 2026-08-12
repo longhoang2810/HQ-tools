@@ -332,6 +332,30 @@ def test_gach_en_em_html_khop_core():
     )
 
 
+def test_ghi_chu_ngoai_tru_summary_tu_noi_duoc_ly_do():
+    # Màn hẹp gấp sẵn <details>, nên <summary> phải TỰ nói được điều quan trọng
+    # (mã này CÓ in trong bảng PL III nhưng bị LOẠI TRỪ). Nhãn trơn kiểu
+    # 'Ghi chú "Ngoại trừ" — mục 26' thì cán bộ đọc xong vẫn không biết gì.
+    src = Path(__file__).with_name("build_html.py").read_text(encoding="utf-8")
+    assert 'Ghi chú "Ngoại trừ" — mục' not in src, "summary quay lại làm nhãn trơn"
+    got = _run_js("""
+      const h = hintHtml("108-01-0");
+      console.log(JSON.stringify({
+        summary: h.match(/<summary>([\\s\\S]*?)<\\/summary>/)[1],
+        body: (h.match(/<div class="fold-body">([\\s\\S]*?)<\\/div>/) || [,""])[1],
+      }));
+    """)
+    if got is None:
+        return
+    summary = got["summary"].replace("&quot;", '"')
+    # Chữ phải ĐẾN TỪ core.PL3_EXCLUDED_NOTE, không gõ tay lại trong build_html.py
+    # -> hai nơi không thể lệch nhau (đúng lý do của bản cũ, chỉ đổi chỗ cắt).
+    full = core.PL3_EXCLUDED_NOTE.format(stt="33")
+    assert summary == full.split(". ")[0] + ".", f"summary không khớp core: {summary}"
+    assert "LOẠI TRỪ" in summary, "summary vẫn chưa nói được lý do"
+    assert got["body"] and got["body"] in full, "phần còn lại phải nằm ở thân gấp"
+
+
 def test_cap_hien_thi_khong_duoc_ha_verdict_ca_dong():
     # Dòng hàng liệt kê nhiều chất (mô tả "Hỗn hợp gồm ...") có thể vượt
     # LINE_MATCH_CAP. Nếu cắt TRƯỚC khi tính verdict thì chất Phụ lục III nằm sau
