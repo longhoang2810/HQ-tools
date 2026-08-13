@@ -9,7 +9,7 @@ SCAD=${SCAD:-openscad}
 SRC=cop-eufy-s2-pro.scad
 mkdir -p stl
 
-for p in base lid cap handle pin; do
+for p in base lid cap pin; do
     echo "==> stl/$p.stl"
     "$SCAD" --export-format=binstl -D "part=\"$p\"" -o "stl/$p.stl" "$SRC" 2>&1 \
         | grep -E "Volumes|WARNING|ERROR" || true

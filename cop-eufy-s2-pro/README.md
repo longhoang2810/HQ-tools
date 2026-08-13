@@ -1,8 +1,7 @@
 # Cốp cứng đựng máy hút sữa eufy S2 Pro
 
-Vỏ cứng in 3D kiểu "quả trứng", mở gập hai nửa, có quai xách gập được — dựng theo mẫu
-cốp bán sẵn trên sàn TMĐT. Toàn bộ hình dạng viết bằng OpenSCAD nên **sửa số là ra cỡ khác**,
-không phải sửa mesh.
+Vỏ cứng in 3D kiểu "quả trứng", mở gập hai nửa — dựng theo mẫu cốp bán sẵn trên sàn TMĐT.
+Toàn bộ hình dạng viết bằng OpenSCAD nên **sửa số là ra cỡ khác**, không phải sửa mesh.
 
 | Đóng | Mở | Mặt cắt |
 |---|---|---|
@@ -18,7 +17,7 @@ theo cỡ chung của máy hút sữa không dây 2 cốc:
 
 > lòng cốp **165 × 140 mm**, sâu 82 mm (nửa dưới) + 45 mm (nửa trên) = **cao 130 mm**
 
-In cả bộ hết ~350 g nhựa và hơn 20 giờ. **Đo máy thật rồi sửa số trước khi in** — xem mục 3.
+In cả bộ hết ~330 g nhựa và hơn 20 giờ. **Đo máy thật rồi sửa số trước khi in** — xem mục 3.
 
 ---
 
@@ -26,14 +25,13 @@ In cả bộ hết ~350 g nhựa và hơn 20 giờ. **Đo máy thật rồi sử
 
 | Chi tiết | File STL | Kích thước bao (mm) | Nhựa | Hướng in |
 |---|---|---|---|---|
-| Nửa dưới | `stl/base.stl` | 188 × 161 × 106 | ~180 g | **Giữ nguyên** — đáy phẳng nằm trên bàn |
+| Nửa dưới | `stl/base.stl` | 188 × 145 × 106 | ~175 g | **Giữ nguyên** — đáy phẳng nằm trên bàn |
 | Nửa trên | `stl/lid.stl` | 185 × 145 × 53 | ~100 g | **Giữ nguyên** — úp miệng xuống bàn, bật brim |
 | Nắp trên | `stl/cap.stl` | 137 × 116 × 7 | ~52 g | **Lật ngược 180°** — mặt phẳng xuống bàn |
-| Quai xách | `stl/handle.stl` | 172 × 16 × 85 | ~26 g | **Xoay 90°** — đặt nằm phẳng xuống bàn |
 | Trục bản lề | `stl/pin.stl` | ø3 × 45 | ~1 g | Dựng đứng |
 
 Kích thước ngoài khi lắp xong: **170 × 145 × 135 mm** (chưa kể bản lề và chốt khoá nhô ra),
-tổng cộng chỗ chiếm **188 × 161 mm**. Cần bàn in tối thiểu **190 × 165 mm** — Ender 3, P1S,
+tổng cộng chỗ chiếm **188 × 145 mm**. Cần bàn in tối thiểu **190 × 150 mm** — Ender 3, P1S,
 A1 đều được; A1 mini (180 × 180) thì phải thu nhỏ.
 
 Không chi tiết nào cần support.
@@ -104,11 +102,7 @@ muốn có thì bật **Fuzzy skin** trong slicer.
 1. Lồng khấc bản lề nửa trên vào giữa 2 khấc nửa dưới, xỏ trục ø3 xuyên qua.
    Chặt quá thì khoan lại lỗ bằng mũi 3.2; lỏng quá thì nhỏ một giọt keo vào đầu trục.
 2. Đặt nắp trên vào miệng nửa trên (gờ định vị tự vào khớp), bắt 4 vít M3.
-3. Quai xách: banh nhẹ hai chân quai, cho 2 chốt ø3.2 vào 2 lỗ trên tai hông nửa dưới.
-4. Đóng nắp, lật dây chốt lên, ấn cho vấu chui qua lỗ.
-
-**Xách bằng quai thì tải đi thẳng vào nửa dưới** (chỗ chứa đồ) — nắp trên và 4 vít không
-chịu lực. Bản lề và chốt khoá chỉ giữ cho nửa trên không bật ra.
+3. Đóng nắp, lật dây chốt lên, ấn cho vấu chui qua lỗ.
 
 ## 6. Chỉnh khớp nếu chật/lỏng
 
@@ -137,7 +131,7 @@ Cần OpenSCAD ≥ 2021.01 (`apt install openscad` hoặc tải ở openscad.org
 
 `build.sh` in ra `Volumes: 2` cho mỗi chi tiết — nghĩa là chi tiết ra **một khối liền**.
 Nếu sửa thông số xong mà báo 3 trở lên là model đã bị rời mảnh (thường do vặn quá tay
-`in_len`/`in_wid` làm tai quai hoặc chân chốt hụt khỏi thành vỏ), đừng in, chỉnh lại.
+`in_len`/`in_wid` làm chân dây chốt hoặc nêm bản lề hụt khỏi thành vỏ), đừng in, chỉnh lại.
 
 ## 8. Điều đã biết trước
 

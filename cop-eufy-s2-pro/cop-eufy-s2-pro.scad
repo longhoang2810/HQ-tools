@@ -1,6 +1,6 @@
 // =====================================================================
 //  CỐP CỨNG ĐỰNG MÁY HÚT SỮA KHÔNG DÂY eufy S2 Pro
-//  Vỏ 2 nửa mở gập (clamshell) + nắp trên phẳng + quai xách gập
+//  Vỏ 2 nửa mở gập (clamshell) + nắp trên phẳng
 //
 //  Đơn vị: mm.  Cần OpenSCAD >= 2021.01
 //  Render 1 chi tiết:  openscad -D 'part="base"' -o base.stl cop-eufy-s2-pro.scad
@@ -12,7 +12,7 @@
 
 /* [Chi tiết cần render] */
 // all = lắp ráp | open = mở nắp | cut = bổ đôi xem thành
-part = "all";               // ["all","open","cut","base","lid","cap","handle","pin"]
+part = "all";               // ["all","open","cut","base","lid","cap","pin"]
 show_payload = false;       // hiện khối bao của máy hút sữa (chỉ để xem)
 
 /* ---------------------------------------------------------------
@@ -91,19 +91,6 @@ spig_t   = 2.2;
 cap_text = "";    // khắc chữ lên nắp, vd "eufy S2 Pro" (để "" là không khắc)
 cap_text_size = 11;
 
-/* ---------------------------------------------------------------
-   MỤC 8. QUAI XÁCH (gập được, gắn vào hông nửa dưới)
-   --------------------------------------------------------------- */
-bail_on   = true;
-bail_w    = 16;   // bề rộng quai
-bail_t    = 5;    // dày quai
-bail_rise = 18;   // đỉnh quai cao hơn mặt nắp bấy nhiêu
-lug_h     = 8;    // tai quai nhô ra khỏi hông
-lug_d     = 14;   // đường kính tai quai
-lug_z     = -8;   // cao độ tâm trục quai
-peg_d     = 3.2;  // chốt quai
-peg_l     = 5;
-
 // =====================================================================
 //                      TÍNH TOÁN — KHÔNG SỬA
 // =====================================================================
@@ -133,10 +120,6 @@ hg_z = hg_r;                 // trục bản lề nằm trên mặt chia, ống 
 z_mid  = z_seat - fl_t/2;
 sx_scr = (rX(z_mid,0) + rX(z_mid,fl_w))/2;   // vị trí 2 vít theo trục X
 sy_scr = (rY(z_mid,0) + rY(z_mid,fl_w))/2;   // vị trí 2 vít theo trục Y
-
-y_lug  = rY(lug_z) + wall + lug_h;           // mặt ngoài tai quai
-y_bail = y_lug + 0.6 + bail_t/2;             // tim chân quai
-b_bail = (z_cap + bail_rise) - lug_z;        // bán trục đứng của quai
 
 pay_z0 = z_floor_i + pay_gap;
 
@@ -243,24 +226,13 @@ module latch_nub()                          // vấu trên nửa trên
         translate([AX-3, -nub_w/2, nub_z0 + nub_out]) cube([3+nub_out, nub_w, nub_z1-nub_z0-nub_out]);
     }
 
-module bail_lugs() if (bail_on) for (s = [-1,1]) hull(){
-    translate([0, s*(y_lug - lug_d/2), lug_z]) rotate([90,0,0])
-        cylinder(h=lug_d, d=lug_d, center=true, $fn=48);
-    translate([0, s*(y_lug - lug_d/2), lug_z - 14]) rotate([90,0,0])
-        cylinder(h=lug_d, d=2, center=true, $fn=16);          // nêm 45° phía dưới -> in được
-}
-module bail_holes() if (bail_on) for (s = [-1,1])
-    translate([0, s*(y_lug + 0.5), lug_z]) rotate([90,0,0])
-        cylinder(h=peg_l+1.5, d=peg_d+0.4, $fn=32);
-
 module base() difference(){
     union(){
         intersection(){ shell(); slab(-600, 0); }
-        difference(){ union(){ hinge_base(); latch_strap(); bail_lugs(); } inner_solid(); }
+        difference(){ union(){ hinge_base(); latch_strap(); } inner_solid(); }
         rim_lip();
     }
     hinge_pin();
-    bail_holes();
 }
 
 // =====================================================================
@@ -315,31 +287,13 @@ module cap() difference(){
 }
 
 // =====================================================================
-//                          QUAI XÁCH (handle)
+//                          TRỤC BẢN LỀ (pin)
 // =====================================================================
 // Trục bản lề in sẵn. Thay được bằng: que tre xiên ø3, vít M3x50, hoặc đoạn dây thép ø3.
 module pin(){
     L = hg_w*3 + hg_gap*2 + 2;
     cylinder(h=L, d=hg_pin-0.25, $fn=32);
     cylinder(h=1.8, d=hg_pin+2.6, $fn=32);      // đầu chặn
-}
-
-module bail(){
-    a = y_bail;
-    difference(){
-        union(){
-            // vòng cung nằm trong mặt phẳng YZ (bắc qua chiều ngang), dày bail_w theo X
-            translate([0,0,lug_z]) rotate([0,0,90]) rotate([90,0,0]) translate([0,0,-bail_w/2])
-                linear_extrude(bail_w) difference(){
-                    scale([a + bail_t/2, b_bail + bail_t/2]) circle(r=1, $fn=seg);
-                    scale([a - bail_t/2, b_bail - bail_t/2]) circle(r=1, $fn=seg);
-                }
-            // chốt quai: cắm từ mặt trong thân quai, chĩa vào trong, ăn vào lỗ trên tai
-            for (s=[-1,1]) translate([0, s*(y_bail - bail_t/2 + 1), lug_z])
-                rotate([s>0?90:-90,0,0]) cylinder(h=peg_l+1, d=peg_d, $fn=32);
-        }
-        slab(-600, lug_z);
-    }
 }
 
 // =====================================================================
@@ -353,14 +307,12 @@ module lid_group(){ lid(); cap(); }
 module assembled(open_ang = 0){
     base();
     translate([-PX, 0, hg_z]) rotate([0, -open_ang, 0]) translate([PX, 0, -hg_z]) lid_group();
-    if (bail_on) bail();
     payload_box();
 }
 
 if      (part == "base")   base();
 else if (part == "lid")    lid();
 else if (part == "cap")    cap();
-else if (part == "handle") bail();
 else if (part == "pin")    pin();
 else if (part == "open")   assembled(105);
 else if (part == "cut")    difference(){ assembled(0); translate([-600,0,-600]) cube([1200,600,1200]); }
