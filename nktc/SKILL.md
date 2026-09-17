@@ -188,11 +188,20 @@ chỉ muốn tạo lại công văn với dữ liệu cũ.
   `{{DOC_YEAR}}`, `{{FROM_DATE}}`, `{{TO_DATE}}`), vendor tương tự exceljs — sửa
   mẫu này rồi build lại, không sửa tay `NKTC-xu-ly-excel.html`.
 - **Ba đường kẻ ngang thể thức (dưới tên cơ quan, dưới tiêu ngữ, dưới trích yếu)
-  là `w:pBdr` bottom của một đoạn rỗng cỡ chữ 1pt đặt ngay sau dòng chữ**, không
-  phải shape. Bản mẫu cũ vẽ chúng bằng 36 `straightConnector1` neo toạ độ tuyệt
-  đối (`positionH relativeFrom="column"`) — đổi khổ giấy/lề/bề rộng bảng là lệch
-  ngay, đã bỏ hết. Nếu sửa lại bề rộng cột header thì phải chỉnh `w:ind` của ba
-  đoạn kẻ đó cho khớp, nếu không đường kẻ sẽ không còn cân giữa dòng chữ.
+  là `w:pBdr` bottom của một đoạn 1pt chứa duy nhất một dấu cách có
+  `xml:space="preserve"`, đặt ngay sau dòng chữ**, không phải shape. Bản mẫu cũ
+  vẽ chúng bằng 36 `straightConnector1` neo toạ độ tuyệt đối (`positionH
+  relativeFrom="column"`) — đổi khổ giấy/lề/bề rộng bảng là lệch ngay, đã bỏ hết.
+  Nếu sửa lại bề rộng cột header thì phải chỉnh `w:ind` **trên đoạn kẻ, không
+  phải đoạn chữ** cho khớp, nếu không đường kẻ sẽ không còn cân giữa dòng chữ.
+  Dùng `w:spacing` 1pt cho đoạn kẻ và `w:bottom/@w:space="2"` để nét nằm sát
+  dòng trên nhưng vẫn chừa chỗ cho dấu dưới của chữ Việt; không tăng khoảng
+  cách bằng một đoạn trắng cỡ chữ thông thường. Hai đoạn chữ cơ quan ban hành
+  và tiêu ngữ phải để dòng đơn (`w:line="240"`), không giữ 1,5 dòng (`360`),
+  vì phần leading dưới của dòng 1,5 làm nét kẻ trông bị rời khỏi chữ.
+  LibreOffice đôi lúc bỏ qua `pBdr` dưới tiêu ngữ trong ô phải dù XML hợp lệ;
+  kiểm tra bản phát hành bằng Word, không thêm bảng lồng vì bộ tạo offline giả
+  định đúng hai bảng cho mỗi thư.
 - **Bảng header chia cứng 4100/5255 twip, `tblCellMar` = 0.** Quốc hiệu 12pt đậm
   rộng 5006tw; để lề trong ô mặc định (108tw/bên) hoặc thu ô phải xuống dưới
   5222tw là "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM" xuống dòng.
