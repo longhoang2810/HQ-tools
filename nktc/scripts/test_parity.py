@@ -120,7 +120,7 @@ const match = template.match(/<script>\s*(\(\(\) => \{[\s\S]*?\}\)\(\);)\s*<\/sc
 if (!match) throw new Error('Could not extract inline NKTC application JS');
 const app = match[1].replace(
   /\}\)\(\);\s*$/,
-  "globalThis.__NKTC_TEST__={num,extractRows,chooseRegion,buildRegionSheet,run,sourceColumns,cvnkGenerate,setLastRun:g=>{lastRun={groups:g};},getUnparseableAmounts:()=>unparseableAmounts,getBlankAmounts:()=>blankAmounts,getHeaderFallback:()=>headerFallback};})();"
+  "globalThis.__NKTC_TEST__={num,extractRows,chooseRegion,buildRegionSheet,run,sourceColumns,cvnkGenerate,setLastRun:g=>{lastRun={groups:g};},getUnparseableAmounts:()=>unparseableAmounts,getBlankAmounts:()=>blankAmounts};})();"
 );
 vm.runInThisContext(app, {filename: request.template});
 const api = global.__NKTC_TEST__;
@@ -138,11 +138,8 @@ const api = global.__NKTC_TEST__;
   if (request.action === 'columns') {
     const source = new ExcelJS.Workbook();
     await source.xlsx.load(fs.readFileSync(request.source));
-    api.extractRows(source.worksheets[0]);
-    process.stdout.write(JSON.stringify({
-      cols: api.sourceColumns(source.worksheets[0]),
-      headerFallback: api.getHeaderFallback(),
-    }));
+    try { process.stdout.write(JSON.stringify(api.sourceColumns(source.worksheets[0]))); }
+    catch (e) { process.stdout.write(JSON.stringify({error: e.message})); }
     return;
   }
   if (request.action === 'cvnk') {
@@ -156,9 +153,12 @@ const api = global.__NKTC_TEST__;
     return;
   }
   if (request.action === 'status') {
-    await api.run();
+    // Same contract as the real click handler: a thrown error becomes an error status.
+    try { await api.run(); }
+    catch (e) { process.stdout.write(JSON.stringify({kind: 'error', text: e.message, downloaded: global.__lastBlob !== null})); return; }
+    if (request.output) fs.writeFileSync(request.output, Buffer.from(await global.__lastBlob.arrayBuffer()));
     const status = element('status');
-    process.stdout.write(JSON.stringify({kind: status.className, text: status.textContent}));
+    process.stdout.write(JSON.stringify({kind: status.className, text: status.textContent, downloaded: global.__lastBlob !== null}));
     return;
   }
   if (request.action === 'build') {
@@ -383,68 +383,134 @@ class CvnkLetterTest(unittest.TestCase):
 
 
 class HeaderDetectionParityTest(unittest.TestCase):
-    """Nhận diện cột phải ALL-OR-NOTHING ở CẢ HAI bản.
+    """Cột nguồn chỉ được tìm theo TÊN header, ở CẢ HAI bản; không đủ 7 cột thì DỪNG.
 
-    Ca hỏng thật: file xuất tháng chèn thêm một cột (mọi cột dịch phải) VÀ cột địa
-    chỉ bị đổi tên. Bản cũ trộn hai kiểu — Ten_DN_XNK dò được ra cột 10, còn
-    Ma_dia_chi không dò được nên giữ vị trí cố định cũ cũng là 10 -> ô địa chỉ đọc
-    TÊN DOANH NGHIỆP, im lặng, cả bảng chia tỉnh sai. Đây đúng là thứ mà bước nhận
-    diện header sinh ra để chặn.
+    Ca hỏng thật (tái hiện 2026-07-28): file có dòng banner phía trên header và cột
+    trị giá dời P->Q. Bản cũ không thấy header ở dòng 1 nên rơi về layout cố định
+    A/B/H/I/J/K/P -> "Coverage 100%", banner xanh, tiền sai hoàn toàn. File xuất
+    thật T6/2026 cũng đã lệch layout cũ (mã DN ở I, trị giá ở Q), nên mọi kiểu
+    "đoán cột" đều là sai tiền im lặng.
     """
 
     SHIFTED = ["NEW", *HEADERS]
     RENAMED = ["NEW", *(h if h != "Ma_dia_chi_DN_XNK" else "Dia_chi_DN_XNK" for h in HEADERS)]
+    BANNER = ["DANH SÁCH TỜ KHAI TẠI CHỖ THÁNG 6/2026"]
 
-    def _ws(self, headers):
+    def _ws(self, *rows):
         wb = Workbook()
         ws = wb.active
-        ws.append(headers)
+        for row in rows:
+            ws.append(row)
         return ws
 
-    def test_python_partial_headers_fall_back_wholesale_and_warn(self):
-        from nktc_process import SRC, detect_src
-        stats = {}
-        src = detect_src(self._ws(self.RENAMED), 1, stats)
-        self.assertNotEqual(src["Ten_DN_XNK"], src["Ma_dia_chi"],
-                            "cột tên DN và cột địa chỉ trỏ cùng một chỗ")
-        self.assertEqual(src, SRC, "dò được một phần thì phải về TRỌN layout cũ")
-        self.assertIn("header_fallback", stats, "phải cảnh báo, không im lặng")
-        # Cảnh báo phải GỌI TÊN cột bị thiếu, không chỉ nói "có gì đó sai".
-        self.assertIn("ma_dia_chi_dn_xnk", stats["header_fallback"])
+    def _source(self, tmp, *rows):
+        path = Path(tmp) / "source.xlsx"
+        wb = Workbook()
+        for row in rows:
+            wb.active.append(row)
+        wb.save(path)
+        return path
 
-    def test_python_full_headers_still_detected(self):
+    def test_python_partial_headers_stop_and_name_the_missing_column(self):
+        from nktc_process import SourceLayoutError, detect_src
+        with self.assertRaises(SourceLayoutError) as ctx:
+            detect_src(self._ws(self.RENAMED))
+        self.assertIn("ma_dia_chi_dn_xnk", str(ctx.exception))
+
+    def test_python_no_headers_stop(self):
+        from nktc_process import SourceLayoutError, detect_src
+        with self.assertRaises(SourceLayoutError):
+            detect_src(self._ws(["x"] * 16))
+
+    def test_python_full_headers_detected_after_banner(self):
         from nktc_process import detect_src
-        stats = {}
-        src = detect_src(self._ws(self.SHIFTED), 1, stats)
-        self.assertEqual(src["Ma_dia_chi"], self.SHIFTED.index("Ma_dia_chi_DN_XNK") + 1)
-        self.assertNotIn("header_fallback", stats)
+        cols, header_row = detect_src(self._ws(self.BANNER, ["", ""], self.SHIFTED))
+        self.assertEqual(header_row, 3)
+        self.assertEqual(cols["Tong_tri_gia"], self.SHIFTED.index("Tong_tri_gia_tinh_thue") + 1)
 
-    def test_python_no_headers_uses_legacy_without_warning(self):
-        from nktc_process import SRC, detect_src
-        stats = {}
-        self.assertEqual(detect_src(self._ws(["x"] * 16), 1, stats), SRC)
-        self.assertNotIn("header_fallback", stats)
+    def test_python_explicit_header_rows_must_match_exactly(self):
+        from nktc_process import SourceLayoutError, detect_src
+        ws = self._ws(self.BANNER, self.SHIFTED)
+        self.assertEqual(detect_src(ws, 2)[1], 2)
+        with self.assertRaises(SourceLayoutError):
+            detect_src(ws, 1)
+
+    def test_python_cli_refuses_and_writes_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            source = self._source(tmp, self.RENAMED, ["", *source_row("Co", "1")])
+            output = tmp_path / "out.xlsx"
+            regions = tmp_path / "regions.txt"
+            write_regions(regions)
+            with self.assertRaises(subprocess.CalledProcessError) as ctx:
+                run_python(source, output, regions)
+            self.assertEqual(ctx.exception.returncode, 2)
+            self.assertIn("ma_dia_chi_dn_xnk", ctx.exception.stderr)
+            self.assertFalse(output.exists())
+
+    def test_python_cli_refuses_zero_rows(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            row = source_row("Co", "1")
+            row[1] = "A11"
+            source = self._source(tmp, HEADERS, row)
+            output = tmp_path / "out.xlsx"
+            regions = tmp_path / "regions.txt"
+            write_regions(regions)
+            with self.assertRaises(subprocess.CalledProcessError) as ctx:
+                run_python(source, output, regions)
+            self.assertEqual(ctx.exception.returncode, 2)
+            self.assertFalse(output.exists())
 
     @unittest.skipUnless(NODE, "node is required for browser-JS parity tests")
-    def test_javascript_partial_headers_fall_back_wholesale_and_warn(self):
-        from nktc_process import SRC
+    def test_javascript_partial_headers_stop_and_name_the_missing_column(self):
         with tempfile.TemporaryDirectory() as tmp:
-            source = Path(tmp) / "source.xlsx"
-            write_source(source, [source_row("Co", "1")], headers=self.RENAMED)
-            got = run_js(tmp, {"action": "columns", "source": str(source)})
-        self.assertNotEqual(got["cols"]["Ten_DN_XNK"], got["cols"]["Ma_dia_chi"])
-        self.assertEqual(got["cols"], {k: SRC[k] for k in got["cols"]},
-                         "JS dò được một phần thì cũng phải về TRỌN layout cũ")
-        self.assertTrue(got["headerFallback"], "JS phải cảnh báo, không im lặng")
+            got = run_js(tmp, {"action": "columns",
+                               "source": str(self._source(tmp, self.RENAMED))})
+        self.assertIn("ma_dia_chi_dn_xnk", got["error"])
 
     @unittest.skipUnless(NODE, "node is required for browser-JS parity tests")
-    def test_javascript_full_headers_still_detected(self):
+    def test_javascript_no_headers_stop(self):
         with tempfile.TemporaryDirectory() as tmp:
-            source = Path(tmp) / "source.xlsx"
-            write_source(source, [source_row("Co", "1")], headers=self.SHIFTED)
-            got = run_js(tmp, {"action": "columns", "source": str(source)})
-        self.assertEqual(got["cols"]["Ma_dia_chi"], self.SHIFTED.index("Ma_dia_chi_DN_XNK") + 1)
-        self.assertFalse(got["headerFallback"])
+            got = run_js(tmp, {"action": "columns",
+                               "source": str(self._source(tmp, ["x"] * 16))})
+        self.assertIn("error", got)
+
+    @unittest.skipUnless(NODE, "node is required for browser-JS parity tests")
+    def test_javascript_full_headers_detected_after_banner(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            got = run_js(tmp, {"action": "columns",
+                               "source": str(self._source(tmp, self.BANNER, ["", ""], self.SHIFTED))})
+        self.assertEqual(got["headerRow"], 3)
+        self.assertEqual(got["cols"]["Tong_tri_gia"], self.SHIFTED.index("Tong_tri_gia_tinh_thue") + 1)
+
+    @unittest.skipUnless(NODE, "node is required for browser-JS parity tests")
+    def test_javascript_bad_header_or_zero_rows_shows_error_and_downloads_nothing(self):
+        row = source_row("Co", "1")
+        row[1] = "A11"
+        for rows in ([self.RENAMED, ["", *source_row("Co", "1")]], [HEADERS, row]):
+            with tempfile.TemporaryDirectory() as tmp:
+                got = run_js(tmp, {"action": "status",
+                                   "source": str(self._source(tmp, *rows))})
+            self.assertEqual(got["kind"], "error")
+            self.assertIn("Không xuất file", got["text"])
+            self.assertFalse(got["downloaded"])
+
+    @unittest.skipUnless(NODE, "node is required for browser-JS parity tests")
+    def test_banner_and_shifted_amount_column_give_the_right_money_in_both(self):
+        """Đúng ca tái hiện cũ: banner + mọi cột dời phải một ô (trị giá P->Q)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            source = self._source(
+                tmp, self.BANNER, self.SHIFTED,
+                ["x", *source_row("Co A", "0001", amount=1234.5)],
+                ["x", *source_row("Co B", "0002", amount=99, declaration=100000002)],
+            )
+            python_output, js_output, _ = WorkbookParityTest.run_both_from_source(None, tmp_path, source)
+            python_rows, _ = region_snapshot(python_output)
+            js_rows, _ = region_snapshot(js_output)
+        self.assertEqual([r[5] for r in python_rows], [1234.5, 99])
+        self.assertEqual(js_rows, python_rows)
 
 
 class AmountParsingParityTest(unittest.TestCase):
@@ -836,6 +902,56 @@ class WorkbookParityTest(unittest.TestCase):
             js_rows, _ = region_snapshot(js_output)
         self.assertEqual(python_rows[0][2], "true")
         self.assertEqual(js_rows, python_rows)
+
+
+    @unittest.skipUnless(NODE, "node is required for browser-JS parity tests")
+    def test_so_quan_ly_is_trimmed_before_cutting_8_chars_in_both(self):
+        padded = source_row("Padded", "0001")
+        padded[5] = "  12345678XK100000001  "
+        short = source_row("Short", "0002", declaration=100000002)
+        short[5] = "   12345678   "  # 8 chars after trim -> nothing left -> dropped
+        with tempfile.TemporaryDirectory() as tmp:
+            python_output, js_output, _ = self.run_both(Path(tmp), [padded, short])
+            python_rows, _ = region_snapshot(python_output)
+            js_rows, _ = region_snapshot(js_output)
+        self.assertEqual([r[4] for r in python_rows], ["XK100000001"])
+        self.assertEqual(js_rows, python_rows)
+
+    @unittest.skipUnless(NODE, "node is required for browser-JS parity tests")
+    def test_unmatched_sheet_groups_and_merges_by_company_in_both(self):
+        rows = [
+            source_row("Beta", "0002", declaration=100000003, address="Ca Mau"),
+            source_row("Alpha", "0001", declaration=100000001, address="Ca Mau"),
+            source_row("Alpha", "0001", declaration=100000002, address="Ca Mau"),
+            source_row("Gamma", "", declaration=100000004, address="Ca Mau"),
+            source_row("Gamma", "", declaration=100000005, address="Ca Mau"),
+            source_row("Matched", "0009", declaration=100000006),
+        ]
+
+        def snapshot(path):
+            ws = load_workbook(path, data_only=True)["unmatched"]
+            cells = [tuple("" if ws.cell(r, c).value is None else ws.cell(r, c).value
+                           for c in range(1, 11)) for r in range(5, ws.max_row + 1)]
+            return cells, {str(rng) for rng in ws.merged_cells.ranges}
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            source = tmp_path / "source.xlsx"
+            write_source(source, rows)
+            python_output = tmp_path / "python.xlsx"
+            regions = tmp_path / "regions.txt"
+            write_regions(regions)
+            run_python(source, python_output, regions)
+            js_output = tmp_path / "javascript.xlsx"
+            run_js(tmp_path, {"action": "status", "source": str(source),
+                              "output": str(js_output), "regions": "Test\tHa Noi"})
+            python_cells, python_merges = snapshot(python_output)
+            js_cells, js_merges = snapshot(js_output)
+        # Alpha (2 rows, merged) = STT 1, Beta = 2, each blank-code Gamma row is its own STT.
+        self.assertEqual([r[0] for r in python_cells], [1, "", 2, 3, 4])
+        self.assertIn("A5:A6", python_merges)
+        self.assertEqual(js_cells, python_cells)
+        self.assertEqual(js_merges, python_merges)
 
 
 class BundleSyncTest(unittest.TestCase):

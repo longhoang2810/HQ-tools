@@ -3,38 +3,31 @@
 NKTC Excel processor.
 
 Step 1 - Filter & normalize a customs-declaration export:
-  * keep rows where column B (Ma_LH) is in --ma-lh (default E21,G13)
-  * sort by column I (Ten_DN_XNK) A->Z
+  * locate the column-name row (auto-scan of the first rows, so title banners
+    are fine) and find all 7 required columns BY NAME; if any is missing the
+    run stops with an error and writes nothing
+  * keep rows whose Ma_LH is in --ma-lh (default E21,G13)
+  * sort by Ten_DN_XNK A->Z (codepoint order)
   * remap columns:
-        A = J  (Ma_dia_chi_DN_XNK)
-        B = I  (Ten_DN_XNK)
-        C = H  (Ma_DN_XNK)
-        D = A  (So_to_khai)
-        E = K  (So_quan_ly_cua_noi_bo_doanh_nghiep) with first 8 chars stripped
-        F = P  (Tong_tri_gia_tinh_thue)
+        A = Ma_dia_chi_DN_XNK
+        B = Ten_DN_XNK
+        C = Ma_DN_XNK
+        D = So_to_khai
+        E = So_quan_ly_cua_noi_bo_doanh_nghiep, trimmed, first 8 chars stripped
+            (rows where nothing is left are dropped)
+        F = Tong_tri_gia_tinh_thue
 
-Step 2 - Build one workbook with one sheet per region plus unmatched (10 sheets total) by
-  default. Use --separate-files to build one .xlsx per region plus unmatched instead. For each
-  region, keep Step-1 rows whose column A (address) matches that region's
-  terms. Matching is accent-insensitive: both accented ("Hà Nội") and
-  unaccented ("Ha Noi") forms match, and "đ" is treated as "d". Each sheet/file
-  is grouped by company CODE (column C; blank codes stay separate) with merged
-  STT/name/code cells, formatted header,
-  borders and Times New Roman throughout. Regions (sheet/file <- address
-  contains):
-        hp <- hai ph, hai phong
-        Hn <- ha noi
-        PT <- phu tho, vinh phuc
-        HY <- hung yen
-        BN <- bac ninh, bac giang
-        TH <- thanh hoa
-        TQ <- tuyen quang
-        QT <- quang tri
-        NB <- nam dinh, ninh binh
+Step 2 - Build one workbook: a summary sheet, one sheet per region in
+  regions.txt, plus unmatched. Use --separate-files to build one .xlsx per
+  region plus unmatched instead. Each row goes to exactly ONE region: the one
+  whose term appears furthest right in the address (accent-insensitive, "đ" =
+  "d"); a tie or no match goes to unmatched. Every sheet is grouped by company
+  CODE (column C; blank codes stay separate) with merged STT/name/code cells,
+  formatted header, borders and Times New Roman throughout.
 
 Usage:
   python3 nktc_process.py INPUT.xlsx [-o OUTPUT.xlsx] [--sheet NAME]
-         [--ma-lh E21,G13] [--header-rows 1] [--step1-out step1.xlsx]
+         [--ma-lh E21,G13] [--header-rows N] [--step1-out step1.xlsx]
          [--month MM] [--year YYYY]
          [--tb-no NUM] [--tb-day DD] [--tb-month MM] [--tb-year YYYY]
 
@@ -51,18 +44,23 @@ import unicodedata
 import openpyxl
 from openpyxl.styles import Alignment, Border, Font, Side
 
-# Source column indices (1-based)
-SRC = {
-    "So_to_khai":   1,   # A
-    "Ma_LH":        2,   # B
-    # Defaults for older exports; detect_src() below overrides these when
-    # the workbook has recognizable headers.
-    "Ma_DN_XNK":    8,   # H
-    "Ten_DN_XNK":   9,   # I
-    "Ma_dia_chi":  10,   # J
-    "So_quan_ly":  11,   # K
-    "Tong_tri_gia":16,   # P
+# Source columns are found by header NAME only (normalized: de-accented,
+# whitespace -> "_"). There is no fixed-position fallback any more: real exports
+# shift columns (T6/2026 has Ma_DN_XNK at I and the amount at Q, not H/P), so a
+# guessed layout reads the wrong money column silently.
+WANTED_HEADERS = {
+    "So_to_khai": "so_to_khai",
+    "Ma_LH": "ma_lh",
+    "Ma_DN_XNK": "ma_dn_xnk",
+    "Ten_DN_XNK": "ten_dn_xnk",
+    "Ma_dia_chi": "ma_dia_chi_dn_xnk",
+    "So_quan_ly": "so_quan_ly_cua_noi_bo_doanh_nghiep",
+    "Tong_tri_gia": "tong_tri_gia_tinh_thue",
 }
+# ponytail: banners above the header row are found by scanning this many rows;
+# raise it if an export ever puts the header lower.
+HEADER_SCAN_ROWS = 20
+
 
 OUT_HEADERS = [
     "STT", "Tên DN XNK", "Mã DN XNK", "Số tờ khai",
@@ -124,7 +122,7 @@ def strip8(v):
     """
     if v is None:
         return ""
-    s = str(v)
+    s = str(v).strip()  # trim first, exactly like the HTML version's text()
     return s[8:] if len(s) > 8 else ""
 
 
@@ -184,14 +182,6 @@ def cell_to_text(cell):
     return str(v).strip()
 
 
-def match_terms(addr, terms):
-    """True if the (de-accented) address contains any configured term."""
-    if not addr:
-        return False
-    s = deaccent(addr)
-    return any(t in s for t in terms)
-
-
 def choose_region(addr, regions):
     """Choose the region whose locality term appears furthest right in an address."""
     if not addr:
@@ -227,57 +217,54 @@ def norm_header(v):
     return re.sub(r"\s+", "_", deaccent(v).strip())
 
 
-def detect_src(ws, header_rows, stats=None):
-    """Use header names when present; fall back to legacy fixed positions.
+class SourceLayoutError(ValueError):
+    """The source sheet's columns cannot be identified with certainty."""
 
-    ALL-OR-NOTHING. Nhận diện được MỘT PHẦN header thì KHÔNG trộn vị trí dò được
-    với vị trí cố định cũ — trộn chính là ca hỏng mà detect_src sinh ra để chặn:
-    file xuất tháng chèn thêm một cột, cột địa chỉ lại bị đổi tên nên rơi về J cố
-    định, trong khi Ten_DN_XNK dò được cũng ra J -> ô địa chỉ đọc TÊN DOANH
-    NGHIỆP, im lặng, cả bảng chia tỉnh sai. Thà quay về TRỌN layout cũ và kêu to.
+
+def detect_src(ws, header_rows=None):
+    """Find the header row and map all 7 required columns by name.
+
+    Returns (columns, header_row). Raises SourceLayoutError unless ONE row holds
+    all 7 headers — a partial match or no match stops the run instead of
+    guessing: this output is attached to an official notice, and a guessed
+    layout has produced "Coverage 100%" with every amount wrong.
+
+    header_rows=None scans the first HEADER_SCAN_ROWS rows (handles title
+    banners); an explicit N requires the header to be exactly on row N.
     """
-    detected = SRC.copy()
-    header_row = max(1, header_rows)
-    headers = {norm_header(ws.cell(header_row, c).value): c
-               for c in range(1, ws.max_column + 1)
-               if ws.cell(header_row, c).value is not None}
-    wanted = {
-        "So_to_khai": "so_to_khai",
-        "Ma_LH": "ma_lh",
-        "Ma_DN_XNK": "ma_dn_xnk",
-        "Ten_DN_XNK": "ten_dn_xnk",
-        "Ma_dia_chi": "ma_dia_chi_dn_xnk",
-        "So_quan_ly": "so_quan_ly_cua_noi_bo_doanh_nghiep",
-        "Tong_tri_gia": "tong_tri_gia_tinh_thue",
-    }
-    found = {key: headers[h] for key, h in wanted.items() if h in headers}
-    if not found:
-        return detected  # không có header chuẩn nào -> layout cũ, như trước nay
-    missing = [h for h in wanted.values() if h not in headers]
-    if missing:
-        msg = (
-            f"CẢNH BÁO: chỉ nhận diện được {len(found)}/{len(wanted)} cột theo "
-            f"header, thiếu: {', '.join(missing)}. KHÔNG trộn hai kiểu — dùng "
-            f"trọn layout cũ A/B/H/I/J/K/P. Nếu file nguồn đã đổi cột, sửa lại "
-            f"tên header cho khớp rồi chạy lại, đừng dùng kết quả này."
-        )
-        print(msg, file=sys.stderr)
-        if stats is not None:
-            stats["header_fallback"] = msg
-        return detected
-    detected.update(found)
-    return detected
+    candidates = [header_rows] if header_rows else range(1, min(ws.max_row, HEADER_SCAN_ROWS) + 1)
+    best_row, best = None, {}
+    for r in candidates:
+        headers = {norm_header(ws.cell(r, c).value): c
+                   for c in range(1, ws.max_column + 1)
+                   if ws.cell(r, c).value is not None}
+        found = {key: headers[h] for key, h in WANTED_HEADERS.items() if h in headers}
+        if len(found) == len(WANTED_HEADERS):
+            return found, r
+        if len(found) > len(best):
+            best_row, best = r, found
+    need = ", ".join(WANTED_HEADERS.values())
+    if best:
+        missing = [h for k, h in WANTED_HEADERS.items() if k not in best]
+        raise SourceLayoutError(
+            f"Dòng {best_row} chỉ nhận diện được {len(best)}/{len(WANTED_HEADERS)} cột, "
+            f"thiếu: {', '.join(missing)}. Không xuất file. Sửa tên header trong file "
+            f"nguồn cho khớp rồi chạy lại.")
+    where = f"dòng {header_rows}" if header_rows else f"{HEADER_SCAN_ROWS} dòng đầu"
+    raise SourceLayoutError(
+        f"Không tìm thấy dòng header trong {where}. Không xuất file. "
+        f"File nguồn cần đủ các cột: {need}.")
 
 
-def step1(ws, ma_lh, header_rows, stats=None):
+def step1(ws, ma_lh, header_rows=None, stats=None):
     """Filter by Ma_LH (one or more codes), remap columns, sort A->Z by name."""
-    src = detect_src(ws, header_rows, stats)
+    src, header_row = detect_src(ws, header_rows)
     rows = []
     if isinstance(ma_lh, str):
         targets = {x.strip().upper() for x in ma_lh.split(",") if x.strip()}
     else:
         targets = {str(x).strip().upper() for x in ma_lh}
-    for r in range(header_rows + 1, ws.max_row + 1):
+    for r in range(header_row + 1, ws.max_row + 1):
         mlh = ws.cell(r, src["Ma_LH"]).value
         if mlh is None:
             continue
@@ -329,8 +316,8 @@ def bucket_rows_by_code(rows):
     return buckets
 
 
-def build_region_sheet(ws, rows, terms, sheet_title, opts):
-    hp = list(rows) if terms is None else [r for r in rows if match_terms(r["A"], terms)]
+def build_region_sheet(ws, rows, sheet_title, opts):
+    hp = list(rows)
     # Sort for display, then bucket by code without relying on adjacency.
     hp.sort(key=lambda x: ((str(x["B"]) if x["B"] is not None else "").strip().lower(),
                            (str(x["C"]) if x["C"] is not None else "").strip()))
@@ -419,9 +406,9 @@ def build_region_sheet(ws, rows, terms, sheet_title, opts):
     return len(hp), stt
 
 
-def build_region_file(rows, out_path, terms, sheet_title, opts):
+def build_region_file(rows, out_path, sheet_title, opts):
     wb = openpyxl.Workbook()
-    n_rows, n_grp = build_region_sheet(wb.active, rows, terms, sheet_title, opts)
+    n_rows, n_grp = build_region_sheet(wb.active, rows, sheet_title, opts)
     wb.save(out_path)
     return n_rows, n_grp
 
@@ -442,7 +429,7 @@ def build_unmatched_sheet(ws, rows, opts):
     mm = opts["month"] or "__"
     yyyy = opts["year"] or "____"
     ws.merge_cells("A1:J1")
-    ws["A1"] = f"DÒNG CHƯA KHỚP 9 NHÓM SAU KHI LỌC E21/G13 THÁNG {mm}/{yyyy}"
+    ws["A1"] = f"DÒNG CHƯA KHỚP VÙNG SAU KHI LỌC E21/G13 THÁNG {mm}/{yyyy}"
     ws["A1"].font = font_title
     ws["A1"].alignment = a_center
     for col, name in enumerate(headers, start=1):
@@ -520,7 +507,7 @@ def write_summary_sheet(ws, step1_rows, counts):
         cell.font = font_hdr
         cell.border = border
     for stem, terms, n_rows, n_grp in counts:
-        ws.append([stem, ", ".join(terms) if terms else "", n_rows, n_grp, "not matched by 9 regions" if not terms else ""])
+        ws.append([stem, ", ".join(terms) if terms else "", n_rows, n_grp, "not matched by configured regions" if not terms else ""])
     for row in ws.iter_rows(min_row=1, max_row=ws.max_row, max_col=5):
         for cell in row:
             cell.font = font_data if cell.row != 7 else font_hdr
@@ -538,7 +525,7 @@ def build_region_workbook(rows, out_path, opts, regions):
     counts = []
     for stem, terms in regions:
         ws = wb.create_sheet()
-        n_rows, n_grp = build_region_sheet(ws, grouped[stem], None, stem, opts)
+        n_rows, n_grp = build_region_sheet(ws, grouped[stem], stem, opts)
         counts.append((stem, terms, n_rows, n_grp))
     ws = wb.create_sheet("unmatched")
     n_rows, n_grp = build_unmatched_sheet(ws, unmatched, opts)
@@ -560,7 +547,9 @@ def main():
                     help="source sheet name (default: first sheet)")
     ap.add_argument("--ma-lh", default="E21,G13",
                     help="comma-separated Ma_LH codes to keep")
-    ap.add_argument("--header-rows", type=int, default=1)
+    ap.add_argument("--header-rows", type=int, default=None,
+                    help="row number of the column-name row (default: auto-detect "
+                         f"within the first {HEADER_SCAN_ROWS} rows)")
     ap.add_argument("--regions", default=DEFAULT_REGIONS_PATH,
                     help="UTF-8 config: sheet_name<TAB>keyword | keyword (default: regions.txt)")
     ap.add_argument("--step1-out", default=None,
@@ -598,8 +587,16 @@ def main():
     ws = wb[args.sheet] if args.sheet else wb.worksheets[0]
 
     stats = {}
-    rows = step1(ws, args.ma_lh, args.header_rows, stats)
+    try:
+        rows = step1(ws, args.ma_lh, args.header_rows, stats)
+    except SourceLayoutError as exc:
+        print(f"LỖI: {exc}", file=sys.stderr)
+        return 2
     print(f"Step 1: {len(rows)} rows with Ma_LH in {args.ma_lh}")
+    if not rows:
+        print(f"LỖI: không có dòng nào có Ma_LH thuộc {args.ma_lh} sau khi lọc. "
+              "Không xuất file - kiểm tra lại file nguồn.", file=sys.stderr)
+        return 2
     unparseable_amounts = stats.get("unparseable_amounts", 0)
     if unparseable_amounts:
         print(
@@ -630,7 +627,7 @@ def main():
         grand = 0
         for stem, terms in regions:
             out_path = os.path.join(outdir, f"{stem}.xlsx")
-            n_rows, n_grp = build_region_file(grouped[stem], out_path, None, stem, opts)
+            n_rows, n_grp = build_region_file(grouped[stem], out_path, stem, opts)
             grand += n_rows
             print(f"  {stem}.xlsx: {n_rows} rows in {n_grp} companies "
                   f"(terms: {', '.join(terms)})")
@@ -662,7 +659,7 @@ def main():
                 print(f"  sheet {stem}: {n_rows} rows in {n_grp} companies "
                       f"(terms: {', '.join(terms)})")
             else:
-                print(f"  sheet {stem}: {n_rows} rows in {n_grp} companies (not matched by 9 regions)")
+                print(f"  sheet {stem}: {n_rows} rows in {n_grp} companies (not matched by configured regions)")
         unmatched_rows = sum(n for _, terms, n, _ in counts if not terms)
         region_rows = grand - unmatched_rows
         coverage = (region_rows / len(rows) * 100) if rows else 0
