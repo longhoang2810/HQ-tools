@@ -68,9 +68,10 @@ NB	Nam Dinh | Tinh Nam Dinh | Ninh Binh | Tinh Ninh Binh
 </section>
 <section>
 <h2>3. Xuất workbook</h2>
-<div class="actions"><button id="run" type="button">Xuất Excel NKTC</button><button class="secondary" id="cvnk" type="button">Tạo công văn</button><span id="status" role="status"></span></div>
+<div class="actions"><button id="run" type="button">Xuất Excel NKTC</button><button class="secondary" id="runSplit" type="button">Xuất tách mỗi tỉnh 1 file (ZIP)</button><button class="secondary" id="cvnk" type="button">Tạo công văn</button><span id="status" role="status"></span></div>
 <details><summary>Workbook xuất gồm gì?</summary><p class="note">1 sheet summary, 1 sheet cho mỗi dòng vùng, và unmatched. Mỗi sheet có tiêu đề, font Times New Roman, viền, STT theo DN, merge A/B/C cho nhiều tờ khai cùng DN, trị giá định dạng số.</p></details>
-<p class="note">"Tạo công văn" dùng dữ liệu của lần "Xuất Excel NKTC" gần nhất — chạy Xuất Excel trước. Chỉ tạo thư cho vùng có dữ liệu tháng đó, trong 9 vùng cố định của mẫu công văn (bỏ qua nếu đổi sang cấu hình 34 tỉnh/thành hoặc đổi tên sheet).</p>
+<p class="note">"Xuất tách mỗi tỉnh 1 file" tải về 1 file ZIP gồm <code>TênSheet.xlsx</code> cho từng vùng có dữ liệu (cùng định dạng sheet vùng ở trên) và <code>unmatched.xlsx</code> nếu còn dòng chưa khớp. Vùng không có dữ liệu bị bỏ qua.</p>
+<p class="note">"Tạo công văn" dùng dữ liệu của lần xuất Excel gần nhất (một trong hai nút) — chạy xuất Excel trước. Chỉ tạo thư cho vùng có dữ liệu tháng đó, trong 9 vùng cố định của mẫu công văn (bỏ qua nếu đổi sang cấu hình 34 tỉnh/thành hoặc đổi tên sheet).</p>
 </section>
 </main>
 <script>
@@ -272,7 +273,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     const enc=new TextEncoder(), localParts=[], centralParts=[], localOffsets=[]; let offset=0;
     for(const e of entries) {
       const nameBytes=enc.encode(e.name), h=new DataView(new ArrayBuffer(30));
-      h.setUint32(0,0x04034b50,true); h.setUint16(4,20,true); h.setUint16(6,0,true); h.setUint16(8,e.method,true);
+      h.setUint32(0,0x04034b50,true); h.setUint16(4,20,true); h.setUint16(6,e.flags||0,true); h.setUint16(8,e.method,true);
       h.setUint16(10,0,true); h.setUint16(12,0x21,true); h.setUint32(14,e.crc,true); h.setUint32(18,e.compSize,true);
       h.setUint32(22,e.uncompSize,true); h.setUint16(26,nameBytes.length,true); h.setUint16(28,0,true);
       localOffsets.push(offset); localParts.push(new Uint8Array(h.buffer),nameBytes,e.data); offset+=30+nameBytes.length+e.data.length;
@@ -280,7 +281,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     const cdStart=offset;
     entries.forEach((e,i) => {
       const nameBytes=enc.encode(e.name), h=new DataView(new ArrayBuffer(46));
-      h.setUint32(0,0x02014b50,true); h.setUint16(4,20,true); h.setUint16(6,20,true); h.setUint16(8,0,true); h.setUint16(10,e.method,true);
+      h.setUint32(0,0x02014b50,true); h.setUint16(4,20,true); h.setUint16(6,20,true); h.setUint16(8,e.flags||0,true); h.setUint16(10,e.method,true);
       h.setUint16(12,0,true); h.setUint16(14,0x21,true); h.setUint32(16,e.crc,true); h.setUint32(20,e.compSize,true);
       h.setUint32(24,e.uncompSize,true); h.setUint16(28,nameBytes.length,true); h.setUint16(30,0,true); h.setUint16(32,0,true);
       h.setUint16(34,0,true); h.setUint16(36,0,true); h.setUint32(38,0,true); h.setUint32(42,localOffsets[i],true);
@@ -369,8 +370,30 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     show('ok',`Đã tạo công văn: ${keepFlags.filter(Boolean).length}/${keepFlags.length} vùng có dữ liệu.`);
   }
   let lastRun = null;
-  async function run() { const input=$('source').files[0]; if(!input) throw Error('Chọn file XLSX nguồn trước.'); if(!window.ExcelJS) throw Error('Không tải được thư viện Excel trong file HTML.'); const regions=parseRegions($('regions').value); show('info','Đang đọc file nguồn...'); const sourceWb=new ExcelJS.Workbook(); await sourceWb.xlsx.load(await input.arrayBuffer()); const rows=extractRows(sourceWb.worksheets[0]); if(!rows.length) throw Error('Không có dòng E21/G13 nào sau khi lọc. Không xuất file - kiểm tra lại file nguồn.'); const groups=Object.fromEntries(regions.map(r=>[r.name,[]])); const unmatched=[]; rows.forEach(row=>{const name=chooseRegion(row.A,regions); (name?groups[name]:unmatched).push(row);}); lastRun={groups}; /* CHI groups: thang/nam doc song luc tao cong van, snapshot lai la nguon lech im lang. Comment PHAI la block — run() nam tren MOT dong, dung // la nuot sach phan con lai. */ show('info',`Đang tạo ${regions.length} sheet từ ${rows.length.toLocaleString('vi-VN')} dòng...`); const out=new ExcelJS.Workbook(); out.creator='NKTC - HTML offline'; const summary=out.addWorksheet('summary'); const counts=[]; regions.forEach(region=>{const count=buildRegionSheet(out,region.name,groups[region.name]);counts.push({name:region.name,terms:region.terms,...count});}); counts.push({name:'unmatched',terms:null,...buildUnmatched(out,unmatched)}); buildSummary(summary,rows.length,counts); const data=await out.xlsx.writeBuffer(); const url=URL.createObjectURL(new Blob([data],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})); const a=document.createElement('a'); a.href=url; a.download=($('outName').value.trim()||'NKTC.xlsx').replace(/\.xlsx$/i,'')+'.xlsx'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); const done=`Đã xuất ${a.download}: ${rows.length.toLocaleString('vi-VN')} dòng, ${regions.length} vùng, chưa khớp ${unmatched.length}.`; const warns=[]; if(unparseableAmounts)warns.push(`CẢNH BÁO: ${unparseableAmounts} dòng có Trị giá không đọc được, đã ghi 0.00 - kiểm tra lại file nguồn.`); if(blankAmounts)warns.push(`CẢNH BÁO: ${blankAmounts} dòng có Trị giá ĐỂ TRỐNG, đã ghi 0.00 - kiểm tra lại file nguồn.`); if(warns.length)show('error',`${done} ${warns.join(' ')}`);else show('ok',done); }
+  async function loadSource() { const input=$('source').files[0]; if(!input) throw Error('Chọn file XLSX nguồn trước.'); if(!window.ExcelJS) throw Error('Không tải được thư viện Excel trong file HTML.'); const regions=parseRegions($('regions').value); show('info','Đang đọc file nguồn...'); const sourceWb=new ExcelJS.Workbook(); await sourceWb.xlsx.load(await input.arrayBuffer()); const rows=extractRows(sourceWb.worksheets[0]); if(!rows.length) throw Error('Không có dòng E21/G13 nào sau khi lọc. Không xuất file - kiểm tra lại file nguồn.'); const groups=Object.fromEntries(regions.map(r=>[r.name,[]])); const unmatched=[]; rows.forEach(row=>{const name=chooseRegion(row.A,regions); (name?groups[name]:unmatched).push(row);}); lastRun={groups}; /* CHI groups: thang/nam doc song luc tao cong van, snapshot lai la nguon lech im lang. */ return {regions,rows,groups,unmatched}; }
+  const outStem = () => ($('outName').value.trim()||'NKTC.xlsx').replace(/\.xlsx$/i,'');
+  function download(data, type, name) { const url=URL.createObjectURL(new Blob([data],{type})); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); }
+  function finish(done) { const warns=[]; if(unparseableAmounts)warns.push(`CẢNH BÁO: ${unparseableAmounts} dòng có Trị giá không đọc được, đã ghi 0.00 - kiểm tra lại file nguồn.`); if(blankAmounts)warns.push(`CẢNH BÁO: ${blankAmounts} dòng có Trị giá ĐỂ TRỐNG, đã ghi 0.00 - kiểm tra lại file nguồn.`); if(warns.length)show('error',`${done} ${warns.join(' ')}`);else show('ok',done); }
+  async function run() { const {regions,rows,groups,unmatched}=await loadSource(); show('info',`Đang tạo ${regions.length} sheet từ ${rows.length.toLocaleString('vi-VN')} dòng...`); const out=new ExcelJS.Workbook(); out.creator='NKTC - HTML offline'; const summary=out.addWorksheet('summary'); const counts=[]; regions.forEach(region=>{const count=buildRegionSheet(out,region.name,groups[region.name]);counts.push({name:region.name,terms:region.terms,...count});}); counts.push({name:'unmatched',terms:null,...buildUnmatched(out,unmatched)}); buildSummary(summary,rows.length,counts); const name=outStem()+'.xlsx'; download(await out.xlsx.writeBuffer(),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',name); finish(`Đã xuất ${name}: ${rows.length.toLocaleString('vi-VN')} dòng, ${regions.length} vùng, chưa khớp ${unmatched.length}.`); }
+  // Moi vung co du lieu -> 1 file .xlsx rieng (cung noi dung sheet vung ben run()), goi chung 1 ZIP:
+  // tai nhieu file roi rac thi trinh duyet hoi "cho phep tai nhieu file" va de mat file. Vung rong
+  // bo qua (giong Tao cong van); unmatched.xlsx chi co khi con dong chua khop. ZIP de STORED (method 0)
+  // vi xlsx da nen san; co 0x800 = ten file UTF-8, de ten sheet co dau khong bi vo tren Windows.
+  async function runSplit() {
+    const {regions,rows,groups,unmatched}=await loadSource(); show('info',`Đang tạo từng file từ ${rows.length.toLocaleString('vi-VN')} dòng...`);
+    const entries=[], skipped=[];
+    for(const [name,records] of [...regions.map(r=>[r.name,groups[r.name]]),['unmatched',unmatched]]) {
+      if(!records.length) { if(name!=='unmatched') skipped.push(name); continue; }
+      const wb=new ExcelJS.Workbook(); wb.creator='NKTC - HTML offline';
+      if(name==='unmatched') buildUnmatched(wb,records); else buildRegionSheet(wb,name,records);
+      const bytes=new Uint8Array(await wb.xlsx.writeBuffer());
+      entries.push({name:`${name}.xlsx`,flags:0x800,method:0,crc:crc32(bytes),compSize:bytes.length,uncompSize:bytes.length,data:bytes});
+    }
+    const zipName=outStem()+'_tach_tinh.zip'; download(writeZip(entries),'application/zip',zipName);
+    finish(`Đã xuất ${zipName}: ${entries.length} file (${entries.map(e=>e.name).join(', ')}), ${rows.length.toLocaleString('vi-VN')} dòng, chưa khớp ${unmatched.length}.${skipped.length?` Bỏ qua ${skipped.length} vùng không có dữ liệu: ${skipped.join(', ')}.`:''}`);
+  }
   $('run').addEventListener('click',async()=>{const b=$('run');try{b.disabled=true;await run();}catch(e){console.error(e);show('error',e.message||String(e));}finally{b.disabled=false;}});
+  $('runSplit').addEventListener('click',async()=>{const b=$('runSplit');try{b.disabled=true;await runSplit();}catch(e){console.error(e);show('error',e.message||String(e));}finally{b.disabled=false;}});
   $('cvnk').addEventListener('click',async()=>{const b=$('cvnk');try{b.disabled=true;await cvnkGenerate();}catch(e){console.error(e);show('error',e.message||String(e));}finally{b.disabled=false;}});
   $('resetRegions').onclick=()=>{if(confirm('Khôi phục cấu hình 9 vùng mặc định? Các chỉnh sửa chưa tải TXT sẽ mất.')) $('regions').value=defaultRegions;};
   $('downloadRegions').onclick=()=>{const url=URL.createObjectURL(new Blob([$('regions').value],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='regions.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};

@@ -120,7 +120,7 @@ const match = template.match(/<script>\s*(\(\(\) => \{[\s\S]*?\}\)\(\);)\s*<\/sc
 if (!match) throw new Error('Could not extract inline NKTC application JS');
 const app = match[1].replace(
   /\}\)\(\);\s*$/,
-  "globalThis.__NKTC_TEST__={num,extractRows,chooseRegion,buildRegionSheet,run,sourceColumns,cvnkGenerate,setLastRun:g=>{lastRun={groups:g};},getUnparseableAmounts:()=>unparseableAmounts,getBlankAmounts:()=>blankAmounts};})();"
+  "globalThis.__NKTC_TEST__={num,extractRows,chooseRegion,buildRegionSheet,run,runSplit,sourceColumns,cvnkGenerate,setLastRun:g=>{lastRun={groups:g};},getUnparseableAmounts:()=>unparseableAmounts,getBlankAmounts:()=>blankAmounts};})();"
 );
 vm.runInThisContext(app, {filename: request.template});
 const api = global.__NKTC_TEST__;
@@ -159,6 +159,13 @@ const api = global.__NKTC_TEST__;
     if (request.output) fs.writeFileSync(request.output, Buffer.from(await global.__lastBlob.arrayBuffer()));
     const status = element('status');
     process.stdout.write(JSON.stringify({kind: status.className, text: status.textContent, downloaded: global.__lastBlob !== null}));
+    return;
+  }
+  if (request.action === 'split') {
+    await api.runSplit();
+    fs.writeFileSync(request.output, Buffer.from(await global.__lastBlob.arrayBuffer()));
+    const status = element('status');
+    process.stdout.write(JSON.stringify({kind: status.className, text: status.textContent}));
     return;
   }
   if (request.action === 'build') {
@@ -952,6 +959,42 @@ class WorkbookParityTest(unittest.TestCase):
         self.assertIn("A5:A6", python_merges)
         self.assertEqual(js_cells, python_cells)
         self.assertEqual(js_merges, python_merges)
+
+
+class SplitExportTest(unittest.TestCase):
+    """Nut "Xuat tach moi tinh 1 file": ZIP mo duoc, moi vung co du lieu 1 file,
+    vung rong bi bo, noi dung sheet vung trung du lieu voi ban CLI."""
+
+    @unittest.skipUnless(NODE, "node is required for browser-JS parity tests")
+    def test_zip_has_one_file_per_nonempty_region_matching_python(self):
+        rows = [
+            source_row("CONG TY A", "0001", declaration=100000001),
+            source_row("CONG TY A", "0001", declaration=100000002),
+            source_row("CONG TY B", "0002", declaration=100000003, address="Da Nang"),
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            source = tmp_path / "source.xlsx"
+            write_source(source, rows)
+            regions_text = "Test\tHa Noi\nRỗng\tCa Mau"
+            regions = tmp_path / "regions.txt"
+            regions.write_text(regions_text, encoding="utf-8")
+            python_output = tmp_path / "python.xlsx"
+            run_python(source, python_output, regions)
+            zip_path = tmp_path / "split.zip"
+            status = run_js(tmp_path, {"action": "split", "source": str(source),
+                                       "output": str(zip_path), "regions": regions_text})
+            self.assertEqual(status["kind"], "ok", status["text"])
+            self.assertIn("Rỗng", status["text"])
+            with zipfile.ZipFile(zip_path) as zf:
+                self.assertIsNone(zf.testzip())
+                self.assertEqual(zf.namelist(), ["Test.xlsx", "unmatched.xlsx"])
+                self.assertTrue(all(info.flag_bits & 0x800 for info in zf.infolist()))
+                zf.extractall(tmp_path / "out")
+            self.assertEqual(region_snapshot(tmp_path / "out" / "Test.xlsx"), region_snapshot(python_output))
+            unmatched = load_workbook(tmp_path / "out" / "unmatched.xlsx", data_only=True)["unmatched"]
+            self.assertEqual(unmatched["B5"].value, "CONG TY B")
+            self.assertIsNone(unmatched["B6"].value)
 
 
 class BundleSyncTest(unittest.TestCase):

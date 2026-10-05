@@ -157,6 +157,17 @@ HTML hỗ trợ tải lên/tải xuống `regions.txt`, khôi phục mặc đị
 quy tắc phân vùng như CLI: địa danh khớp ở cuối địa chỉ được ưu tiên, một dòng
 chỉ vào một sheet.
 
+### Xuất tách mỗi tỉnh 1 file (nút "Xuất tách mỗi tỉnh 1 file (ZIP)")
+
+Tương đương `--separate-files` của CLI, nhưng gói chung 1 file
+`<Tên file kết quả>_tach_tinh.zip` (tải nhiều file rời thì trình duyệt hỏi quyền
+và dễ sót). Mỗi vùng có dữ liệu → `TênSheet.xlsx` chứa đúng 1 sheet vùng, cùng
+nội dung/định dạng với sheet vùng trong workbook gộp; thêm `unmatched.xlsx` nếu
+còn dòng chưa khớp. **Khác CLI: vùng không có dữ liệu bị bỏ qua** (giống "Tạo
+công văn"), tên vùng bị bỏ qua hiện trong thông báo. Không có sheet `summary`.
+ZIP lưu STORED (xlsx đã nén sẵn), cờ UTF-8 bật cho tên file. Nút này cũng cập
+nhật dữ liệu cho "Tạo công văn" như nút xuất gộp.
+
 ### Tạo công văn (nút "Tạo công văn")
 
 Sau khi bấm **Xuất Excel NKTC**, nút **Tạo công văn** tạo file `.docx` "Thông báo
